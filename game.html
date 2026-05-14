@@ -1,76 +1,85 @@
 <!DOCTYPE html>
-if(leader && !raceEnded){
-
-socket.emit("leaderUpdate",leader.marbleData.id);
-
-if(leader.position.y >= FINISH_Y){
-raceEnded = true;
-socket.emit("raceFinished",leader.marbleData.id);
-}
+justify-content:center;
+flex-direction:column;
+background:#000c;
+color:white;
+font-size:50px;
+z-index:10;
 }
 
-let camY = 0;
-
-if(leader){
-camY = leader.position.y - H*0.4;
+#winner img{
+width:150px;
+height:150px;
+border-radius:50%;
+object-fit:cover;
+margin-top:20px;
+border:5px solid gold;
 }
+</style>
+</head>
+<body>
 
-ctx.save();
-ctx.translate(0,-camY);
+<canvas id="c"></canvas>
 
-ctx.fillStyle = "gold";
-ctx.fillRect(0,FINISH_Y,W,15);
+<div id="winner">
+<div>🏆 GANADOR 🏆</div>
+<div id="winnerName"></div>
+<div id="winnerImg"></div>
+</div>
 
-const bodies = Matter.Composite.allBodies(world);
+<script>
 
-bodies.forEach(body=>{
+const socket = io();
 
-ctx.beginPath();
+const Engine = Matter.Engine;
+const World = Matter.World;
+const Bodies = Matter.Bodies;
+const Body = Matter.Body;
+const Runner = Matter.Runner;
 
-const verts = body.vertices;
-ctx.moveTo(verts[0].x,verts[0].y);
+const engine = Engine.create();
+engine.gravity.y = 0.7;
 
-for(let i=1;i<verts.length;i++){
-ctx.lineTo(verts[i].x,verts[i].y);
-}
+const world = engine.world;
+const runner = Runner.create();
+Runner.run(runner, engine);
 
-ctx.closePath();
+const canvas = document.getElementById("c");
+const ctx = canvas.getContext("2d");
 
-if(body.marbleData){
+let W = window.innerWidth;
+let H = window.innerHeight;
 
-const m = body.marbleData;
+canvas.width = W;
+canvas.height = H;
 
-ctx.fillStyle = m.color;
-ctx.fill();
-
-if(m.image){
-
-const img = new Image();
-img.src = m.image;
-
-ctx.save();
-ctx.clip();
-ctx.drawImage(
-img,
-body.position.x-body.circleRadius,
-body.position.y-body.circleRadius,
-body.circleRadius*2,
-body.circleRadius*2
-);
-ctx.restore();
-}
-
-}else{
-ctx.fillStyle = "#334";
-ctx.fill();
-}
+window.addEventListener("resize",()=>{
+W = window.innerWidth;
+H = window.innerHeight;
+canvas.width = W;
+canvas.height = H;
 });
 
-ctx.restore();
+let marbles = [];
+let state = {};
+let started = false;
+let raceEnded = false;
+let currentLeader = null;
+
+const TRACK_HEIGHT = 8000;
+const FINISH_Y = TRACK_HEIGHT - 300;
+
+const audios = {};
+let currentAudio = null;
+
+function seededRandom(seed){
+return function(){
+seed = (seed * 9301 + 49297) % 233280;
+return seed / 233280;
+}
 }
 
-render();
-
-</script>
-</body>
+function clearWorld(){
+const all = Matter.Composite.allBodies(world);
+all.forEach(b=>World.remove(world,b));
 </html>
