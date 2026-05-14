@@ -1,70 +1,61 @@
 const express = require('express');
-      }
-    });
+const http = require('http');
+const { Server } = require('socket.io');
+const path = require('path');
+const Matter = require('matter-js');
 
-    broadcastState();
-  });
+const Engine = Matter.Engine;
+const World = Matter.World;
+const Bodies = Matter.Bodies;
+const Body = Matter.Body;
+const Runner = Matter.Runner;
 
-  socket.on('setPhase', phase => {
-    gameState.phase = phase;
-    broadcastState();
-  });
+const app = express();
+const server = http.createServer(app);
 
-  socket.on('startCountdown', () => {
-    gameState.phase = 'countdown';
-    broadcastState();
-
-    let count = 3;
-
-    const interval = setInterval(() => {
-      io.emit('countdownTick', count);
-
-      count--;
-
-      if (count < 0) {
-        clearInterval(interval);
-
-        gameState.phase = 'racing';
-
-        buildRace();
-
-        broadcastState();
-      }
-    }, 1000);
-  });
-
-  socket.on('nextRound', () => {
-    destroyRace();
-
-    gameState.round += 1;
-    gameState.phase = 'ready';
-    gameState.currentLeader = null;
-
-    broadcastState();
-  });
-
-  socket.on('resetGame', () => {
-    destroyRace();
-
-    gameState = {
-      phase: 'setup',
-      marbles: [],
-      currentLeader: null,
-      round: 1,
-      scores: {},
-      seed: null
-    };
-
-    broadcastState();
-  });
-
-  socket.on('disconnect', () => {
-    console.log('Disconnected:', socket.id);
-  });
+const io = new Server(server, {
+  cors: { origin: '*' }
 });
 
-const PORT = process.env.PORT || 3000;
+app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname)));
+app.use(express.json({ limit: '50mb' }));
 
-server.listen(PORT, () => {
-  console.log('Server running on', PORT);
+let gameState = {
+  phase: 'setup',
+  marbles: [],
+  currentLeader: null,
+  round: 1,
+  scores: {},
+  seed: null
+};
+
+let engine = null;
+let runner = null;
+let marbleBodies = [];
+let raceLoop = null;
+let raceFinished = false;
+
+const WORLD_W = 1200;
+const TRACK_HEIGHT = 7000;
+const FINISH_Y = TRACK_HEIGHT - 120;
+const R = 22;
+
+function broadcastState() {
+  io.emit('stateUpdate', gameState);
+}
+
+function destroyRace() {
+  if (raceLoop) clearInterval(raceLoop);
+  raceLoop = null;
+
+  if (runner) Runner.stop(runner);
+
+  if (engine) {
+    World.clear(engine.world);
+    Engine.clear(engine);
+  }
+
+  engine = null;
+  runner = null;
 });
