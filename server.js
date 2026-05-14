@@ -10,6 +10,7 @@ const io = new Server(server, {
 });
 
 app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname)));
 app.use(express.json({ limit: '10mb' }));
 
 // Game state
@@ -118,3 +119,4 @@ const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`Marble Race server running on port ${PORT}`);
 });
+
