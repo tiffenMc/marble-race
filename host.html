@@ -3,260 +3,188 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>🎱 MARBLE RACE — Host</title>
+<title>MARBLE RACE - Host</title>
 <script src="/socket.io/socket.io.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --bg: #0a0a0f;
-    --surface: #13131e;
-    --surface2: #1c1c2e;
-    --accent: #ff6b2b;
-    --accent2: #ffcc00;
-    --green: #39ff14;
-    --text: #f0f0ff;
-    --muted: #6666aa;
-    --radius: 14px;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'Nunito', sans-serif;
-    min-height: 100vh;
-    padding: 20px;
-  }
-  h1 {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 3rem;
-    letter-spacing: 4px;
-    color: var(--accent);
-    text-shadow: 0 0 30px #ff6b2b88;
-    text-align: center;
-    margin-bottom: 6px;
-  }
-  .subtitle { text-align: center; color: var(--muted); font-size: .9rem; margin-bottom: 28px; }
-  .badge {
-    display: inline-block;
-    background: var(--accent);
-    color: #fff;
-    font-size: .7rem;
-    font-weight: 900;
-    padding: 3px 10px;
-    border-radius: 20px;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    margin-left: 8px;
-    vertical-align: middle;
-  }
-
-  .grid { display: grid; grid-template-columns: 380px 1fr; gap: 20px; max-width: 1100px; margin: 0 auto; }
-  @media (max-width: 800px) { .grid { grid-template-columns: 1fr; } }
-
-  .card {
-    background: var(--surface);
-    border: 1px solid #ffffff11;
-    border-radius: var(--radius);
-    padding: 22px;
-  }
-  .card h2 {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 1.4rem;
-    letter-spacing: 2px;
-    color: var(--accent2);
-    margin-bottom: 16px;
-  }
-
-  /* Form */
-  .field { margin-bottom: 14px; }
-  .field label { display: block; font-size: .8rem; font-weight: 700; color: var(--muted); margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1px; }
-  .field input[type=text] {
-    width: 100%;
-    background: var(--surface2);
-    border: 1px solid #ffffff22;
-    border-radius: 8px;
-    color: var(--text);
-    padding: 10px 14px;
-    font-family: 'Nunito', sans-serif;
-    font-size: .95rem;
-    outline: none;
-    transition: border .2s;
-  }
-  .field input[type=text]:focus { border-color: var(--accent); }
-
-  .upload-row { display: flex; gap: 10px; }
-  .upload-btn {
-    flex: 1;
-    background: var(--surface2);
-    border: 2px dashed #ffffff22;
-    border-radius: 8px;
-    padding: 10px;
-    text-align: center;
-    cursor: pointer;
-    font-size: .8rem;
-    color: var(--muted);
-    transition: all .2s;
-    position: relative;
-    overflow: hidden;
-  }
-  .upload-btn:hover { border-color: var(--accent); color: var(--accent); }
-  .upload-btn input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; }
-  .upload-btn .preview-img {
-    width: 40px; height: 40px; border-radius: 50%;
-    object-fit: cover; display: block; margin: 0 auto 4px;
-  }
-  .upload-btn .preview-sound {
-    font-size: 1.5rem; display: block; margin-bottom: 4px;
-  }
-
-  .btn {
-    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-    padding: 12px 22px;
-    border-radius: 10px;
-    border: none;
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 1.1rem;
-    letter-spacing: 2px;
-    cursor: pointer;
-    transition: all .15s;
-    text-transform: uppercase;
-  }
-  .btn:active { transform: scale(.97); }
-  .btn-primary { background: var(--accent); color: #fff; width: 100%; }
-  .btn-primary:hover { background: #ff8855; }
-  .btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid #ffffff22; }
-  .btn-secondary:hover { border-color: var(--accent2); color: var(--accent2); }
-  .btn-green { background: var(--green); color: #000; }
-  .btn-green:hover { background: #55ff33; }
-  .btn-danger { background: #ff2244; color: #fff; }
-  .btn-xl { font-size: 1.6rem; padding: 18px 30px; width: 100%; margin-top: 10px; }
-
-  /* Marble list */
-  .marble-list { display: flex; flex-direction: column; gap: 10px; max-height: 320px; overflow-y: auto; padding-right: 4px; }
-  .marble-list::-webkit-scrollbar { width: 4px; }
-  .marble-list::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 4px; }
-
-  .marble-item {
-    display: flex; align-items: center; gap: 12px;
-    background: var(--surface2);
-    border-radius: 10px;
-    padding: 10px 14px;
-    border: 1px solid #ffffff11;
-    position: relative;
-  }
-  .marble-avatar {
-    width: 44px; height: 44px; border-radius: 50%;
-    object-fit: cover;
-    border: 2px solid var(--accent);
-    flex-shrink: 0;
-    background: #222;
-  }
-  .marble-info { flex: 1; min-width: 0; }
-  .marble-name { font-weight: 900; font-size: .95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .marble-meta { font-size: .75rem; color: var(--muted); }
-  .marble-score {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 1.4rem;
-    color: var(--accent2);
-    min-width: 28px;
-    text-align: center;
-  }
-  .marble-del {
-    background: none; border: none; color: #ff4466; cursor: pointer;
-    font-size: 1.1rem; padding: 4px 6px; border-radius: 6px;
-  }
-  .marble-del:hover { background: #ff224422; }
-
-  /* Phase controls */
-  .phase-section { display: flex; flex-direction: column; gap: 12px; }
-  .phase-label {
-    font-size: .75rem; font-weight: 700; text-transform: uppercase;
-    letter-spacing: 2px; color: var(--muted); margin-bottom: -4px;
-  }
-
-  .phase-indicator {
-    display: flex; align-items: center; gap: 10px;
-    background: var(--surface2);
-    border-radius: 10px;
-    padding: 12px 16px;
-    border: 1px solid #ffffff11;
-  }
-  .phase-dot {
-    width: 10px; height: 10px; border-radius: 50%;
-    background: var(--muted);
-    flex-shrink: 0;
-  }
-  .phase-dot.active { background: var(--green); box-shadow: 0 0 8px var(--green); }
-  .phase-text { font-weight: 700; font-size: .9rem; }
-
-  .viewers {
-    font-size: .8rem; color: var(--muted); text-align: right;
-    margin-top: -8px;
-  }
-  .viewers span { color: var(--green); font-weight: 900; }
-
-  /* Scores panel */
-  .score-row {
-    display: flex; align-items: center; gap: 10px;
-    padding: 8px 12px;
-    border-radius: 8px;
-    background: var(--surface2);
-    margin-bottom: 6px;
-  }
-  .score-pos {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 1.2rem;
-    color: var(--muted);
-    width: 24px;
-    text-align: center;
-  }
-  .score-pos.gold { color: var(--accent2); }
-  .score-name { flex: 1; font-weight: 700; }
-  .score-pts {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 1.3rem;
-    color: var(--accent);
-  }
-
-  .round-badge {
-    background: var(--surface2);
-    border: 1px solid var(--accent2);
-    color: var(--accent2);
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 1.1rem;
-    letter-spacing: 3px;
-    padding: 8px 16px;
-    border-radius: 8px;
-    text-align: center;
-  }
-
-  .empty-state {
-    text-align: center;
-    color: var(--muted);
-    font-size: .85rem;
-    padding: 20px;
-    border: 2px dashed #ffffff11;
-    border-radius: 10px;
-  }
-
-  /* Color picker row */
-  .color-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
-  .color-swatch {
-    width: 28px; height: 28px; border-radius: 50%;
-    cursor: pointer; border: 3px solid transparent;
-    transition: all .15s;
-  }
-  .color-swatch.selected { border-color: #fff; transform: scale(1.2); }
-
-  .toast {
-    position: fixed; bottom: 24px; right: 24px;
-    background: var(--green); color: #000;
-    font-weight: 900; padding: 12px 20px;
-    border-radius: 10px; font-size: .9rem;
-    transform: translateY(60px); opacity: 0;
-    transition: all .3s; z-index: 999;
-  }
-  .toast.show { transform: translateY(0); opacity: 1; }
+:root {
+  --bg: #0a0a0f;
+  --surface: #13131e;
+  --surface2: #1c1c2e;
+  --accent: #ff6b2b;
+  --accent2: #ffcc00;
+  --green: #39ff14;
+  --text: #f0f0ff;
+  --muted: #6666aa;
+  --radius: 14px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Nunito', sans-serif;
+  min-height: 100vh;
+  padding: 20px;
+}
+h1 {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 3rem;
+  letter-spacing: 4px;
+  color: var(--accent);
+  text-shadow: 0 0 30px #ff6b2b88;
+  text-align: center;
+  margin-bottom: 6px;
+}
+.subtitle { text-align: center; color: var(--muted); font-size: .9rem; margin-bottom: 28px; }
+.badge {
+  display: inline-block;
+  background: var(--accent);
+  color: #fff;
+  font-size: .7rem;
+  font-weight: 900;
+  padding: 3px 10px;
+  border-radius: 20px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-left: 8px;
+}
+.grid { display: grid; grid-template-columns: 380px 1fr; gap: 20px; max-width: 1100px; margin: 0 auto; }
+@media (max-width: 800px) { .grid { grid-template-columns: 1fr; } }
+.card {
+  background: var(--surface);
+  border: 1px solid #ffffff11;
+  border-radius: var(--radius);
+  padding: 22px;
+}
+.card h2 {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.4rem;
+  letter-spacing: 2px;
+  color: var(--accent2);
+  margin-bottom: 16px;
+}
+.field { margin-bottom: 14px; }
+.field label { display: block; font-size: .8rem; font-weight: 700; color: var(--muted); margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1px; }
+.field input[type=text] {
+  width: 100%;
+  background: var(--surface2);
+  border: 1px solid #ffffff22;
+  border-radius: 8px;
+  color: var(--text);
+  padding: 10px 14px;
+  font-family: 'Nunito', sans-serif;
+  font-size: .95rem;
+  outline: none;
+  transition: border .2s;
+}
+.field input[type=text]:focus { border-color: var(--accent); }
+.upload-row { display: flex; gap: 10px; }
+.upload-btn {
+  flex: 1;
+  background: var(--surface2);
+  border: 2px dashed #ffffff22;
+  border-radius: 8px;
+  padding: 10px;
+  text-align: center;
+  cursor: pointer;
+  font-size: .8rem;
+  color: var(--muted);
+  transition: all .2s;
+  position: relative;
+  overflow: hidden;
+}
+.upload-btn:hover { border-color: var(--accent); color: var(--accent); }
+.upload-btn input[type=file] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+  width: 100%;
+  height: 100%;
+}
+.preview-img { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; display: block; margin: 0 auto 4px; }
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 12px 22px;
+  border-radius: 10px;
+  border: none;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.1rem;
+  letter-spacing: 2px;
+  cursor: pointer;
+  transition: all .15s;
+  text-transform: uppercase;
+}
+.btn:active { transform: scale(.97); }
+.btn-primary { background: var(--accent); color: #fff; width: 100%; }
+.btn-primary:hover { background: #ff8855; }
+.btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid #ffffff22; width: 100%; }
+.btn-secondary:hover { border-color: var(--accent2); color: var(--accent2); }
+.btn-green { background: var(--green); color: #000; width: 100%; }
+.btn-green:hover { background: #55ff33; }
+.btn-danger { background: #ff2244; color: #fff; width: 100%; }
+.btn-xl { font-size: 1.6rem; padding: 18px 30px; }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.marble-list { display: flex; flex-direction: column; gap: 10px; max-height: 320px; overflow-y: auto; padding-right: 4px; }
+.marble-item {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--surface2);
+  border-radius: 10px;
+  padding: 10px 14px;
+  border: 1px solid #ffffff11;
+}
+.marble-avatar {
+  width: 44px; height: 44px; border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--accent);
+  flex-shrink: 0;
+}
+.marble-info { flex: 1; min-width: 0; }
+.marble-name { font-weight: 900; font-size: .95rem; }
+.marble-meta { font-size: .75rem; color: var(--muted); }
+.marble-score { font-family: 'Bebas Neue', sans-serif; font-size: 1.4rem; color: var(--accent2); min-width: 28px; text-align: center; }
+.marble-del { background: none; border: none; color: #ff4466; cursor: pointer; font-size: 1.1rem; padding: 4px 6px; border-radius: 6px; }
+.marble-del:hover { background: #ff224422; }
+.phase-section { display: flex; flex-direction: column; gap: 12px; }
+.phase-label { font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: var(--muted); }
+.phase-indicator {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--surface2);
+  border-radius: 10px;
+  padding: 12px 16px;
+  border: 1px solid #ffffff11;
+}
+.phase-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--green); box-shadow: 0 0 8px var(--green); flex-shrink: 0; }
+.phase-text { font-weight: 700; font-size: .9rem; }
+.round-badge {
+  background: var(--surface2);
+  border: 1px solid var(--accent2);
+  color: var(--accent2);
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.1rem;
+  letter-spacing: 3px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  text-align: center;
+}
+.color-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
+.color-swatch { width: 28px; height: 28px; border-radius: 50%; cursor: pointer; border: 3px solid transparent; transition: all .15s; }
+.color-swatch.selected { border-color: #fff; transform: scale(1.2); }
+.score-row { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 8px; background: var(--surface2); margin-bottom: 6px; }
+.score-pos { font-family: 'Bebas Neue', sans-serif; font-size: 1.2rem; color: var(--muted); width: 24px; text-align: center; }
+.score-pos.gold { color: var(--accent2); }
+.score-name { flex: 1; font-weight: 700; }
+.score-pts { font-family: 'Bebas Neue', sans-serif; font-size: 1.3rem; color: var(--accent); }
+.empty-state { text-align: center; color: var(--muted); font-size: .85rem; padding: 20px; border: 2px dashed #ffffff11; border-radius: 10px; }
+.toast {
+  position: fixed; bottom: 24px; right: 24px;
+  background: var(--green); color: #000;
+  font-weight: 900; padding: 12px 20px;
+  border-radius: 10px; font-size: .9rem;
+  transform: translateY(60px); opacity: 0;
+  transition: all .3s; z-index: 999;
+}
+.toast.show { transform: translateY(0); opacity: 1; }
 </style>
 </head>
 <body>
@@ -264,7 +192,6 @@
 <p class="subtitle">Panel de control del HOST <span class="badge">Admin</span></p>
 
 <div class="grid">
-  <!-- LEFT: Add marble -->
   <div>
     <div class="card" style="margin-bottom:16px">
       <h2>➕ Añadir Canica</h2>
@@ -273,26 +200,26 @@
         <input type="text" id="mName" placeholder="Ej: El Rayo, La Bestia..." maxlength="20">
       </div>
       <div class="upload-row">
-        <div class="upload-btn" id="imgBtn">
-          <input type="file" id="mImg" accept="image/*" onchange="previewImg(this)">
-          <span id="imgPreviewWrap">
-            <span style="font-size:1.5rem;display:block;margin-bottom:4px">🖼️</span>
-            <span>Foto</span>
-          </span>
+        <div class="upload-btn">
+          <input type="file" id="mImg" accept="image/*">
+          <div id="imgPreviewWrap">
+            <div style="font-size:1.5rem;margin-bottom:4px">🖼️</div>
+            <div>Foto</div>
+          </div>
         </div>
-        <div class="upload-btn" id="sndBtn">
-          <input type="file" id="mSound" accept="audio/*" onchange="previewSound(this)">
-          <span id="sndPreviewWrap">
-            <span class="preview-sound">🎵</span>
-            <span>Sonido</span>
-          </span>
+        <div class="upload-btn">
+          <input type="file" id="mSound" accept="audio/*">
+          <div id="sndPreviewWrap">
+            <div style="font-size:1.5rem;margin-bottom:4px">🎵</div>
+            <div>Sonido</div>
+          </div>
         </div>
       </div>
       <div class="field" style="margin-top:14px">
         <label>Color de canica</label>
         <div class="color-row" id="colorRow"></div>
       </div>
-      <button class="btn btn-primary" style="margin-top:16px" onclick="addMarble()">➕ Añadir Canica</button>
+      <button class="btn btn-primary" style="margin-top:16px" id="btnAddMarble">➕ Añadir Canica</button>
     </div>
 
     <div class="card">
@@ -303,35 +230,22 @@
     </div>
   </div>
 
-  <!-- RIGHT: Controls -->
   <div>
     <div class="card" style="margin-bottom:16px">
       <h2>🎮 Control de Partida</h2>
       <div class="phase-section">
         <div class="phase-label">Estado actual</div>
         <div class="phase-indicator">
-          <div class="phase-dot active" id="phaseDot"></div>
+          <div class="phase-dot"></div>
           <div class="phase-text" id="phaseText">Configurando...</div>
         </div>
         <div class="round-badge" id="roundBadge">RONDA 1</div>
-
         <div class="phase-label" style="margin-top:8px">Acciones</div>
-
-        <button class="btn btn-secondary" id="btnLobby" onclick="setPhase('lobby')">
-          📺 Abrir sala de espera
-        </button>
-        <button class="btn btn-secondary" id="btnReady" onclick="setPhase('ready')" disabled>
-          🎱 Mostrar canicas en escenario
-        </button>
-        <button class="btn btn-green btn-xl" id="btnStart" onclick="startCountdown()" disabled>
-          ▶ INICIAR CARRERA
-        </button>
-        <button class="btn btn-secondary" id="btnNext" onclick="nextRound()" style="display:none">
-          🔄 Siguiente ronda
-        </button>
-        <button class="btn btn-danger" onclick="resetGame()" style="margin-top:6px">
-          🗑️ Reset total
-        </button>
+        <button class="btn btn-secondary" id="btnLobby">📺 Abrir sala de espera</button>
+        <button class="btn btn-secondary" id="btnReady" disabled>🎱 Mostrar canicas en escenario</button>
+        <button class="btn btn-green btn-xl" id="btnStart" disabled>▶ INICIAR CARRERA</button>
+        <button class="btn btn-secondary" id="btnNext" style="display:none">🔄 Siguiente ronda</button>
+        <button class="btn btn-danger" id="btnReset" style="margin-top:6px">🗑️ Reset total</button>
       </div>
     </div>
 
@@ -347,59 +261,63 @@
 <div class="toast" id="toast"></div>
 
 <script>
-const socket = io();
-const COLORS = ['#ff6b2b','#ffcc00','#39ff14','#00cfff','#ff44aa','#bb44ff','#ff4444','#44ffcc','#ffffff','#ff9900'];
-let selectedColor = COLORS[0];
-let localMarbles = [];
-let imgData = null, sndData = null, sndName = '';
-let gameState = {};
+var socket = io();
+var COLORS = ['#ff6b2b','#ffcc00','#39ff14','#00cfff','#ff44aa','#bb44ff','#ff4444','#44ffcc','#ffffff','#ff9900'];
+var selectedColor = COLORS[0];
+var localMarbles = [];
+var imgData = null;
+var sndData = null;
+var sndName = '';
+var gameState = {};
 
 // Build color swatches
-const colorRow = document.getElementById('colorRow');
-COLORS.forEach((c, i) => {
-  const sw = document.createElement('div');
-  sw.className = 'color-swatch' + (i===0?' selected':'');
+var colorRow = document.getElementById('colorRow');
+COLORS.forEach(function(c, i) {
+  var sw = document.createElement('div');
+  sw.className = 'color-swatch' + (i === 0 ? ' selected' : '');
   sw.style.background = c;
-  sw.onclick = () => {
-    document.querySelectorAll('.color-swatch').forEach(s=>s.classList.remove('selected'));
+  sw.addEventListener('click', function() {
+    document.querySelectorAll('.color-swatch').forEach(function(s) { s.classList.remove('selected'); });
     sw.classList.add('selected');
     selectedColor = c;
-  };
+  });
   colorRow.appendChild(sw);
 });
 
-function previewImg(input) {
-  const file = input.files[0];
+// Image upload
+document.getElementById('mImg').addEventListener('change', function() {
+  var file = this.files[0];
   if (!file) return;
-  const reader = new FileReader();
-  reader.onload = e => {
+  var reader = new FileReader();
+  reader.onload = function(e) {
     imgData = e.target.result;
     document.getElementById('imgPreviewWrap').innerHTML =
-      `<img src="${imgData}" class="preview-img"><span style="font-size:.7rem">Foto cargada ✅</span>`;
+      '<img src="' + imgData + '" class="preview-img"><div style="font-size:.7rem">Foto cargada ✅</div>';
   };
   reader.readAsDataURL(file);
-}
+});
 
-function previewSound(input) {
-  const file = input.files[0];
+// Sound upload
+document.getElementById('mSound').addEventListener('change', function() {
+  var file = this.files[0];
   if (!file) return;
   sndName = file.name;
-  const reader = new FileReader();
-  reader.onload = e => {
+  var reader = new FileReader();
+  reader.onload = function(e) {
     sndData = e.target.result;
     document.getElementById('sndPreviewWrap').innerHTML =
-      `<span class="preview-sound">🎵</span><span style="font-size:.7rem">${sndName.substring(0,16)}... ✅</span>`;
+      '<div style="font-size:1.5rem;margin-bottom:4px">🎵</div><div style="font-size:.7rem">' + sndName.substring(0, 16) + ' ✅</div>';
   };
   reader.readAsDataURL(file);
-}
+});
 
-function addMarble() {
-  const name = document.getElementById('mName').value.trim();
+// Add marble button
+document.getElementById('btnAddMarble').addEventListener('click', function() {
+  var name = document.getElementById('mName').value.trim();
   if (!name) { showToast('⚠️ Ponle un nombre a la canica'); return; }
-
-  const marble = {
+  var marble = {
     id: 'marble_' + Date.now(),
-    name,
+    name: name,
     color: selectedColor,
     image: imgData || null,
     sound: sndData || null,
@@ -407,76 +325,73 @@ function addMarble() {
   };
   localMarbles.push(marble);
   socket.emit('setMarbles', localMarbles);
-
-  // Reset form
   document.getElementById('mName').value = '';
   imgData = null; sndData = null; sndName = '';
-  document.getElementById('imgPreviewWrap').innerHTML = `<span style="font-size:1.5rem;display:block;margin-bottom:4px">🖼️</span><span>Foto</span>`;
-  document.getElementById('sndPreviewWrap').innerHTML = `<span class="preview-sound">🎵</span><span>Sonido</span>`;
+  document.getElementById('imgPreviewWrap').innerHTML = '<div style="font-size:1.5rem;margin-bottom:4px">🖼️</div><div>Foto</div>';
+  document.getElementById('sndPreviewWrap').innerHTML = '<div style="font-size:1.5rem;margin-bottom:4px">🎵</div><div>Sonido</div>';
   showToast('✅ Canica añadida: ' + name);
   renderMarbles();
-}
+});
 
 function removeMarble(id) {
-  localMarbles = localMarbles.filter(m => m.id !== id);
+  localMarbles = localMarbles.filter(function(m) { return m.id !== id; });
   socket.emit('setMarbles', localMarbles);
   renderMarbles();
 }
 
 function renderMarbles() {
-  const list = document.getElementById('marbleList');
+  var list = document.getElementById('marbleList');
   document.getElementById('marbleCount').textContent = localMarbles.length;
   if (!localMarbles.length) {
     list.innerHTML = '<div class="empty-state">Aún no hay canicas.<br>¡Añade la primera!</div>';
     return;
   }
-  list.innerHTML = localMarbles.map(m => `
-    <div class="marble-item">
-      ${m.image
-        ? `<img src="${m.image}" class="marble-avatar">`
-        : `<div class="marble-avatar" style="background:${m.color};display:flex;align-items:center;justify-content:center;font-size:1.3rem">🎱</div>`}
-      <div class="marble-info">
-        <div class="marble-name">${m.name}</div>
-        <div class="marble-meta">${m.sound?'🎵 Con sonido':'Sin sonido'} · <span style="color:${m.color}">●</span></div>
-      </div>
-      <div class="marble-score">${gameState.scores?.[m.id]??0}</div>
-      <button class="marble-del" onclick="removeMarble('${m.id}')">✕</button>
-    </div>
-  `).join('');
+  var html = '';
+  localMarbles.forEach(function(m) {
+    var avatarHtml = m.image
+      ? '<img src="' + m.image + '" class="marble-avatar">'
+      : '<div class="marble-avatar" style="background:' + m.color + ';display:flex;align-items:center;justify-content:center;font-size:1.3rem">🎱</div>';
+    html += '<div class="marble-item">' +
+      avatarHtml +
+      '<div class="marble-info">' +
+        '<div class="marble-name">' + m.name + '</div>' +
+        '<div class="marble-meta">' + (m.sound ? '🎵 Con sonido' : 'Sin sonido') + ' · <span style="color:' + m.color + '">●</span></div>' +
+      '</div>' +
+      '<div class="marble-score">' + (gameState.scores && gameState.scores[m.id] !== undefined ? gameState.scores[m.id] : 0) + '</div>' +
+      '<button class="marble-del" onclick="removeMarble(\'' + m.id + '\')">✕</button>' +
+    '</div>';
+  });
+  list.innerHTML = html;
 }
 
-function setPhase(phase) {
-  socket.emit('setPhase', phase);
-}
-function startCountdown() {
-  socket.emit('startCountdown');
-}
-function nextRound() {
-  socket.emit('nextRound');
-}
-function resetGame() {
+// Phase buttons
+document.getElementById('btnLobby').addEventListener('click', function() { socket.emit('setPhase', 'lobby'); });
+document.getElementById('btnReady').addEventListener('click', function() { socket.emit('setPhase', 'ready'); });
+document.getElementById('btnStart').addEventListener('click', function() { socket.emit('startCountdown'); });
+document.getElementById('btnNext').addEventListener('click', function() { socket.emit('nextRound'); });
+document.getElementById('btnReset').addEventListener('click', function() {
   if (!confirm('¿Resetear todo?')) return;
   localMarbles = [];
   socket.emit('resetGame');
-}
+});
 
-socket.on('stateUpdate', (state) => {
+socket.on('stateUpdate', function(state) {
   gameState = state;
   updateUI(state);
   renderMarbles();
   renderScores(state);
 });
 
-socket.on('raceWinner', ({ winnerId, scores }) => {
-  gameState.scores = scores;
-  const w = localMarbles.find(m => m.id === winnerId);
-  showToast('🏆 Ganador: ' + (w?.name || winnerId));
+socket.on('raceWinner', function(data) {
+  gameState.scores = data.scores;
+  var w = localMarbles.find(function(m) { return m.id === data.winnerId; });
+  showToast('🏆 Ganador: ' + (w ? w.name : data.winnerId));
   renderMarbles();
   renderScores(gameState);
 });
 
 function updateUI(state) {
-  const phases = {
+  var phases = {
     setup: 'Configurando canicas',
     lobby: 'Sala de espera abierta',
     ready: 'Escenario visible',
@@ -485,34 +400,44 @@ function updateUI(state) {
     results: '🏆 Resultados'
   };
   document.getElementById('phaseText').textContent = phases[state.phase] || state.phase;
-  document.getElementById('roundBadge').textContent = `RONDA ${state.round}`;
-
+  document.getElementById('roundBadge').textContent = 'RONDA ' + state.round;
   document.getElementById('btnLobby').disabled = state.phase !== 'setup';
-  document.getElementById('btnReady').disabled = !['lobby','results'].includes(state.phase);
+  document.getElementById('btnReady').disabled = state.phase !== 'lobby' && state.phase !== 'results';
   document.getElementById('btnStart').disabled = state.phase !== 'ready';
-  document.getElementById('btnNext').style.display = state.phase === 'results' ? 'flex' : 'none';
+  var btnNext = document.getElementById('btnNext');
+  btnNext.style.display = state.phase === 'results' ? 'flex' : 'none';
 }
 
 function renderScores(state) {
-  const board = document.getElementById('scoreBoard');
-  if (!localMarbles.length) { board.innerHTML = '<div class="empty-state">La carrera aún no ha empezado</div>'; return; }
-  const sorted = [...localMarbles].sort((a,b) => (state.scores?.[b.id]??0) - (state.scores?.[a.id]??0));
-  board.innerHTML = sorted.map((m, i) => `
-    <div class="score-row">
-      <div class="score-pos ${i===0?'gold'}">${i===0?'🥇':i===1?'🥈':i===2?'🥉':i+1}</div>
-      ${m.image ? `<img src="${m.image}" style="width:30px;height:30px;border-radius:50%;object-fit:cover;border:2px solid ${m.color}">` :
-        `<div style="width:30px;height:30px;border-radius:50%;background:${m.color}"></div>`}
-      <div class="score-name">${m.name}</div>
-      <div class="score-pts">${state.scores?.[m.id]??0} pts</div>
-    </div>
-  `).join('');
+  var board = document.getElementById('scoreBoard');
+  if (!localMarbles.length) {
+    board.innerHTML = '<div class="empty-state">La carrera aún no ha empezado</div>';
+    return;
+  }
+  var sorted = localMarbles.slice().sort(function(a, b) {
+    return ((state.scores && state.scores[b.id]) || 0) - ((state.scores && state.scores[a.id]) || 0);
+  });
+  var html = '';
+  sorted.forEach(function(m, i) {
+    var pos = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : (i + 1);
+    var avatarHtml = m.image
+      ? '<img src="' + m.image + '" style="width:30px;height:30px;border-radius:50%;object-fit:cover;border:2px solid ' + m.color + '">'
+      : '<div style="width:30px;height:30px;border-radius:50%;background:' + m.color + '"></div>';
+    html += '<div class="score-row">' +
+      '<div class="score-pos ' + (i === 0 ? 'gold' : '') + '">' + pos + '</div>' +
+      avatarHtml +
+      '<div class="score-name">' + m.name + '</div>' +
+      '<div class="score-pts">' + ((state.scores && state.scores[m.id]) || 0) + ' pts</div>' +
+    '</div>';
+  });
+  board.innerHTML = html;
 }
 
 function showToast(msg) {
-  const t = document.getElementById('toast');
+  var t = document.getElementById('toast');
   t.textContent = msg;
   t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2500);
+  setTimeout(function() { t.classList.remove('show'); }, 2500);
 }
 </script>
 </body>
