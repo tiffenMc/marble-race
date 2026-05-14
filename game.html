@@ -8,233 +8,184 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    background: #060610;
-    color: #f0f0ff;
-    font-family: 'Nunito', sans-serif;
-    height: 100vh;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-  }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: #060610;
+  color: #f0f0ff;
+  font-family: 'Nunito', sans-serif;
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
 
-  #waitScreen {
-    position: fixed; inset: 0;
-    background: #060610;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    z-index: 100;
-  }
-  .wait-logo {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: min(10vw, 5rem);
-    color: #ff6b2b;
-    text-shadow: 0 0 60px #ff6b2b99;
-    letter-spacing: 6px;
-    animation: pulse 2s ease-in-out infinite;
-  }
-  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.6} }
-  .wait-sub {
-    color: #6666aa;
-    font-size: 1rem;
-    margin-top: 12px;
-    text-align: center;
-    padding: 0 20px;
-  }
-  .marble-orbs {
-    display: flex; gap: 16px; margin-top: 30px; flex-wrap: wrap; justify-content: center;
-  }
-  .orb {
-    width: 50px; height: 50px; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-size: .65rem; font-weight: 900;
-    text-align: center; padding: 4px;
-    overflow: hidden;
-    box-shadow: 0 0 20px currentColor;
-    animation: float 3s ease-in-out infinite;
-    animation-delay: calc(var(--i) * 0.3s);
-  }
-  @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
-  .orb img { width:100%; height:100%; object-fit:cover; border-radius:50%; }
+#waitScreen {
+  position: fixed; inset: 0;
+  background: #060610;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+.wait-logo {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(2.5rem, 10vw, 5rem);
+  color: #ff6b2b;
+  text-shadow: 0 0 60px #ff6b2b99;
+  letter-spacing: 6px;
+  animation: pulse 2s ease-in-out infinite;
+}
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
+.wait-sub { color: #6666aa; font-size: 1rem; margin-top: 12px; text-align: center; padding: 0 20px; }
+.marble-orbs { display: flex; gap: 16px; margin-top: 30px; flex-wrap: wrap; justify-content: center; }
+.orb {
+  width: 54px; height: 54px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: .65rem; font-weight: 900; text-align: center; padding: 4px;
+  overflow: hidden;
+  animation: float 3s ease-in-out infinite;
+  animation-delay: calc(var(--i) * 0.3s);
+}
+@keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
+.orb img { width:100%; height:100%; object-fit:cover; border-radius:50%; }
 
-  /* Countdown overlay */
-  #countdownOverlay {
-    position: fixed; inset: 0;
-    background: #00000099;
-    display: none;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    z-index: 90;
-  }
-  .countdown-num {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: min(40vw, 20rem);
-    color: #ffcc00;
-    text-shadow: 0 0 80px #ffcc0088;
-    line-height: 1;
-    animation: countPop .6s ease-out forwards;
-  }
-  @keyframes countPop {
-    0% { transform: scale(2); opacity:0; }
-    60% { transform: scale(0.9); opacity:1; }
-    100% { transform: scale(1); opacity:1; }
-  }
+#countdownOverlay {
+  position: fixed; inset: 0;
+  background: #000000bb;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 90;
+}
+.countdown-num {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(8rem, 35vw, 18rem);
+  color: #ffcc00;
+  text-shadow: 0 0 80px #ffcc0088;
+  line-height: 1;
+  animation: countPop .6s ease-out forwards;
+}
+@keyframes countPop {
+  0% { transform: scale(2.5); opacity:0; }
+  60% { transform: scale(0.85); opacity:1; }
+  100% { transform: scale(1); opacity:1; }
+}
 
-  /* Race UI */
-  #raceUI {
-    display: none;
-    flex-direction: column;
-    height: 100vh;
-    overflow: hidden;
-  }
+#raceUI { display: none; flex-direction: column; height: 100vh; overflow: hidden; }
 
-  /* Top HUD */
-  #hud {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 8px 16px;
-    background: #0a0a1488;
-    border-bottom: 1px solid #ffffff11;
-    flex-shrink: 0;
-    flex-wrap: wrap;
-  }
-  .hud-round {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 1.2rem;
-    letter-spacing: 3px;
-    color: #ffcc00;
-  }
-  .hud-leader {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    background: #ffffff0a;
-    border-radius: 20px;
-    padding: 4px 14px;
-    font-weight: 700;
-    font-size: .85rem;
-  }
-  .leader-dot {
-    width: 10px; height: 10px; border-radius: 50%;
-    animation: blink 1s infinite;
-  }
-  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+#hud {
+  display: flex; align-items: center; gap: 12px;
+  padding: 8px 16px;
+  background: #0a0a14ee;
+  border-bottom: 1px solid #ffffff11;
+  flex-shrink: 0;
+  z-index: 10;
+}
+.hud-round { font-family:'Bebas Neue',sans-serif; font-size:1.2rem; letter-spacing:3px; color:#ffcc00; }
+.hud-leader {
+  flex: 1; display: flex; align-items: center; gap: 8px;
+  background: #ffffff0a; border-radius: 20px; padding: 4px 14px;
+  font-weight: 700; font-size: .85rem;
+}
+.leader-dot { width:10px; height:10px; border-radius:50%; animation: blink 1s infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.2} }
 
-  /* Canvas area */
-  #canvasWrap {
-    flex: 1;
-    position: relative;
-    overflow: hidden;
-  }
-  #raceCanvas {
-    display: block;
-    width: 100%;
-    height: 100%;
-  }
+/* Progress bar */
+.hud-progress {
+  display: flex; align-items: center; gap: 8px;
+  font-size: .75rem; color: #6666aa;
+}
+.progress-bar {
+  width: 100px; height: 8px;
+  background: #ffffff11; border-radius: 4px; overflow: hidden;
+}
+.progress-fill { height: 100%; background: #39ff14; border-radius: 4px; transition: width .3s; }
 
-  /* Side scoreboard */
-  #scoreboard {
-    position: absolute;
-    top: 10px; right: 10px;
-    background: #0a0a1499;
-    border: 1px solid #ffffff11;
-    border-radius: 12px;
-    padding: 10px 14px;
-    min-width: 160px;
-    backdrop-filter: blur(10px);
-  }
-  .sb-title {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 1rem;
-    letter-spacing: 2px;
-    color: #ffcc00;
-    margin-bottom: 8px;
-    text-align: center;
-  }
-  .sb-row {
-    display: flex; align-items: center; gap: 8px;
-    margin-bottom: 5px;
-    font-size: .8rem;
-  }
-  .sb-pos { font-family:'Bebas Neue',sans-serif; font-size:.95rem; color:#6666aa; width:16px; }
-  .sb-avatar {
-    width: 24px; height: 24px; border-radius: 50%;
-    object-fit: cover; flex-shrink: 0;
-  }
-  .sb-name { flex:1; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .sb-pts { font-family:'Bebas Neue',sans-serif; font-size:1rem; color:#ff6b2b; }
+#canvasWrap { flex: 1; position: relative; overflow: hidden; }
+#raceCanvas { display: block; }
 
-  /* Winner overlay */
-  #winnerOverlay {
-    position: fixed; inset: 0;
-    background: #000000cc;
-    display: none;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    z-index: 80;
-  }
-  .winner-trophy { font-size: 5rem; animation: bounce 1s infinite; }
-  @keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-20px)} }
-  .winner-label {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: min(8vw, 3.5rem);
-    color: #ffcc00;
-    text-shadow: 0 0 40px #ffcc0088;
-    letter-spacing: 4px;
-    margin-top: 10px;
-  }
-  .winner-name {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: min(15vw, 6rem);
-    color: #ff6b2b;
-    text-shadow: 0 0 60px #ff6b2b88;
-    letter-spacing: 2px;
-  }
-  .winner-avatar {
-    width: 120px; height: 120px; border-radius: 50%;
-    object-fit: cover;
-    border: 4px solid #ffcc00;
-    margin-top: 16px;
-    box-shadow: 0 0 40px #ffcc0088;
-  }
-  .wait-next { color:#6666aa; margin-top:20px; font-size:.9rem; }
+/* Floating scoreboard */
+#scoreboard {
+  position: absolute; top: 10px; right: 10px;
+  background: #0a0a14cc;
+  border: 1px solid #ffffff11;
+  border-radius: 12px;
+  padding: 10px 14px;
+  min-width: 160px;
+  backdrop-filter: blur(10px);
+  z-index: 5;
+}
+.sb-title { font-family:'Bebas Neue',sans-serif; font-size:1rem; letter-spacing:2px; color:#ffcc00; margin-bottom:8px; text-align:center; }
+.sb-row { display:flex; align-items:center; gap:8px; margin-bottom:5px; font-size:.8rem; }
+.sb-pos { font-family:'Bebas Neue',sans-serif; font-size:.95rem; color:#6666aa; width:16px; }
+.sb-avatar { width:24px; height:24px; border-radius:50%; object-fit:cover; flex-shrink:0; }
+.sb-name { flex:1; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.sb-pts { font-family:'Bebas Neue',sans-serif; font-size:1rem; color:#ff6b2b; }
 
-  /* Confetti canvas */
-  #confettiCanvas {
-    position: fixed; inset: 0; pointer-events: none; z-index: 79;
-    display: none;
-  }
+/* Race position indicators on left */
+#racePositions {
+  position: absolute; top: 10px; left: 10px;
+  display: flex; flex-direction: column; gap: 4px;
+  z-index: 5;
+}
+.race-pos-item {
+  display: flex; align-items: center; gap: 6px;
+  background: #0a0a14cc;
+  border-radius: 20px;
+  padding: 4px 10px 4px 4px;
+  font-size: .75rem; font-weight: 700;
+  backdrop-filter: blur(6px);
+  border: 1px solid #ffffff11;
+  transition: all .3s;
+}
+.race-pos-item.leader { border-color: #ffcc00; background: #ffcc0022; }
+.race-pos-num { font-family:'Bebas Neue',sans-serif; font-size:.9rem; color:#6666aa; width:14px; text-align:center; }
+.race-pos-num.gold { color:#ffcc00; }
+.race-pos-avatar { width:22px; height:22px; border-radius:50%; object-fit:cover; flex-shrink:0; }
+
+#winnerOverlay {
+  position: fixed; inset: 0;
+  background: #000000cc;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 80;
+}
+.winner-trophy { font-size: 5rem; animation: bounce 1s infinite; }
+@keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-20px)} }
+.winner-label { font-family:'Bebas Neue',sans-serif; font-size:clamp(2rem,8vw,3.5rem); color:#ffcc00; text-shadow:0 0 40px #ffcc0088; letter-spacing:4px; margin-top:10px; }
+.winner-name { font-family:'Bebas Neue',sans-serif; font-size:clamp(3rem,15vw,6rem); color:#ff6b2b; text-shadow:0 0 60px #ff6b2b88; letter-spacing:2px; }
+.winner-avatar { width:140px; height:140px; border-radius:50%; object-fit:cover; border:4px solid #ffcc00; margin-top:16px; box-shadow:0 0 40px #ffcc0088; }
+.wait-next { color:#6666aa; margin-top:20px; font-size:.9rem; }
+
+#confettiCanvas { position:fixed; inset:0; pointer-events:none; z-index:79; display:none; }
 </style>
 </head>
 <body>
 
-<!-- WAIT SCREEN -->
 <div id="waitScreen">
   <div class="wait-logo">🎱 MARBLE RACE</div>
   <div class="wait-sub">Esperando al host para empezar...</div>
   <div class="marble-orbs" id="orbContainer"></div>
 </div>
 
-<!-- COUNTDOWN -->
 <div id="countdownOverlay">
   <div class="countdown-num" id="countNum">3</div>
 </div>
 
-<!-- RACE -->
 <div id="raceUI">
   <div id="hud">
     <div class="hud-round" id="hudRound">RONDA 1</div>
     <div class="hud-leader">
       <div class="leader-dot" id="leaderDot" style="background:#ff6b2b"></div>
-      <span>🥇 En cabeza: </span>
+      <span>🥇</span>
       <span id="leaderName" style="color:#ffcc00">—</span>
+    </div>
+    <div class="hud-progress">
+      <span>META</span>
+      <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
     </div>
   </div>
   <div id="canvasWrap">
@@ -243,10 +194,10 @@
       <div class="sb-title">🏆 Puntos</div>
       <div id="sbRows"></div>
     </div>
+    <div id="racePositions"></div>
   </div>
 </div>
 
-<!-- WINNER -->
 <div id="winnerOverlay">
   <div class="winner-trophy">🏆</div>
   <div class="winner-label">¡GANADOR!</div>
@@ -258,23 +209,29 @@
 <canvas id="confettiCanvas"></canvas>
 
 <script>
-const socket = io();
-const { Engine, Render, Runner, Bodies, Body, World, Events, Composite } = Matter;
+var socket = io();
+var Matter = window.Matter;
+var Engine = Matter.Engine, Bodies = Matter.Bodies, Body = Matter.Body,
+    World = Matter.World, Events = Matter.Events, Runner = Matter.Runner, Composite = Matter.Composite;
 
-let gameState = {};
-let engine, runner, matterRender;
-let marbleBodies = [];
-let audioObjects = {};
-let currentLeaderAudio = null;
-let raceFinished = false;
-let finishY = 0;
-let animFrame;
+var gameState = {};
+var engine, runner;
+var marbleBodies = [];
+var audioObjects = {};
+var currentLeaderAudio = null;
+var raceFinished = false;
+var cameraY = 0;
+var targetCameraY = 0;
+var animFrame;
+var TRACK_HEIGHT = 0;
+var WORLD_W = 0;
+var VIEW_H = 0;
+var R = 18; // marble radius
 
-// ─── Socket events ───────────────────────────────────────────────
-socket.on('stateUpdate', (state) => {
-  const prev = gameState.phase;
+// ── Socket events ──────────────────────────────────────────────
+socket.on('stateUpdate', function(state) {
+  var prev = gameState.phase;
   gameState = state;
-
   updateOrbs(state.marbles);
   updateScoreboard(state);
 
@@ -282,52 +239,48 @@ socket.on('stateUpdate', (state) => {
     showWait();
   } else if (state.phase === 'ready') {
     showRace();
-    buildScene(state.marbles, state.seed || 1, false);
+    buildScene(state.marbles, state.seed || 42, false);
   } else if (state.phase === 'racing' && prev !== 'racing') {
     showRace();
     buildScene(state.marbles, state.seed, true);
     raceFinished = false;
-  } else if (state.phase === 'results') {
-    // already shown by raceWinner
   }
-
-  document.getElementById('hudRound').textContent = `RONDA ${state.round}`;
+  document.getElementById('hudRound').textContent = 'RONDA ' + state.round;
 });
 
-socket.on('countdownTick', (n) => {
-  const overlay = document.getElementById('countdownOverlay');
-  const num = document.getElementById('countNum');
+socket.on('countdownTick', function(n) {
+  var overlay = document.getElementById('countdownOverlay');
+  var num = document.getElementById('countNum');
   overlay.style.display = 'flex';
   if (n > 0) {
     num.textContent = n;
-    num.style.animation = 'none';
-    void num.offsetWidth;
-    num.style.animation = 'countPop .6s ease-out forwards';
-    playBeep(n);
+    num.style.color = '#ffcc00';
   } else {
     num.textContent = '¡YA!';
     num.style.color = '#39ff14';
-    num.style.animation = 'none';
-    void num.offsetWidth;
-    num.style.animation = 'countPop .4s ease-out forwards';
-    playBeep(0);
-    setTimeout(() => { overlay.style.display = 'none'; }, 800);
+  }
+  num.style.animation = 'none';
+  void num.offsetWidth;
+  num.style.animation = 'countPop .6s ease-out forwards';
+  playBeep(n);
+  if (n === 0) {
+    setTimeout(function() { overlay.style.display = 'none'; }, 900);
   }
 });
 
-socket.on('leaderChanged', (marbleId) => {
+socket.on('leaderChanged', function(marbleId) {
   updateLeader(marbleId);
   playMarbleSound(marbleId);
 });
 
-socket.on('raceWinner', ({ winnerId, scores }) => {
-  gameState.scores = scores;
-  showWinner(winnerId);
+socket.on('raceWinner', function(data) {
+  gameState.scores = data.scores;
+  showWinner(data.winnerId);
   updateScoreboard(gameState);
   stopAllAudio();
 });
 
-// ─── UI helpers ──────────────────────────────────────────────────
+// ── UI helpers ─────────────────────────────────────────────────
 function showWait() {
   document.getElementById('waitScreen').style.display = 'flex';
   document.getElementById('raceUI').style.display = 'none';
@@ -343,179 +296,300 @@ function showRace() {
 
 function updateOrbs(marbles) {
   if (!marbles) return;
-  const c = document.getElementById('orbContainer');
-  c.innerHTML = marbles.map((m, i) => `
-    <div class="orb" style="background:${m.color};color:${contrastColor(m.color)};--i:${i}">
-      ${m.image ? `<img src="${m.image}">` : m.name.substring(0,6)}
-    </div>
-  `).join('');
+  var c = document.getElementById('orbContainer');
+  var html = '';
+  marbles.forEach(function(m, i) {
+    var boxShadow = '0 0 20px ' + m.color;
+    if (m.image) {
+      html += '<div class="orb" style="background:' + m.color + ';box-shadow:' + boxShadow + ';--i:' + i + '"><img src="' + m.image + '"></div>';
+    } else {
+      html += '<div class="orb" style="background:' + m.color + ';box-shadow:' + boxShadow + ';--i:' + i + ';color:' + contrastColor(m.color) + '">' + m.name.substring(0,5) + '</div>';
+    }
+  });
+  c.innerHTML = html;
 }
 
 function contrastColor(hex) {
-  const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+  if (!hex || hex.length < 7) return '#fff';
+  var r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
   return (r*299+g*587+b*114)/1000 > 128 ? '#000' : '#fff';
 }
 
 function updateLeader(marbleId) {
-  const marble = gameState.marbles?.find(m => m.id === marbleId);
+  var marble = gameState.marbles && gameState.marbles.find(function(m) { return m.id === marbleId; });
   if (!marble) return;
   document.getElementById('leaderName').textContent = marble.name;
   document.getElementById('leaderDot').style.background = marble.color;
 }
 
 function updateScoreboard(state) {
-  if (!state.marbles?.length) return;
-  const sorted = [...state.marbles].sort((a,b) => (state.scores?.[b.id]??0)-(state.scores?.[a.id]??0));
-  document.getElementById('sbRows').innerHTML = sorted.map((m,i) => `
-    <div class="sb-row">
-      <div class="sb-pos">${i+1}</div>
-      ${m.image ? `<img src="${m.image}" class="sb-avatar" style="border:2px solid ${m.color}">` :
-        `<div class="sb-avatar" style="background:${m.color}"></div>`}
-      <div class="sb-name">${m.name}</div>
-      <div class="sb-pts">${state.scores?.[m.id]??0}</div>
-    </div>
-  `).join('');
+  if (!state.marbles || !state.marbles.length) return;
+  var sorted = state.marbles.slice().sort(function(a,b) {
+    return ((state.scores && state.scores[b.id]) || 0) - ((state.scores && state.scores[a.id]) || 0);
+  });
+  var html = '';
+  sorted.forEach(function(m, i) {
+    var avatarHtml = m.image
+      ? '<img src="' + m.image + '" class="sb-avatar" style="border:2px solid ' + m.color + '">'
+      : '<div class="sb-avatar" style="background:' + m.color + '"></div>';
+    html += '<div class="sb-row">' +
+      '<div class="sb-pos">' + (i+1) + '</div>' +
+      avatarHtml +
+      '<div class="sb-name">' + m.name + '</div>' +
+      '<div class="sb-pts">' + ((state.scores && state.scores[m.id]) || 0) + '</div>' +
+    '</div>';
+  });
+  document.getElementById('sbRows').innerHTML = html;
 }
 
 function showWinner(winnerId) {
-  const marble = gameState.marbles?.find(m => m.id === winnerId);
+  var marble = gameState.marbles && gameState.marbles.find(function(m) { return m.id === winnerId; });
   if (!marble) return;
   document.getElementById('winnerName').textContent = marble.name;
   document.getElementById('winnerName').style.color = marble.color;
-  const avatarWrap = document.getElementById('winnerAvatarWrap');
-  avatarWrap.innerHTML = marble.image
-    ? `<img src="${marble.image}" class="winner-avatar" style="border-color:${marble.color}">`
-    : `<div style="width:120px;height:120px;border-radius:50%;background:${marble.color};margin-top:16px;display:flex;align-items:center;justify-content:center;font-size:3rem">🎱</div>`;
+  var avatarWrap = document.getElementById('winnerAvatarWrap');
+  if (marble.image) {
+    avatarWrap.innerHTML = '<img src="' + marble.image + '" class="winner-avatar" style="border-color:' + marble.color + '">';
+  } else {
+    avatarWrap.innerHTML = '<div style="width:140px;height:140px;border-radius:50%;background:' + marble.color + ';margin-top:16px;display:flex;align-items:center;justify-content:center;font-size:3.5rem;box-shadow:0 0 40px ' + marble.color + '88">🎱</div>';
+  }
   document.getElementById('winnerOverlay').style.display = 'flex';
   launchConfetti(marble.color);
 }
 
-// ─── Physics ──────────────────────────────────────────────────────
+// ── Physics / Scene ────────────────────────────────────────────
 function destroyEngine() {
   if (runner) Runner.stop(runner);
   if (engine) { World.clear(engine.world); Engine.clear(engine); }
-  if (matterRender) { Render.stop(matterRender); matterRender.canvas.width = 0; }
   if (animFrame) cancelAnimationFrame(animFrame);
   marbleBodies = [];
-  engine = null; runner = null; matterRender = null;
+  cameraY = 0; targetCameraY = 0;
+  engine = null; runner = null;
 }
 
 function buildScene(marbles, seed, running) {
   destroyEngine();
-  if (!marbles || marbles.length === 0) return;
+  if (!marbles || !marbles.length) return;
 
-  const wrap = document.getElementById('canvasWrap');
-  const W = wrap.clientWidth, H = wrap.clientHeight;
-  finishY = H - 40;
+  var wrap = document.getElementById('canvasWrap');
+  WORLD_W = wrap.clientWidth;
+  VIEW_H = wrap.clientHeight;
 
-  engine = Engine.create({ gravity: { y: 1.4 } });
-  const world = engine.world;
+  // Long track: ~6000px tall for ~60 second race
+  TRACK_HEIGHT = 6000;
 
-  // Canvas setup
-  const canvas = document.getElementById('raceCanvas');
-  canvas.width = W; canvas.height = H;
-  const ctx = canvas.getContext('2d');
+  var canvas = document.getElementById('raceCanvas');
+  canvas.width = WORLD_W;
+  canvas.height = VIEW_H;
+  var ctx = canvas.getContext('2d');
 
-  // Marble radius scales with count
-  const R = Math.max(14, Math.min(28, 400 / marbles.length));
+  // Marble radius based on count
+  R = Math.max(12, Math.min(22, 500 / Math.max(marbles.length, 1)));
 
-  // ── Preload marble images ──
-  const marbleImgs = {};
-  let loaded = 0;
-  function tryStart() {
+  engine = Engine.create({ gravity: { y: 0.6 } });
+  var world = engine.world;
+
+  // Preload images
+  var marbleImgs = {};
+  var toLoad = marbles.filter(function(m) { return m.image; }).length || 1;
+  var loaded = 0;
+
+  function onLoaded() {
     loaded++;
-    if (loaded >= marbles.length) startSim();
+    if (loaded >= toLoad) startSim();
   }
-  marbles.forEach(m => {
-    if (m.image) {
-      const img = new Image();
-      img.onload = () => { marbleImgs[m.id] = img; tryStart(); };
-      img.onerror = tryStart;
-      img.src = m.image;
-    } else {
-      setTimeout(tryStart, 0);
-    }
-  });
+
+  if (!marbles.some(function(m) { return m.image; })) {
+    onLoaded();
+  } else {
+    marbles.forEach(function(m) {
+      if (m.image) {
+        var img = new Image();
+        img.onload = function() { marbleImgs[m.id] = img; onLoaded(); };
+        img.onerror = onLoaded;
+        img.src = m.image;
+      }
+    });
+  }
 
   function startSim() {
-    // ── Generate obstacles with seed ──
-    const rng = seededRng(seed);
-    const obstacles = [];
+    var rng = seededRng(seed || 42);
 
-    // Walls
-    const wallOpts = { isStatic: true, restitution: .4, friction: .1, render:{fillStyle:'#1a1a2e'} };
-    obstacles.push(
-      Bodies.rectangle(W/2, H + 25, W + 4, 50, wallOpts),  // floor (hidden, used as trigger)
-      Bodies.rectangle(-25, H/2, 50, H, wallOpts),
-      Bodies.rectangle(W+25, H/2, 50, H, wallOpts)
-    );
+    var wallOpts = { isStatic: true, restitution: 0.5, friction: 0.05 };
 
-    // Random obstacle shapes
-    const numPegs = 18 + Math.floor(rng() * 14);
-    const zones = 6;
-    const zoneH = (H * 0.75) / zones;
+    // Side walls (full height)
+    World.add(world, [
+      Bodies.rectangle(-20, TRACK_HEIGHT/2, 40, TRACK_HEIGHT + 200, Object.assign({}, wallOpts, { render:{fillStyle:'#111'} })),
+      Bodies.rectangle(WORLD_W+20, TRACK_HEIGHT/2, 40, TRACK_HEIGHT + 200, Object.assign({}, wallOpts, { render:{fillStyle:'#111'} }))
+    ]);
 
-    for (let z = 0; z < zones; z++) {
-      const yBase = H * 0.1 + z * zoneH;
-      const count = 3 + Math.floor(rng() * 4);
-      for (let i = 0; i < count; i++) {
-        const x = R*2 + rng() * (W - R*4);
-        const y = yBase + rng() * zoneH;
-        const type = Math.floor(rng() * 4);
-        let body;
-        const hue = Math.floor(rng() * 360);
-        const col = `hsl(${hue},60%,40%)`;
-        if (type === 0) {
-          // Circle peg
-          body = Bodies.circle(x, y, R * (0.6 + rng()*0.8), {
-            isStatic: true, restitution: .6, friction: .05,
-            render: { fillStyle: col }
-          });
-        } else if (type === 1) {
-          // Rectangle ramp
-          const w = W * (0.08 + rng() * 0.18);
-          const angle = (rng() - .5) * Math.PI * 0.5;
-          body = Bodies.rectangle(x, y, w, 10, {
-            isStatic: true, restitution: .3, friction: .1, angle,
-            render: { fillStyle: col }
-          });
-        } else if (type === 2) {
-          // Triangle
-          const sz = R * (1.2 + rng());
-          body = Bodies.polygon(x, y, 3, sz, {
-            isStatic: true, restitution: .5, friction: .05,
-            angle: rng() * Math.PI,
-            render: { fillStyle: col }
-          });
-        } else {
-          // Hexagon bumper
-          const sz = R * (0.5 + rng() * 0.5);
-          body = Bodies.polygon(x, y, 6, sz, {
-            isStatic: true, restitution: .7, friction: .02,
-            render: { fillStyle: col }
-          });
-        }
-        obstacles.push(body);
-      }
+    // ── Generate track sections ────────────────────────────────
+    // Section 1: Open fall (top 800px) - marbles spread out
+    // Section 2: Peg field
+    // Section 3: Zigzag ramps
+    // Section 4: Bumper garden
+    // Section 5: Narrow channels
+    // Section 6: Final sprint
+
+    var yOff = 300; // start after marble spawn
+
+    // Helper to add a peg
+    function addPeg(x, y, radius, color) {
+      World.add(world, Bodies.circle(x, y, radius, {
+        isStatic: true, restitution: 0.7, friction: 0.02,
+        render: { fillStyle: color || '#334466' }
+      }));
     }
 
-    // Funnel ramps at bottom to guide marbles
-    const rampW = W * 0.3;
-    obstacles.push(
-      Bodies.rectangle(W*0.18, H*0.88, rampW, 10, { isStatic:true, restitution:.3, friction:.1, angle: -0.35, render:{fillStyle:'#334'} }),
-      Bodies.rectangle(W*0.82, H*0.88, rampW, 10, { isStatic:true, restitution:.3, friction:.1, angle: 0.35, render:{fillStyle:'#334'} })
-    );
+    // Helper to add a ramp
+    function addRamp(x, y, w, angle, color) {
+      World.add(world, Bodies.rectangle(x, y, w, 14, {
+        isStatic: true, restitution: 0.35, friction: 0.08, angle: angle,
+        render: { fillStyle: color || '#445566' }
+      }));
+    }
 
-    World.add(world, obstacles);
+    // Helper to add triangle
+    function addTri(x, y, size, angle, color) {
+      World.add(world, Bodies.polygon(x, y, 3, size, {
+        isStatic: true, restitution: 0.6, friction: 0.03, angle: angle,
+        render: { fillStyle: color || '#334' }
+      }));
+    }
 
-    // ── Marbles ──
-    const spacing = Math.min(W / (marbles.length + 1), R * 3);
-    const startX = (W - spacing * (marbles.length - 1)) / 2;
-    marbleBodies = marbles.map((m, i) => {
-      const x = startX + i * spacing;
-      const y = R + 10;
-      const body = Bodies.circle(x, y, R, {
-        restitution: .5, friction: .02, frictionAir: .008,
+    var sectionColors = [
+      '#3a4a6b','#4a3a6b','#3a6b4a','#6b4a3a','#6b3a4a','#4a6b3a'
+    ];
+
+    // ── SECTION 1: Wide peg field ──────────────────────────────
+    for (var row = 0; row < 8; row++) {
+      var cols = 5 + Math.floor(rng() * 4);
+      var spacing = WORLD_W / (cols + 1);
+      for (var col = 0; col < cols; col++) {
+        var px = spacing * (col + 1) + (rng()-0.5)*spacing*0.5;
+        var py = yOff + row * 90 + (rng()-0.5)*30;
+        var pr = R * (0.5 + rng()*0.7);
+        addPeg(px, py, pr, sectionColors[Math.floor(rng()*sectionColors.length)]);
+      }
+    }
+    yOff += 800;
+
+    // ── SECTION 2: Zigzag ramps ────────────────────────────────
+    // Divider label
+    for (var z = 0; z < 7; z++) {
+      var side = z % 2 === 0 ? 1 : -1;
+      var rampX = WORLD_W/2 + side * WORLD_W*0.2;
+      var rampY = yOff + z * 120;
+      var rampW = WORLD_W * (0.45 + rng()*0.15);
+      var rampAng = side * (0.25 + rng()*0.15);
+      addRamp(rampX, rampY, rampW, rampAng, '#' + Math.floor(rng()*0x888+0x334).toString(16).padStart(6,'0'));
+      // Add a few pegs near ramps
+      for (var p = 0; p < 3; p++) {
+        addPeg(rng()*WORLD_W*0.8 + WORLD_W*0.1, rampY - 40 + rng()*80, R*0.5, '#334466');
+      }
+    }
+    yOff += 900;
+
+    // ── SECTION 3: Bumper garden ───────────────────────────────
+    for (var b = 0; b < 22; b++) {
+      var bx = rng() * (WORLD_W - 80) + 40;
+      var by = yOff + rng() * 600;
+      var btype = Math.floor(rng()*3);
+      var hue = Math.floor(rng()*360);
+      var bcolor = 'hsl(' + hue + ',60%,45%)';
+      if (btype === 0) {
+        addPeg(bx, by, R*(0.7+rng()*0.8), bcolor);
+      } else if (btype === 1) {
+        addTri(bx, by, R*(0.8+rng()), rng()*Math.PI, bcolor);
+      } else {
+        World.add(world, Bodies.polygon(bx, by, 6, R*(0.5+rng()*0.5), {
+          isStatic: true, restitution: 0.8, friction: 0.01, angle: rng()*Math.PI,
+          render: { fillStyle: bcolor }
+        }));
+      }
+    }
+    // Some diagonal ramps
+    for (var dr = 0; dr < 4; dr++) {
+      addRamp(rng()*(WORLD_W-200)+100, yOff+150+dr*130, WORLD_W*0.3, (rng()-0.5)*0.6, '#556677');
+    }
+    yOff += 700;
+
+    // ── SECTION 4: Narrow channels ─────────────────────────────
+    // Vertical dividers creating 2-3 lanes
+    var numLanes = 2 + Math.floor(rng()*2);
+    var laneW = WORLD_W / numLanes;
+    for (var lane = 1; lane < numLanes; lane++) {
+      var divX = lane * laneW;
+      var divH = 200 + rng()*150;
+      var divY = yOff + rng()*200;
+      World.add(world, Bodies.rectangle(divX, divY, 16, divH, {
+        isStatic: true, restitution: 0.4, friction: 0.1,
+        render: { fillStyle: '#445' }
+      }));
+      // Pegs in lanes
+      for (var lp = 0; lp < 4; lp++) {
+        addPeg(divX - laneW/2 + (rng()-0.5)*laneW*0.6, divY-divH/2+lp*(divH/4), R*0.5, '#334466');
+      }
+    }
+    yOff += 500;
+
+    // ── SECTION 5: Spinner pegs & chaos ───────────────────────
+    for (var s = 0; s < 30; s++) {
+      var sx = rng() * (WORLD_W - 60) + 30;
+      var sy = yOff + rng() * 700;
+      var stype = Math.floor(rng()*4);
+      var shue = Math.floor(rng()*360);
+      var scol = 'hsl(' + shue + ',70%,50%)';
+      if (stype === 0) {
+        addPeg(sx, sy, R*(0.4+rng()*0.6), scol);
+      } else if (stype === 1) {
+        addRamp(sx, sy, WORLD_W*(0.1+rng()*0.2), (rng()-0.5)*0.8, scol);
+      } else if (stype === 2) {
+        addTri(sx, sy, R*(0.6+rng()*0.8), rng()*Math.PI*2, scol);
+      } else {
+        World.add(world, Bodies.rectangle(sx, sy, R*2, R*2, {
+          isStatic: true, restitution: 0.6, friction: 0.03, angle: rng()*Math.PI,
+          render: { fillStyle: scol }
+        }));
+      }
+    }
+    yOff += 750;
+
+    // ── SECTION 6: Final funnel to finish ─────────────────────
+    // Funnel walls converging to center
+    var funnelY = yOff;
+    World.add(world, [
+      Bodies.rectangle(WORLD_W*0.25, funnelY+80, WORLD_W*0.4, 14, {
+        isStatic:true, restitution:0.4, friction:0.1, angle:-0.4,
+        render:{fillStyle:'#ffcc0066'}
+      }),
+      Bodies.rectangle(WORLD_W*0.75, funnelY+80, WORLD_W*0.4, 14, {
+        isStatic:true, restitution:0.4, friction:0.1, angle:0.4,
+        render:{fillStyle:'#ffcc0066'}
+      })
+    ]);
+    // Last pegs
+    for (var fp = 0; fp < 8; fp++) {
+      addPeg(
+        WORLD_W*0.2 + rng()*WORLD_W*0.6,
+        funnelY + 200 + rng()*200,
+        R*(0.5+rng()*0.4),
+        'hsl(' + Math.floor(rng()*60+30) + ',80%,50%)'
+      );
+    }
+
+    // Finish line Y
+    var finishY = TRACK_HEIGHT - 60;
+
+    // ── Spawn marbles ──────────────────────────────────────────
+    var spacing2 = Math.min((WORLD_W - R*4) / Math.max(marbles.length - 1, 1), R*3.5);
+    var startX = (WORLD_W - spacing2 * (marbles.length - 1)) / 2;
+
+    marbleBodies = marbles.map(function(m, i) {
+      var x = startX + i * spacing2;
+      var y = R + 20;
+      var body = Bodies.circle(x, y, R, {
+        restitution: 0.55, friction: 0.02, frictionAir: 0.006,
         render: { fillStyle: m.color }
       });
       body.marbleId = m.id;
@@ -527,234 +601,310 @@ function buildScene(marbles, seed, running) {
     });
     World.add(world, marbleBodies);
 
-    // ── Run physics ──
+    // Start runner
     runner = Runner.create();
     if (running) Runner.run(runner, engine);
 
-    // ── Render loop ──
+    // Activate when race starts (if built in 'ready' state)
+    if (!running) {
+      var activateHandler = function(st) {
+        if (st.phase === 'racing') {
+          marbleBodies.forEach(function(b) { Body.setStatic(b, false); });
+          Runner.run(runner, engine);
+        }
+      };
+      socket.once('stateUpdate', activateHandler);
+    }
+
+    // ── Render loop ────────────────────────────────────────────
+    var lastLeader = null;
+    var racePositionsEl = document.getElementById('racePositions');
+
     function draw() {
       animFrame = requestAnimationFrame(draw);
-      ctx.clearRect(0, 0, W, H);
+      ctx.clearRect(0, 0, WORLD_W, VIEW_H);
 
-      // Background gradient
-      const bgGrad = ctx.createLinearGradient(0, 0, 0, H);
+      // Camera: follow the leader smoothly
+      if (running && marbleBodies.length > 0) {
+        var leader = marbleBodies[0];
+        marbleBodies.forEach(function(b) {
+          if (b.position.y > leader.position.y) leader = b;
+        });
+        targetCameraY = leader.position.y - VIEW_H * 0.35;
+        targetCameraY = Math.max(0, Math.min(targetCameraY, TRACK_HEIGHT - VIEW_H));
+      }
+      cameraY += (targetCameraY - cameraY) * 0.08;
+
+      ctx.save();
+      ctx.translate(0, -cameraY);
+
+      // Background gradient (full track)
+      var bgGrad = ctx.createLinearGradient(0, cameraY, 0, cameraY + VIEW_H);
       bgGrad.addColorStop(0, '#060610');
-      bgGrad.addColorStop(1, '#0d0d22');
+      bgGrad.addColorStop(1, '#0d0d1a');
       ctx.fillStyle = bgGrad;
-      ctx.fillRect(0, 0, W, H);
+      ctx.fillRect(0, cameraY, WORLD_W, VIEW_H);
+
+      // Section backgrounds (decorative)
+      var sectionH = TRACK_HEIGHT / 6;
+      var secBgs = ['#06060f','#070710','#060f07','#0f0706','#0f0706','#07060f'];
+      secBgs.forEach(function(bg, i) {
+        ctx.fillStyle = bg;
+        ctx.fillRect(0, i*sectionH, WORLD_W, sectionH);
+      });
 
       // Finish line
-      ctx.save();
-      ctx.strokeStyle = '#ffcc00';
-      ctx.lineWidth = 3;
-      ctx.setLineDash([12, 8]);
-      ctx.beginPath();
-      ctx.moveTo(0, finishY);
-      ctx.lineTo(W, finishY);
-      ctx.stroke();
-      ctx.restore();
-      // Finish label
-      ctx.save();
-      ctx.font = 'bold 13px Nunito';
-      ctx.fillStyle = '#ffcc0099';
-      ctx.fillText('🏁 META', 8, finishY - 6);
-      ctx.restore();
+      var grad = ctx.createLinearGradient(0, finishY-2, 0, finishY+2);
+      grad.addColorStop(0,'#ffcc00');
+      grad.addColorStop(1,'#ff6b2b');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, finishY, WORLD_W, 6);
+      // Checkerboard pattern on finish
+      ctx.fillStyle = '#ffcc0066';
+      for (var c = 0; c < Math.floor(WORLD_W/20); c++) {
+        if (c%2===0) ctx.fillRect(c*20, finishY-18, 20, 18);
+      }
+      ctx.font = 'bold 16px Nunito';
+      ctx.fillStyle = '#ffcc00';
+      ctx.fillText('🏁 META', 10, finishY - 24);
 
-      // Draw obstacles
-      const bodies = Composite.allBodies(world);
-      bodies.forEach(b => {
-        if (marbleBodies.includes(b)) return;
-        if (b.isStatic && b.bounds.max.y > H) return; // skip floor
-        const verts = b.vertices;
+      // Draw all static bodies (obstacles)
+      var allBodies = Composite.allBodies(world);
+      allBodies.forEach(function(b) {
+        if (marbleBodies.indexOf(b) !== -1) return;
+        // Cull: skip if outside visible area
+        if (b.bounds.max.y < cameraY - 50 || b.bounds.min.y > cameraY + VIEW_H + 50) return;
+        var verts = b.vertices;
         ctx.beginPath();
         ctx.moveTo(verts[0].x, verts[0].y);
-        for (let v of verts) ctx.lineTo(v.x, v.y);
+        for (var v = 1; v < verts.length; v++) ctx.lineTo(verts[v].x, verts[v].y);
         ctx.closePath();
-        ctx.fillStyle = b.render?.fillStyle || '#334';
+        ctx.fillStyle = (b.render && b.render.fillStyle) ? b.render.fillStyle : '#334466';
         ctx.fill();
-        ctx.strokeStyle = '#ffffff11';
+        ctx.strokeStyle = '#ffffff18';
         ctx.lineWidth = 1;
         ctx.stroke();
+        // Glow on bumpers
+        if (b.restitution > 0.6) {
+          ctx.shadowColor = (b.render && b.render.fillStyle) ? b.render.fillStyle : '#fff';
+          ctx.shadowBlur = 8;
+          ctx.stroke();
+          ctx.shadowBlur = 0;
+        }
       });
 
       // Draw marbles
-      marbleBodies.forEach(b => {
-        const { x, y } = b.position;
+      marbleBodies.forEach(function(b) {
+        var x = b.position.x, y = b.position.y;
+        // Cull
+        if (y + R < cameraY - 20 || y - R > cameraY + VIEW_H + 20) return;
+
         ctx.save();
         ctx.beginPath();
-        ctx.arc(x, y, R, 0, Math.PI * 2);
+        ctx.arc(x, y, R, 0, Math.PI*2);
         ctx.closePath();
-        // Clip for image
+
         if (b.marbleImg) {
           ctx.save();
           ctx.beginPath();
-          ctx.arc(x, y, R, 0, Math.PI * 2);
+          ctx.arc(x, y, R, 0, Math.PI*2);
           ctx.clip();
           ctx.drawImage(b.marbleImg, x-R, y-R, R*2, R*2);
           ctx.restore();
-          // Border
           ctx.beginPath();
-          ctx.arc(x, y, R, 0, Math.PI * 2);
+          ctx.arc(x, y, R, 0, Math.PI*2);
           ctx.strokeStyle = b.marbleColor;
           ctx.lineWidth = 3;
+          ctx.shadowColor = b.marbleColor;
+          ctx.shadowBlur = 12;
           ctx.stroke();
         } else {
-          // Gradient sphere
-          const grad = ctx.createRadialGradient(x - R*0.3, y - R*0.3, R*0.05, x, y, R);
-          grad.addColorStop(0, lightenColor(b.marbleColor, 80));
-          grad.addColorStop(0.5, b.marbleColor);
-          grad.addColorStop(1, darkenColor(b.marbleColor, 60));
-          ctx.fillStyle = grad;
+          var g = ctx.createRadialGradient(x-R*0.3, y-R*0.35, R*0.05, x, y, R);
+          g.addColorStop(0, lighten(b.marbleColor, 90));
+          g.addColorStop(0.45, b.marbleColor);
+          g.addColorStop(1, darken(b.marbleColor, 70));
+          ctx.fillStyle = g;
+          ctx.shadowColor = b.marbleColor;
+          ctx.shadowBlur = 14;
           ctx.fill();
-          ctx.strokeStyle = '#ffffff33';
+          ctx.strokeStyle = '#ffffff44';
           ctx.lineWidth = 1.5;
           ctx.stroke();
-        }
-
-        // Name label
-        ctx.font = `bold ${Math.max(8, R * 0.55)}px Nunito`;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillStyle = '#fff';
-        ctx.shadowColor = '#000';
-        ctx.shadowBlur = 4;
-        if (!b.marbleImg) {
-          ctx.fillText(b.marbleName.substring(0,4), x, y);
+          ctx.shadowBlur = 0;
+          // Shine dot
+          ctx.beginPath();
+          ctx.arc(x-R*0.28, y-R*0.28, R*0.18, 0, Math.PI*2);
+          ctx.fillStyle = '#ffffff99';
+          ctx.fill();
+          // Name inside
+          ctx.font = 'bold ' + Math.max(8,R*0.55) + 'px Nunito';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillStyle = contrastColor(b.marbleColor);
+          ctx.shadowColor = '#000';
+          ctx.shadowBlur = 3;
+          ctx.fillText(b.marbleName.substring(0,3), x, y);
         }
         ctx.restore();
 
-        // Name below
+        // Name label below
         ctx.save();
-        ctx.font = `700 ${Math.max(9, R * 0.5)}px Nunito`;
+        ctx.font = 'bold ' + Math.max(9,R*0.5) + 'px Nunito';
         ctx.textAlign = 'center';
         ctx.fillStyle = b.marbleColor;
         ctx.shadowColor = '#000';
-        ctx.shadowBlur = 6;
-        ctx.fillText(b.marbleName, x, y + R + 12);
+        ctx.shadowBlur = 5;
+        ctx.fillText(b.marbleName, x, y + R + 13);
         ctx.restore();
       });
 
-      // Leader detection & finish detection
-      if (running && !raceFinished && marbleBodies.length > 0) {
-        let leader = marbleBodies[0];
-        marbleBodies.forEach(b => { if (b.position.y > leader.position.y) leader = b; });
+      ctx.restore(); // end camera transform
 
-        // Update leader
-        if (leader.marbleId !== window._lastLeader) {
-          window._lastLeader = leader.marbleId;
+      // ── Leader / positions / finish detection ──────────────
+      if (running && !raceFinished && marbleBodies.length > 0) {
+        // Sort by Y descending (furthest down = winning)
+        var sorted = marbleBodies.slice().sort(function(a,b) { return b.position.y - a.position.y; });
+        var leader = sorted[0];
+
+        // Update progress bar
+        var progress = Math.min(100, Math.max(0, (leader.position.y / finishY) * 100));
+        document.getElementById('progressFill').style.width = progress + '%';
+
+        // Leader change
+        if (leader.marbleId !== lastLeader) {
+          lastLeader = leader.marbleId;
           socket.emit('leaderUpdate', leader.marbleId);
           updateLeader(leader.marbleId);
           playMarbleSound(leader.marbleId);
         }
 
+        // Race position panel (left side)
+        var posHtml = '';
+        sorted.forEach(function(b, i) {
+          var m = gameState.marbles && gameState.marbles.find(function(m) { return m.id === b.marbleId; });
+          if (!m) return;
+          var avatarHtml = m.image
+            ? '<img src="' + m.image + '" class="race-pos-avatar" style="border:2px solid ' + m.color + '">'
+            : '<div class="race-pos-avatar" style="background:' + m.color + '"></div>';
+          posHtml += '<div class="race-pos-item' + (i===0?' leader':'') + '">' +
+            '<div class="race-pos-num' + (i===0?' gold':'') + '">' + (i===0?'🥇':i+1) + '</div>' +
+            avatarHtml +
+            '<span style="color:' + m.color + '">' + m.name + '</span>' +
+          '</div>';
+        });
+        racePositionsEl.innerHTML = posHtml;
+
         // Finish check
-        marbleBodies.forEach(b => {
+        sorted.forEach(function(b) {
           if (b.position.y >= finishY && !raceFinished) {
             raceFinished = true;
-            Runner.stop(runner);
+            if (runner) Runner.stop(runner);
             socket.emit('raceFinished', b.marbleId);
           }
         });
       }
     }
     draw();
-
-    // Activate marbles when race starts
-    if (!running) {
-      socket.once('stateUpdate', (st) => {
-        if (st.phase === 'racing') {
-          marbleBodies.forEach(b => Body.setStatic(b, false));
-          Runner.run(runner, engine);
-        }
-      });
-    }
   }
 }
 
-// ─── Audio ──────────────────────────────────────────────────────
+// ── Audio ──────────────────────────────────────────────────────
 function playMarbleSound(marbleId) {
-  const marble = gameState.marbles?.find(m => m.id === marbleId);
-  if (!marble?.sound) {
-    stopAllAudio(); return;
-  }
-  if (currentLeaderAudio?.marbleId === marbleId) return; // already playing
+  var marble = gameState.marbles && gameState.marbles.find(function(m) { return m.id === marbleId; });
+  if (!marble || !marble.sound) { stopAllAudio(); return; }
+  if (currentLeaderAudio && currentLeaderAudio._marbleId === marbleId) return;
   stopAllAudio();
   if (!audioObjects[marbleId]) {
-    const a = new Audio(marble.sound);
+    var a = new Audio(marble.sound);
     a.loop = true; a.volume = 0.6;
+    a._marbleId = marbleId;
     audioObjects[marbleId] = a;
   }
-  audioObjects[marbleId].marbleId = marbleId;
   audioObjects[marbleId].currentTime = 0;
-  audioObjects[marbleId].play().catch(()=>{});
+  audioObjects[marbleId].play().catch(function(){});
   currentLeaderAudio = audioObjects[marbleId];
 }
 
 function stopAllAudio() {
-  Object.values(audioObjects).forEach(a => { a.pause(); a.currentTime = 0; });
+  Object.keys(audioObjects).forEach(function(k) {
+    audioObjects[k].pause();
+    audioObjects[k].currentTime = 0;
+  });
   currentLeaderAudio = null;
 }
 
-// ─── Countdown beep ──────────────────────────────────────────────
 function playBeep(n) {
   try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.connect(gain); gain.connect(ctx.destination);
-    osc.frequency.value = n > 0 ? 440 + (3-n)*220 : 880;
-    gain.gain.setValueAtTime(0.4, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
-    osc.start(ctx.currentTime);
-    osc.stop(ctx.currentTime + 0.3);
+    var ac = new (window.AudioContext || window.webkitAudioContext)();
+    var osc = ac.createOscillator();
+    var gain = ac.createGain();
+    osc.connect(gain); gain.connect(ac.destination);
+    osc.frequency.value = n > 0 ? 300 + (4-n)*180 : 900;
+    gain.gain.setValueAtTime(0.4, ac.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.35);
+    osc.start(ac.currentTime);
+    osc.stop(ac.currentTime + 0.35);
   } catch(e) {}
 }
 
-// ─── Seeded RNG ──────────────────────────────────────────────────
+// ── Helpers ────────────────────────────────────────────────────
 function seededRng(seed) {
-  let s = seed;
+  var s = seed;
   return function() {
     s = (s * 9301 + 49297) % 233280;
     return s / 233280;
   };
 }
 
-// ─── Color helpers ───────────────────────────────────────────────
-function lightenColor(hex, amount) {
-  let r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
-  r = Math.min(255, r + amount); g = Math.min(255, g + amount); b = Math.min(255, b + amount);
-  return `rgb(${r},${g},${b})`;
+function lighten(hex, amt) {
+  if (!hex || hex.length < 7) return '#fff';
+  var r = Math.min(255, parseInt(hex.slice(1,3),16)+amt);
+  var g = Math.min(255, parseInt(hex.slice(3,5),16)+amt);
+  var b = Math.min(255, parseInt(hex.slice(5,7),16)+amt);
+  return 'rgb('+r+','+g+','+b+')';
 }
-function darkenColor(hex, amount) {
-  let r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
-  r = Math.max(0, r - amount); g = Math.max(0, g - amount); b = Math.max(0, b - amount);
-  return `rgb(${r},${g},${b})`;
+function darken(hex, amt) {
+  if (!hex || hex.length < 7) return '#000';
+  var r = Math.max(0, parseInt(hex.slice(1,3),16)-amt);
+  var g = Math.max(0, parseInt(hex.slice(3,5),16)-amt);
+  var b = Math.max(0, parseInt(hex.slice(5,7),16)-amt);
+  return 'rgb('+r+','+g+','+b+')';
 }
 
-// ─── Confetti ────────────────────────────────────────────────────
+// ── Confetti ───────────────────────────────────────────────────
 function launchConfetti(color) {
-  const cv = document.getElementById('confettiCanvas');
+  var cv = document.getElementById('confettiCanvas');
   cv.style.display = 'block';
   cv.width = window.innerWidth; cv.height = window.innerHeight;
-  const ctx = cv.getContext('2d');
-  const particles = Array.from({length:120}, () => ({
-    x: Math.random() * cv.width, y: -20,
-    vx: (Math.random()-0.5)*6, vy: 2+Math.random()*4,
-    r: 5+Math.random()*8,
-    color: Math.random()<0.5 ? color : ['#ffcc00','#ff6b2b','#39ff14','#fff'][Math.floor(Math.random()*4)],
-    rot: Math.random()*Math.PI*2, rotV: (Math.random()-0.5)*0.2
-  }));
-  let frame = 0;
+  var ctx = cv.getContext('2d');
+  var extras = ['#ffcc00','#ff6b2b','#39ff14','#ffffff','#00cfff'];
+  var particles = [];
+  for (var i = 0; i < 150; i++) {
+    particles.push({
+      x: Math.random()*cv.width, y: -20,
+      vx: (Math.random()-0.5)*7, vy: 2+Math.random()*5,
+      r: 5+Math.random()*9,
+      color: Math.random()<0.4 ? color : extras[Math.floor(Math.random()*extras.length)],
+      rot: Math.random()*Math.PI*2, rotV: (Math.random()-0.5)*0.25,
+      shape: Math.random() > 0.5 ? 'rect' : 'circle'
+    });
+  }
+  var frame = 0;
   function tick() {
     ctx.clearRect(0,0,cv.width,cv.height);
-    particles.forEach(p => {
-      p.x += p.vx; p.y += p.vy; p.rot += p.rotV; p.vy += 0.1;
+    particles.forEach(function(p) {
+      p.x+=p.vx; p.y+=p.vy; p.rot+=p.rotV; p.vy+=0.12;
       ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.rot);
-      ctx.fillStyle = p.color; ctx.fillRect(-p.r/2,-p.r/2,p.r,p.r);
+      ctx.fillStyle = p.color;
+      if (p.shape==='circle') {
+        ctx.beginPath(); ctx.arc(0,0,p.r/2,0,Math.PI*2); ctx.fill();
+      } else {
+        ctx.fillRect(-p.r/2,-p.r/2,p.r,p.r*0.6);
+      }
       ctx.restore();
     });
     frame++;
-    if (frame < 180) requestAnimationFrame(tick);
+    if (frame < 220) requestAnimationFrame(tick);
     else { ctx.clearRect(0,0,cv.width,cv.height); cv.style.display='none'; }
   }
   tick();
