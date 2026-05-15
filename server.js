@@ -57,85 +57,82 @@ function buildTrack(rand) {
   floor._rw = WORLD_W; floor._rh = 20;
   bodies.push(wallL, wallR, floor);
 
-  // ─── RAMPLAS EN ZIGZAG CON SOLAPAMIENTO GARANTIZADO ────────────────
-  // Cada rampa empieza en su pared y apunta hacia el centro.
-  // Ancho mínimo 360px → las rampas izquierda y derecha SE SOLAPAN
-  // en el centro entre 40-120px. La canica SIEMPRE cae sobre la siguiente.
-  const RAMP_COUNT = 35;
-  const GAP        = TRACK_H / (RAMP_COUNT + 1);
-  const MIN_RW     = 360;
-  const MAX_RW     = 480;
+  // ─── TABLERO PLINKO ───────────────────────────────────────────────
+  // Filas de bolas (bumpers) en retícula triangular.
+  // El hueco entre dos bolas adyacentes es > diámetro de la canica (44px)
+  // para que SIEMPRE pueda pasar, pero justo — así rebota y se desvía.
+  // Cada fila está descentrada respecto a la anterior (triangular lattice).
+  const S        = 80;          // separación entre centros de bolas (px)
+  const ROWS     = 80;          // 80 filas
+  const ROW_GAP  = 85;          // 85px entre filas
+  const START_Y  = 120;
+  const MIN_PR   = 8;
+  const MAX_PR   = 14;
 
-  for (let i = 0; i < RAMP_COUNT; i++) {
-    const y    = GAP * (i + 1);
-    const side = i % 2 === 0 ? 'left' : 'right';
-    const rw   = MIN_RW + rand() * (MAX_RW - MIN_RW);
-    const deg  = 5 + rand() * 8;
-    const angle = deg * (Math.PI / 180) * (side === 'left' ? 1 : -1);
+  for (let row = 0; row < ROWS; row++) {
+    const y       = START_Y + row * ROW_GAP;
+    const isEven  = row % 2 === 0;
+    const offsetX = isEven ? 0 : S / 2;
+    const count   = isEven ? 9 : 8;
 
-    const x = side === 'left' ? WALL_W + rw / 2 : WORLD_W - WALL_W - rw / 2;
+    for (let col = 0; col < count; col++) {
+      const x = WALL_W + S + offsetX + col * S;
 
-    const ramp = Bodies.rectangle(x, y, rw, 10, {
-      isStatic: true, angle, label: 'ramp',
-      friction: 0.02, restitution: 0.35
-    });
-    ramp._rw = rw; ramp._rh = 10;
-    bodies.push(ramp);
+      if (x < WALL_W + R + 10 || x > WORLD_W - WALL_W - R - 10) continue;
+
+      const isBoost = rand() < 0.12;
+      const pr = MIN_PR + rand() * (MAX_PR - MIN_PR);
+
+      const peg = Bodies.circle(x, y, pr, {
+        isStatic: true, label: 'bumper',
+        restitution: isBoost ? 0.92 : 0.6 + rand() * 0.2,
+        friction: 0
+      });
+      peg._radius = pr;
+      bodies.push(peg);
+    }
   }
 
-  // ─── BUMPERS EN ZONA DE SOLAPAMIENTO (caos controlado) ─────────────
-  // Sólo en la región central donde ambas rampas se solapan,
-  // para que la canica siempre pueda pasar por izquierda o derecha.
-  for (let i = 2; i < RAMP_COUNT; i += 3) {
-    const y  = GAP * (i + 0.5);
-    const bx = WORLD_W / 2 + (rand() - 0.5) * 100;
-    const br = 10 + rand() * 10;
-    const b  = Bodies.circle(bx, y, br, {
+  // ─── SUPER BOLAS (cada ~15 filas, más grandes, más rebote) ───────
+  // Se colocan ENTRE filas para no solaparse con la retícula.
+  for (let row = 3; row < ROWS; row += 15) {
+    const y  = START_Y + row * ROW_GAP + ROW_GAP / 2;
+    const bx = 50 + rand() * (WORLD_W - 100);
+
+    const tooClose = bodies.some(b => {
+      if (!b.circleRadius) return false;
+      const dx = b.position.x - bx;
+      const dy = b.position.y - y;
+      return Math.sqrt(dx * dx + dy * dy) < (b.circleRadius + 22 + 8);
+    });
+    if (tooClose) continue;
+
+    const br = 16 + rand() * 6;
+    const big = Bodies.circle(bx, y, br, {
       isStatic: true, label: 'bumper',
       restitution: 0.75 + rand() * 0.2, friction: 0
     });
-    b._radius = br;
-    bodies.push(b);
+    big._radius = br;
+    bodies.push(big);
   }
 
-  // ─── ZONA RÁPIDA (pendiente suave, abierta) ───────────────────────
-  const fastY = TRACK_H * 0.68;
-  const fastRamp = Bodies.rectangle(WORLD_W / 2, fastY, 600, 12, {
-    isStatic: true, angle: 0.15, label: 'ramp_fast',
-    friction: 0.005, restitution: 0.3
-  });
-  fastRamp._rw = 600; fastRamp._rh = 12;
-  bodies.push(fastRamp);
+  // ─── PRE-META (6 bolas doradas flotando, muy separadas) ──────────
+  const preY = FINISH_Y - 300;
+  for (let k = 0; k < 6; k++) {
+    const gy = preY + k * 45;
+    const gx = 40 + rand() * (WORLD_W - 80);
 
-  for (let j = 0; j < 4; j++) {
-    const bx = 60 + rand() * (WORLD_W - 120);
-    const by = fastY + 80 + rand() * 150;
-    const br = 18 + rand() * 10;
-    const b  = Bodies.circle(bx, by, br, {
-      isStatic: true, label: 'bumper',
-      restitution: 0.8 + rand() * 0.15, friction: 0
+    const tooClose = bodies.some(b => {
+      if (!b.circleRadius) return false;
+      const dx = b.position.x - gx;
+      const dy = b.position.y - gy;
+      return Math.sqrt(dx * dx + dy * dy) < (b.circleRadius + 22 + 10);
     });
-    b._radius = br;
-    bodies.push(b);
-  }
+    if (tooClose) continue;
 
-  // ─── PRE-META (embudo abierto + bumpers dorados) ──────────────────
-  const preY = FINISH_Y - 350;
-  const fL = Bodies.rectangle(220, preY, 380, 12, {
-    isStatic: true, angle: 0.35, label: 'wall', friction: 0.01, restitution: 0.4
-  });
-  fL._rw = 380; fL._rh = 12;
-  const fR = Bodies.rectangle(580, preY, 380, 12, {
-    isStatic: true, angle: -0.35, label: 'wall', friction: 0.01, restitution: 0.4
-  });
-  fR._rw = 380; fR._rh = 12;
-  bodies.push(fL, fR);
-
-  for (let k = 0; k < 3; k++) {
-    const gy = preY + 50 + k * 60;
-    const gx = WORLD_W / 2 + (rand() - 0.5) * 140;
     const gb = Bodies.circle(gx, gy, 16, {
-      isStatic: true, label: 'bumper_finish', restitution: 0.85, friction: 0
+      isStatic: true, label: 'bumper_finish',
+      restitution: 0.8 + rand() * 0.15, friction: 0
     });
     gb._radius = 16;
     bodies.push(gb);
@@ -162,7 +159,7 @@ function startPhysics() {
   tickCount    = 0;
 
   engine = Engine.create();
-  engine.gravity.y = 0.9;
+  engine.gravity.y = 0.8;
 
   const rand        = seededRandom(gameState.seed);
   const trackBodies = buildTrack(rand);
@@ -177,7 +174,7 @@ function startPhysics() {
     const body = Bodies.circle(startX, 60, R, {
       restitution: 0.5, friction: 0.005, frictionAir: 0.0006, label: 'marble_' + m.id
     });
-    Body.setVelocity(body, { x: (rand() - 0.5) * 2, y: 4 });
+    Body.setVelocity(body, { x: (rand() - 0.5) * 2, y: 3 });
     World.add(engine.world, body);
     marbleBodies.push({ id: m.id, body });
   });
