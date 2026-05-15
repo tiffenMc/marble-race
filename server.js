@@ -1,43 +1,41 @@
 const express = require('express');
-const http = require('http');
+const http    = require('http');
 const { Server } = require('socket.io');
-const path = require('path');
-const Matter = require('matter-js');
+const path    = require('path');
+const Matter  = require('matter-js');
 
-const { Engine, World, Bodies, Body, Runner } = Matter;
+const { Engine, World, Bodies, Body } = Matter;
+// ⚠️  NO usamos Runner — en Node.js no existe requestAnimationFrame
 
-const app = express();
+const app    = express();
 const server = http.createServer(app);
-const io = new Server(server, { cors: { origin: '*' } });
+const io     = new Server(server, { cors: { origin: '*' } });
 
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.static(path.join(__dirname)));
 app.use(express.json({ limit: '50mb' }));
 
-// ─── CONSTANTES ──────────────────────────────────────────────────────────────
+// ─── CONSTANTES ───────────────────────────────────────────────────────────────
 const WORLD_W  = 800;
 const TRACK_H  = 7000;
 const FINISH_Y = TRACK_H - 200;
 const R        = 22;
-const EMIT_MS  = 1000 / 30;
+const TICK_MS  = 1000 / 60;   // 60 Hz física (Engine.update manual)
+const EMIT_EVERY = 2;          // emitir posiciones cada 2 ticks → 30 Hz red
 
-// ─── ESTADO GLOBAL ───────────────────────────────────────────────────────────
+// ─── ESTADO GLOBAL ────────────────────────────────────────────────────────────
 let gameState = {
-  phase: 'setup',
-  marbles: [],
-  round: 1,
-  scores: {},
-  trackBodies: [],
-  currentLeader: null,
-  seed: null
+  phase: 'setup', marbles: [], round: 1,
+  scores: {}, trackBodies: [], currentLeader: null, seed: null
 };
 
 let engine       = null;
-let runner       = null;
-let marbleBodies = [];
-let emitLoop     = null;
+let marbleBodies = [];   // [{ id, body }]
+let physicsLoop  = null;
+let tickCount    = 0;
 let raceFinished = false;
 
+// ─── HELPERS ──────────────────────────────────────────────────────────────────
 function broadcastState() {
   const { phase, marbles, round, scores, currentLeader, seed } = gameState;
   io.emit('stateUpdate', { phase, marbles, round, scores, currentLeader, seed });
@@ -45,20 +43,18 @@ function broadcastState() {
 
 function seededRandom(seed) {
   let s = seed;
-  return () => {
-    s = (s * 9301 + 49297) % 233280;
-    return s / 233280;
-  };
+  return () => { s = (s * 9301 + 49297) % 233280; return s / 233280; };
 }
 
-// ─── ESCENARIO ───────────────────────────────────────────────────────────────
+// ─── ESCENARIO (zigzag garantizado, sin bloqueos) ─────────────────────────────
 function buildTrack(rand) {
   const bodies = [];
 
+  // Paredes y suelo
   bodies.push(
-    Bodies.rectangle(0,           TRACK_H / 2, 20,      TRACK_H, { isStatic: true, label: 'wall' }),
-    Bodies.rectangle(WORLD_W,     TRACK_H / 2, 20,      TRACK_H, { isStatic: true, label: 'wall' }),
-    Bodies.rectangle(WORLD_W / 2, TRACK_H + 10, WORLD_W, 20,    { isStatic: true, label: 'floor' })
+    Bodies.rectangle(0,           TRACK_H / 2,  20,      TRACK_H, { isStatic: true, label: 'wall' }),
+    Bodies.rectangle(WORLD_W,     TRACK_H / 2,  20,      TRACK_H, { isStatic: true, label: 'wall' }),
+    Bodies.rectangle(WORLD_W / 2, TRACK_H + 10, WORLD_W, 20,     { isStatic: true, label: 'floor' })
   );
 
   const RAMP_COUNT  = 28;
@@ -81,6 +77,7 @@ function buildTrack(rand) {
       })
     );
 
+    // Bumper en el hueco para guiar canicas
     const bumpX = side === 'left'
       ? SIDE_MARGIN + RAMP_W + 80
       : WORLD_W - SIDE_MARGIN - RAMP_W - 80;
@@ -107,21 +104,22 @@ function serializeBody(b) {
   };
 }
 
-// ─── FÍSICA ──────────────────────────────────────────────────────────────────
+// ─── INICIAR FÍSICA ───────────────────────────────────────────────────────────
 function startPhysics() {
   destroyRace();
   raceFinished = false;
+  tickCount    = 0;
 
   engine = Engine.create();
   engine.gravity.y = 0.8;
 
   const rand = seededRandom(gameState.seed);
 
-  // 1. Construir escenario
+  // 1. Construir escenario y añadirlo al mundo
   const trackBodies = buildTrack(rand);
   World.add(engine.world, trackBodies);
 
-  // 2. Serializar DESPUÉS de crearlos (aquí está el fix del bug)
+  // 2. Serializar AHORA que ya están creados
   gameState.trackBodies = trackBodies.map(serializeBody);
 
   // 3. Canicas
@@ -137,46 +135,47 @@ function startPhysics() {
     marbleBodies.push({ id: m.id, body });
   });
 
-  // 4. Runner
-  runner = Runner.create();
-  Runner.run(runner, engine);
+  // 4. Loop de física MANUAL (sin Runner, compatible con Node.js)
+  physicsLoop = setInterval(() => {
+    Engine.update(engine, TICK_MS);
+    tickCount++;
 
-  // 5. Loop de emisión
-  emitLoop = setInterval(() => {
-    if (!engine) return;
+    // Emitir posiciones cada EMIT_EVERY ticks (≈30 Hz)
+    if (tickCount % EMIT_EVERY === 0) {
+      const positions = marbleBodies.map(({ id, body }) => ({
+        id, x: body.position.x, y: body.position.y, angle: body.angle
+      }));
+      io.emit('positions', positions);
 
-    const positions = marbleBodies.map(({ id, body }) => ({
-      id, x: body.position.x, y: body.position.y, angle: body.angle
-    }));
-    io.emit('positions', positions);
-
-    // Líder
-    if (marbleBodies.length) {
-      const leader = marbleBodies.reduce((a, b) =>
-        a.body.position.y > b.body.position.y ? a : b
-      );
-      if (leader.id !== gameState.currentLeader) {
-        gameState.currentLeader = leader.id;
-        io.emit('leaderChange', leader.id);
+      // Detectar líder (canica con mayor Y = más abajo)
+      if (marbleBodies.length) {
+        const leader = marbleBodies.reduce((a, b) =>
+          a.body.position.y > b.body.position.y ? a : b
+        );
+        if (leader.id !== gameState.currentLeader) {
+          gameState.currentLeader = leader.id;
+          io.emit('leaderChange', leader.id);
+        }
       }
-    }
 
-    // Meta
-    if (!raceFinished) {
-      for (const { id, body } of marbleBodies) {
-        if (body.position.y >= FINISH_Y) {
-          raceFinished = true;
-          endRace(id);
-          break;
+      // Comprobar meta
+      if (!raceFinished) {
+        for (const { id, body } of marbleBodies) {
+          if (body.position.y >= FINISH_Y) {
+            raceFinished = true;
+            endRace(id);
+            break;
+          }
         }
       }
     }
-  }, EMIT_MS);
+  }, TICK_MS);
 }
 
+// ─── FIN DE CARRERA ───────────────────────────────────────────────────────────
 function endRace(winnerId) {
-  clearInterval(emitLoop);
-  emitLoop = null;
+  clearInterval(physicsLoop);
+  physicsLoop = null;
 
   const sorted = [...marbleBodies].sort((a, b) => b.body.position.y - a.body.position.y);
   sorted.forEach((entry, i) => {
@@ -194,12 +193,12 @@ function endRace(winnerId) {
   setTimeout(() => destroyRace(), 3000);
 }
 
+// ─── DESTRUIR FÍSICA ──────────────────────────────────────────────────────────
 function destroyRace() {
-  clearInterval(emitLoop);
-  emitLoop = null;
-  if (runner) Runner.stop(runner);
+  clearInterval(physicsLoop);
+  physicsLoop = null;
   if (engine) { World.clear(engine.world); Engine.clear(engine); }
-  engine = runner = null;
+  engine = null;
   marbleBodies = [];
 }
 
@@ -207,18 +206,25 @@ function destroyRace() {
 io.on('connection', socket => {
   console.log('Conectado:', socket.id);
 
+  // Estado al conectarse
   socket.emit('stateUpdate', {
     phase: gameState.phase, marbles: gameState.marbles, round: gameState.round,
     scores: gameState.scores, currentLeader: gameState.currentLeader, seed: gameState.seed
   });
 
-  if ((gameState.phase === 'racing' || gameState.phase === 'results') && gameState.trackBodies.length) {
+  // Si ya hay carrera activa, mandar escenario al recién llegado
+  if (
+    (gameState.phase === 'racing' || gameState.phase === 'results') &&
+    gameState.trackBodies.length
+  ) {
     socket.emit('trackData', gameState.trackBodies);
   }
 
   socket.on('setMarbles', marbles => {
     gameState.marbles = marbles;
-    marbles.forEach(m => { if (gameState.scores[m.id] === undefined) gameState.scores[m.id] = 0; });
+    marbles.forEach(m => {
+      if (gameState.scores[m.id] === undefined) gameState.scores[m.id] = 0;
+    });
     broadcastState();
   });
 
@@ -232,9 +238,9 @@ io.on('connection', socket => {
     gameState.phase = 'racing';
     gameState.seed  = Date.now();
 
-    startPhysics(); // <- rellena gameState.trackBodies internamente
+    startPhysics();                          // ← rellena gameState.trackBodies internamente
     broadcastState();
-    io.emit('trackData', gameState.trackBodies); // <- ahora ya no está vacío
+    io.emit('trackData', gameState.trackBodies); // ← ahora ya tiene datos
   });
 
   socket.on('nextRound', () => {
@@ -246,7 +252,6 @@ io.on('connection', socket => {
     broadcastState();
   });
 
-  // NUEVO: reset de la carrera actual (conserva canicas y puntos)
   socket.on('resetRace', () => {
     destroyRace();
     gameState.phase         = 'ready';
@@ -259,8 +264,8 @@ io.on('connection', socket => {
   socket.on('resetGame', () => {
     destroyRace();
     gameState = {
-      phase: 'setup', marbles: [], round: 1, scores: {},
-      trackBodies: [], currentLeader: null, seed: null
+      phase: 'setup', marbles: [], round: 1,
+      scores: {}, trackBodies: [], currentLeader: null, seed: null
     };
     broadcastState();
   });
@@ -268,5 +273,6 @@ io.on('connection', socket => {
   socket.on('disconnect', () => console.log('Desconectado:', socket.id));
 });
 
+// ─── ARRANCAR ────────────────────────────────────────────────────────────────
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => console.log(`Servidor en puerto ${PORT}`));
