@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MARBLE RACE</title>
+<title>GLADIATOR ARENA</title>
 <script src="/socket.io/socket.io.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
 <style>
@@ -21,56 +21,17 @@ canvas { display: block; }
 }
 #roundLabel {
   font-family: 'Bebas Neue', sans-serif;
-  font-size: 1.6rem; letter-spacing: 4px;
+  font-size: 1.4rem; letter-spacing: 4px;
   color: #ffcc00;
-  text-shadow: 0 0 12px #ffcc0088;
 }
-#leaderHud {
-  display: flex; align-items: center; gap: 10px;
-  background: #ffffff15; border-radius: 30px;
-  padding: 6px 16px;
-}
-#leaderAvatar {
-  width: 36px; height: 36px; border-radius: 50%;
-  border: 2px solid gold; object-fit: cover;
-}
-#leaderName {
-  font-weight: 900; font-size: .9rem; color: #ffcc00;
-  max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-}
-
-#volBox {
-  position: fixed; bottom: 20px; right: 20px;
-  background: #13131eee; border: 1px solid #ffffff22;
-  border-radius: 14px; padding: 14px 18px;
-  display: flex; flex-direction: column; align-items: center; gap: 8px;
-  z-index: 30; pointer-events: all;
-}
-#volBox label {
-  font-size: .7rem; font-weight: 700; color: #6666aa;
-  text-transform: uppercase; letter-spacing: 1px;
-}
-#volSlider {
-  -webkit-appearance: none;
-  width: 120px; height: 6px;
-  border-radius: 3px; background: #333;
-  outline: none; cursor: pointer;
-}
-#volSlider::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  width: 18px; height: 18px; border-radius: 50%;
-  background: #ff6b2b; cursor: pointer;
-}
-#volIcon { font-size: 1.4rem; }
+#hudCenter { color: #888; font-size: .85rem; text-align: center; }
 
 #winner {
   display: none;
   position: fixed; inset: 0;
   flex-direction: column; align-items: center; justify-content: center;
-  background: #000000cc;
-  color: white;
-  z-index: 40;
-  text-align: center;
+  background: #000000dd;
+  color: white; z-index: 40; text-align: center;
 }
 #winner h1 {
   font-family: 'Bebas Neue', sans-serif;
@@ -83,7 +44,7 @@ canvas { display: block; }
   font-size: 2.6rem; letter-spacing: 3px; color: #fff;
 }
 #winnerImg {
-  width: 150px; height: 150px; border-radius: 50%;
+  width: 120px; height: 120px; border-radius: 50%;
   object-fit: cover; border: 5px solid gold;
   margin-top: 16px; display: none;
 }
@@ -91,46 +52,76 @@ canvas { display: block; }
 #overlay {
   position: fixed; inset: 0;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
-  background: #0a0a0f;
-  z-index: 50;
+  background: #0a0a0f; z-index: 50;
 }
 #overlay h1 {
   font-family: 'Bebas Neue', sans-serif;
-  font-size: 4rem; letter-spacing: 6px;
-  color: #ff6b2b; text-shadow: 0 0 30px #ff6b2b88;
+  font-size: 3.5rem; letter-spacing: 6px;
+  color: #ff4444; text-shadow: 0 0 30px #ff444488;
   margin-bottom: 8px;
 }
 #overlay p { color: #6666aa; font-size: .95rem; }
-#marblePreview {
+
+#volBox {
+  position: fixed; bottom: 20px; right: 20px;
+  background: #13131eee; border: 1px solid #ffffff22;
+  border-radius: 14px; padding: 14px 18px;
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  z-index: 30; pointer-events: all;
+}
+#volBox label { font-size: .7rem; font-weight: 700; color: #6666aa; text-transform: uppercase; letter-spacing: 1px; }
+#volSlider {
+  -webkit-appearance: none;
+  width: 120px; height: 6px; border-radius: 3px; background: #333;
+  outline: none; cursor: pointer;
+}
+#volSlider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px; height: 18px; border-radius: 50%; background: #ff4444; cursor: pointer;
+}
+#volIcon { font-size: 1.4rem; }
+
+.marblePreview {
   display: flex; flex-wrap: wrap; gap: 12px;
   justify-content: center; margin-top: 28px; max-width: 500px;
 }
 .previewBall {
-  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
   font-size: .75rem; color: #aaa; font-weight: 700;
 }
 .previewBall .ball {
   width: 54px; height: 54px; border-radius: 50%; object-fit: cover;
   border: 3px solid #ffffff33;
 }
+
+#killFeed {
+  position: fixed; left: 16px; top: 70px;
+  z-index: 15; display: flex; flex-direction: column; gap: 4px;
+  pointer-events: none;
+}
+.killMsg {
+  background: #00000099; color: #ff6666;
+  padding: 4px 12px; border-radius: 8px;
+  font-size: .75rem; font-weight: 700;
+  animation: fadeKill 2s forwards;
+}
+@keyframes fadeKill { 0%{opacity:1;transform:translateX(0)} 100%{opacity:0;transform:translateX(-30px)} }
 </style>
 </head>
 <body>
 
 <div id="overlay">
-  <h1>&#x1f3b1; MARBLE RACE</h1>
+  <h1>&#x2694; GLADIATOR ARENA &#x2694;</h1>
   <p>Esperando al host&#x2026;</p>
-  <div id="marblePreview"></div>
+  <div id="marblePreview" class="marblePreview"></div>
 </div>
 
 <canvas id="c"></canvas>
 
 <div id="hud">
   <div id="roundLabel">RONDA 1</div>
-  <div id="leaderHud" style="display:none">
-    <img id="leaderAvatar" src="" alt="">
-    <div id="leaderName">&mdash;</div>
-  </div>
+  <div id="hudCenter">&#x2694; &#x1f3ad; BATALLA &#x1f3ad; &#x2694;</div>
+  <div></div>
 </div>
 
 <div id="volBox">
@@ -140,18 +131,18 @@ canvas { display: block; }
 </div>
 
 <div id="winner">
-  <h1>&#x1f3c6; GANADOR &#x1f3c6;</h1>
+  <h1>&#x1f3c6; CAMPE&#xd3;N &#x1f3c6;</h1>
   <div id="winnerName"></div>
   <img id="winnerImg" src="" alt="">
+  <div style="color:#888;font-size:.9rem;margin-top:10px">&#x1f3b5; Tema del campe&#xf3;n &#x1f3b5;</div>
 </div>
 
+<div id="killFeed"></div>
+
 <script>
-const WORLD_W  = 800;
-const TRACK_H  = 7000;
-const FINISH_Y = TRACK_H - 200;
-const R        = 22;
-const FAN_TOP  = 2700;
-const FAN_BOT  = 4800;
+const W_W = 800;
+const A_H = 600;
+const R   = 25;
 
 const canvas = document.getElementById('c');
 const ctx    = canvas.getContext('2d');
@@ -166,19 +157,15 @@ window.addEventListener('resize', () => {
   canvas.height = H;
 });
 
-function scaleX(x) { return x * (W / WORLD_W); }
-function scaleY(y) { return y; }
-function scaleLen(l) { return l * (W / WORLD_W); }
+function sx(x) { return x * (W / W_W); }
+function sy(y) { return y * (H / A_H); }
+function sl(l) { return l * (W / W_W); }
 
-let marbles     = [];
-let positions   = [];
-let trackBodies = [];
-let state       = { phase: 'setup', round: 1, currentLeader: null };
-let leaderIdNow = null;
-let raceEnded   = false;
-let cameraY     = 0;
-let fanPhase    = 0;
-
+let marbles    = [];
+let gladState  = [];
+let gamePhase  = 'setup';
+let roundNum   = 1;
+let scores     = {};
 let userVolume = 0.6;
 
 document.getElementById('volSlider').addEventListener('input', e => {
@@ -187,269 +174,162 @@ document.getElementById('volSlider').addEventListener('input', e => {
     userVolume === 0 ? '\u{1f507}' : userVolume < 0.4 ? '\u{1f509}' : '\u{1f50a}';
 });
 
-// ─── AUDIO: SIN CACHE ──────────────────────────────────────────────
+// ─── AUDIO ──────────────────────────────────────────────────────────
 let currentAudio  = null;
 let currentAudioId = null;
 let audioFader    = null;
 
-function stopAudioCompletely() {
+function stopAudio() {
   if (audioFader) { clearInterval(audioFader); audioFader = null; }
   if (currentAudio) {
-    try {
-      currentAudio.pause();
-      currentAudio.currentTime = 0;
-      currentAudio.loop = false;
-      currentAudio.src = '';
-      currentAudio.load();
-    } catch (e) {}
+    try { currentAudio.pause(); currentAudio.currentTime = 0; currentAudio.src = ''; currentAudio.load(); } catch(e) {}
     currentAudio = null;
   }
   currentAudioId = null;
-  leaderIdNow = null;
 }
 
-function playLeaderAudio(leaderId) {
-  if (leaderId === currentAudioId && currentAudio) return;
-  stopAudioCompletely();
-  currentAudioId = leaderId;
-  if (!leaderId) return;
-
-  const marble = marbles.find(m => m.id === leaderId);
-  if (!marble || !marble.sound) return;
-
-  const audio = new Audio(marble.sound);
-  audio.loop = true;
-  audio.volume = 0;
-  currentAudio = audio;
-
-  const startFadeIn = () => {
-    if (!currentAudio || currentAudio !== audio) return;
-    audio.play().catch(() => {});
-    let vol = 0;
-    audioFader = setInterval(() => {
-      if (!currentAudio || currentAudio !== audio) {
-        clearInterval(audioFader);
-        audioFader = null;
-        return;
-      }
-      vol = Math.min(userVolume, vol + 0.04);
-      audio.volume = vol;
-      if (vol >= userVolume) {
-        clearInterval(audioFader);
-        audioFader = null;
-      }
-    }, 60);
-  };
-
-  if (audio.readyState >= 2) {
-    startFadeIn();
-  } else {
-    audio.addEventListener('canplaythrough', startFadeIn, { once: true });
-    audio.load();
-  }
+function playSound(soundData, vol) {
+  if (!soundData) return;
+  const a = new Audio(soundData);
+  a.volume = vol || userVolume;
+  a.play().catch(() => {});
+  return a;
 }
 
-// ─── HUD ───────────────────────────────────────────────────────────
-function updateLeaderHud(leaderId) {
-  const m   = marbles.find(m => m.id === leaderId);
-  const hud = document.getElementById('leaderHud');
-  if (!m) { hud.style.display = 'none'; return; }
-  hud.style.display = 'flex';
-  document.getElementById('leaderName').textContent = m.name;
-  const av = document.getElementById('leaderAvatar');
-  if (m.image) { av.src = m.image; av.style.display = 'block'; }
-  else         { av.style.display = 'none'; }
-}
-
-// ─── DIBUJO ────────────────────────────────────────────────────────
-function drawTrack() {
-  ctx.save();
-
-  const bgGrad = ctx.createLinearGradient(0, 0, 0, H);
-  bgGrad.addColorStop(0, '#0d0d1a');
-  bgGrad.addColorStop(1, '#1a0d0d');
-  ctx.fillStyle = bgGrad;
+// ─── DIBUJO ─────────────────────────────────────────────────────────
+function drawArena() {
+  const grad = ctx.createRadialGradient(W / 2, H / 2, 0, W / 2, H / 2, Math.max(W, H) * 0.6);
+  grad.addColorStop(0, '#2a1a0a');
+  grad.addColorStop(0.5, '#1a0f05');
+  grad.addColorStop(1, '#0a0502');
+  ctx.fillStyle = grad;
   ctx.fillRect(0, 0, W, H);
 
-  ctx.strokeStyle = '#ffffff06';
+  const cx = W / 2, cy = H / 2;
+  ctx.strokeStyle = '#ffcc0011';
   ctx.lineWidth = 1;
-  for (let gx = 0; gx < W; gx += 60) {
-    ctx.beginPath(); ctx.moveTo(gx, 0); ctx.lineTo(gx, H); ctx.stroke();
-  }
-  for (let gy = -cameraY % 60; gy < H; gy += 60) {
-    ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(W, gy); ctx.stroke();
+  for (let r = 50; r < Math.max(W, H); r += 60) {
+    ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.stroke();
   }
 
-  const finY = scaleY(FINISH_Y) - cameraY;
-  if (finY > -40 && finY < H + 40) {
-    const metaGrad = ctx.createLinearGradient(0, finY - 20, 0, finY + 20);
-    metaGrad.addColorStop(0, '#ffcc0000');
-    metaGrad.addColorStop(0.5, '#ffcc0044');
-    metaGrad.addColorStop(1, '#ffcc0000');
-    ctx.fillStyle = metaGrad;
-    ctx.fillRect(0, finY - 20, W, 40);
+  ctx.strokeStyle = '#ffffff08';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(0, 0, W, H);
+}
 
-    ctx.strokeStyle = '#ffcc00';
-    ctx.lineWidth   = 3;
-    ctx.setLineDash([20, 10]);
-    ctx.beginPath();
-    ctx.moveTo(0, finY); ctx.lineTo(W, finY);
-    ctx.stroke();
-    ctx.setLineDash([]);
+function drawGladiator(g) {
+  if (!g.alive) return;
+  const x = sx(g.x);
+  const y = sy(g.y);
+  const r = sl(R);
 
-    ctx.font = '900 18px Nunito';
-    ctx.textAlign = 'center';
-    ctx.fillStyle = '#ffcc00';
-    ctx.shadowColor = '#ffcc00';
-    ctx.shadowBlur  = 16;
-    ctx.fillText('\u{1f3c1}  M E T A  \u{1f3c1}', W / 2, finY - 10);
-    ctx.shadowBlur = 0;
-  }
+  const m = marbles.find(m => m.id === g.id);
+  const color = m ? m.color : '#ff4444';
+  const name  = m ? m.name : '?';
 
-  // ─── ZONA DEL VENTILADOR ────────────────────────────────────────
-  const fanTop = scaleY(FAN_TOP) - cameraY;
-  const fanBot = scaleY(FAN_BOT) - cameraY;
-  if (fanBot > 0 && fanTop < H) {
-    const visTop = Math.max(0, fanTop);
-    const visBot = Math.min(H, fanBot);
-    const visH   = visBot - visTop;
-
-    ctx.fillStyle = `rgba(0, 150, 255, ${0.06 + 0.04 * Math.sin(Date.now() * 0.003)})`;
-    ctx.fillRect(0, visTop, W, visH);
-
-    ctx.strokeStyle = `rgba(100, 200, 255, ${0.15 + 0.08 * Math.sin(Date.now() * 0.004)})`;
-    ctx.lineWidth = 2;
-    for (let lx = 0; lx < W; lx += 35) {
-      const wx = lx + fanPhase * 30;
-      if (wx < -10 || wx > W + 10) continue;
-      ctx.setLineDash([8, 12]);
-      ctx.beginPath();
-      ctx.moveTo(wx, visTop);
-      ctx.lineTo(wx + 15 + fanPhase * 10, visBot);
-      ctx.stroke();
-    }
-    ctx.setLineDash([]);
-
-    ctx.font = '700 11px Nunito';
-    ctx.textAlign = 'center';
-    ctx.fillStyle = `rgba(100, 200, 255, ${0.3 + 0.2 * Math.sin(Date.now() * 0.003)})`;
-    ctx.fillText('\u{1f4a8}  VENTILADOR  \u{1f4a8}', W / 2, visTop + 18);
-  }
-
-  trackBodies.forEach(b => {
-    const sx = scaleX(b.x);
-    const sy = b.y - cameraY;
-    if (sy < -300 || sy > H + 300) return;
-
-    ctx.save();
-    ctx.translate(sx, sy);
-    ctx.rotate(b.angle);
-
-    if (b.label === 'bumper' || b.label === 'bumper_finish') {
-      const isGold = b.label === 'bumper_finish';
-      const r = scaleLen(b.radius || 14);
-      const color1 = isGold ? '#ffee55' : '#ffaa55';
-      const color2 = isGold ? '#cc8800' : '#cc3300';
-      const glow   = isGold ? '#ffcc00' : '#ff6b2b';
-
-      const halo = ctx.createRadialGradient(0, 0, r * 0.5, 0, 0, r * 1.8);
-      halo.addColorStop(0, glow + '55');
-      halo.addColorStop(1, glow + '00');
-      ctx.beginPath();
-      ctx.arc(0, 0, r * 1.8, 0, Math.PI * 2);
-      ctx.fillStyle = halo;
-      ctx.fill();
-
-      const grad = ctx.createRadialGradient(-r * 0.3, -r * 0.3, 1, 0, 0, r);
-      grad.addColorStop(0, color1);
-      grad.addColorStop(1, color2);
-      ctx.beginPath();
-      ctx.arc(0, 0, r, 0, Math.PI * 2);
-      ctx.fillStyle = grad;
-      ctx.shadowColor = glow;
-      ctx.shadowBlur  = 18;
-      ctx.fill();
-      ctx.shadowBlur = 0;
-      ctx.strokeStyle = isGold ? '#ffee99' : '#ff9944';
-      ctx.lineWidth = 2;
-      ctx.stroke();
-
-    } else if (b.label === 'spinner') {
-      const rw = scaleLen(b.rw);
-      const rh = scaleLen(b.rh);
-      const grad = ctx.createLinearGradient(-rw / 2, -rh / 2, rw / 2, rh / 2);
-      grad.addColorStop(0, '#ff3366');
-      grad.addColorStop(1, '#990033');
-      ctx.fillStyle = grad;
-      ctx.shadowColor = '#ff3366';
-      ctx.shadowBlur  = 14;
-      ctx.fillRect(-rw / 2, -rh / 2, rw, rh);
-      ctx.shadowBlur = 0;
-      ctx.strokeStyle = '#ff6699';
-      ctx.lineWidth = 2;
-      ctx.strokeRect(-rw / 2, -rh / 2, rw, rh);
-      ctx.fillStyle = '#ffffff44';
-      ctx.fillRect(-rw / 2, -rh / 2, rw * 0.15, rh);
-      ctx.fillRect(rw / 2 - rw * 0.15, -rh / 2, rw * 0.15, rh);
-
-    } else if (b.label === 'pendulum') {
-      const rw = scaleLen(b.rw);
-      const rh = scaleLen(b.rh);
-      const grad = ctx.createLinearGradient(-rw / 2, -rh / 2, rw / 2, rh / 2);
-      grad.addColorStop(0, '#33ffaa');
-      grad.addColorStop(1, '#009966');
-      ctx.fillStyle = grad;
-      ctx.shadowColor = '#33ffaa';
-      ctx.shadowBlur  = 12;
-      ctx.fillRect(-rw / 2, -rh / 2, rw, rh);
-      ctx.shadowBlur = 0;
-      ctx.strokeStyle = '#66ffcc';
-      ctx.lineWidth = 2;
-      ctx.strokeRect(-rw / 2, -rh / 2, rw, rh);
-      ctx.beginPath();
-      ctx.arc(rw / 2 - 8, 0, rh * 0.6, 0, Math.PI * 2);
-      ctx.fillStyle = '#ffffff33';
-      ctx.fill();
-
-    } else if (b.rw !== null && b.rh !== null) {
-      const rw = scaleLen(b.rw);
-      const rh = scaleLen(b.rh);
-
-      if (b.label === 'wall') {
-        const wallGrad = ctx.createLinearGradient(-rw / 2, 0, rw / 2, 0);
-        wallGrad.addColorStop(0, '#1a1a33');
-        wallGrad.addColorStop(0.5, '#2a2a55');
-        wallGrad.addColorStop(1, '#1a1a33');
-        ctx.fillStyle = wallGrad;
-        ctx.fillRect(-rw / 2, -rh / 2, rw, rh);
-      } else if (b.label === 'floor') {
-        ctx.fillStyle = '#111122';
-        ctx.fillRect(-rw / 2, -rh / 2, rw, rh);
-        ctx.strokeStyle = '#3333aa44';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(-rw / 2, -rh / 2, rw, rh);
-      } else {
-        const rampGrad = ctx.createLinearGradient(0, -rh / 2, 0, rh / 2);
-        rampGrad.addColorStop(0, '#6677dd');
-        rampGrad.addColorStop(1, '#334499');
-        ctx.fillStyle = rampGrad;
-        ctx.shadowColor = '#8899ff44';
-        ctx.shadowBlur  = 10;
-        ctx.fillRect(-rw / 2, -rh / 2, rw, rh);
-        ctx.shadowBlur = 0;
-        ctx.strokeStyle = '#8899ff';
-        ctx.lineWidth   = 1.5;
-        ctx.strokeRect(-rw / 2, -rh / 2, rw, rh);
-        ctx.strokeStyle = '#aabbff88';
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.moveTo(-rw / 2, -rh / 2);
-        ctx.lineTo(rw / 2, -rh / 2);
-        ctx.stroke();
-      }
-    }
-    ctx.restore();
+  // Facing direction: find nearest enemy
+  let fx = 0, fy = 0;
+  let nearest = null, minD = Infinity;
+  gladState.forEach(o => {
+    if (o.id === g.id || !o.alive) return;
+    const d = Math.sqrt((o.x - g.x) ** 2 + (o.y - g.y) ** 2);
+    if (d < minD) { minD = d; nearest = o; }
   });
+  if (nearest) { fx = nearest.x - g.x; fy = nearest.y - g.y; }
+  const fLen = Math.sqrt(fx * fx + fy * fy) || 1;
+  const fnx = fx / fLen, fny = fy / fLen;
+
+  ctx.save();
+  ctx.translate(x, y);
+
+  const bodyLen = r * 0.9;
+  const armLen  = r * 0.8;
+  const legLen  = r * 0.7;
+
+  // Shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.3)';
+  ctx.beginPath(); ctx.ellipse(2, 2, r, r * 0.6, 0, 0, Math.PI * 2); ctx.fill();
+
+  // Body (torso)
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(fnx * 5, fny * 5);
+  ctx.lineTo(fnx * bodyLen, fny * bodyLen);
+  ctx.stroke();
+
+  // Arms (left/right of body)
+  const perpX = -fny, perpY = fnx;
+  ctx.lineWidth = 2.5;
+  const armSwing = g.attacking ? 0.6 : 0.3;
+  [-1, 1].forEach(s => {
+    const endX = fnx * 6 + perpX * s * armLen;
+    const endY = fny * 6 + perpY * s * armLen;
+    ctx.beginPath();
+    ctx.moveTo(fnx * 4, fny * 4);
+    ctx.lineTo(endX + fnx * armSwing * s * 10, endY + fny * armSwing * s * 10);
+    ctx.stroke();
+  });
+
+  // Legs
+  ctx.lineWidth = 2.5;
+  [-1, 1].forEach(s => {
+    const lx = fnx * bodyLen + perpX * s * legLen * 0.6;
+    const ly = fny * bodyLen + perpY * s * legLen * 0.6;
+    ctx.beginPath();
+    ctx.moveTo(fnx * bodyLen, fny * bodyLen);
+    ctx.lineTo(lx, ly);
+    ctx.stroke();
+  });
+
+  // Head (the physics body)
+  ctx.shadowColor = color + '66';
+  ctx.shadowBlur  = 12;
+  const img = m && marbleImages[m.id];
+  if (img && img.complete && img.naturalWidth > 0) {
+    ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.clip();
+    ctx.drawImage(img, -r, -r, r * 2, r * 2);
+    ctx.shadowBlur = 0;
+  } else {
+    const grad = ctx.createRadialGradient(-r * 0.3, -r * 0.3, 1, 0, 0, r);
+    grad.addColorStop(0, lighten(color, 60));
+    grad.addColorStop(1, color);
+    ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2);
+    ctx.fillStyle = grad;
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.strokeStyle = lighten(color, 30);
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  }
+
+  // Weapon icon
+  ctx.shadowBlur = 0;
+  ctx.font = `${sl(14)}px Arial`;
+  ctx.textAlign = 'center';
+  ctx.fillText(g.weapon.icon, fnx * (bodyLen + r * 0.5), fny * (bodyLen + r * 0.5) - sl(8));
+
+  // HP bar
+  const barW = r * 2.2;
+  const barH = 5;
+  const barY = -r - sl(12);
+  ctx.fillStyle = '#333';
+  ctx.fillRect(-barW / 2, barY, barW, barH);
+  const hpPct = g.hp / g.maxHp;
+  ctx.fillStyle = hpPct > 0.5 ? '#39ff14' : hpPct > 0.25 ? '#ffcc00' : '#ff2244';
+  ctx.fillRect(-barW / 2, barY, barW * hpPct, barH);
+  ctx.strokeStyle = '#ffffff22';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(-barW / 2, barY, barW, barH);
+
+  // Name
+  ctx.font = `700 ${sl(10)}px Nunito`;
+  ctx.fillStyle = '#fff';
+  ctx.shadowColor = '#000';
+  ctx.shadowBlur = 4;
+  ctx.fillText(name, 0, barY - sl(4));
+  ctx.shadowBlur = 0;
+
   ctx.restore();
 }
 
@@ -457,111 +337,45 @@ const marbleImages = {};
 function preloadImages() {
   marbles.forEach(m => {
     if (m.image && !marbleImages[m.id]) {
-      const img = new Image();
-      img.src = m.image;
+      const img = new Image(); img.src = m.image;
       marbleImages[m.id] = img;
     }
   });
 }
 
-function drawMarbles() {
-  const scaledR = scaleLen(R);
-  positions.forEach(pos => {
-    const m = marbles.find(m => m.id === pos.id);
-    if (!m) return;
-    const sx = scaleX(pos.x);
-    const sy = pos.y - cameraY;
-    if (sy < -60 || sy > H + 60) return;
-
-    ctx.save();
-    ctx.translate(sx, sy);
-    ctx.rotate(pos.angle);
-    ctx.shadowColor = '#00000066';
-    ctx.shadowBlur  = 8;
-
-    const img = marbleImages[m.id];
-    if (img && img.complete && img.naturalWidth > 0) {
-      ctx.beginPath();
-      ctx.arc(0, 0, scaledR, 0, Math.PI * 2);
-      ctx.clip();
-      ctx.drawImage(img, -scaledR, -scaledR, scaledR * 2, scaledR * 2);
-    } else {
-      const grad = ctx.createRadialGradient(-scaledR * 0.35, -scaledR * 0.35, 2, 0, 0, scaledR);
-      grad.addColorStop(0, lighten(m.color, 60));
-      grad.addColorStop(1, m.color);
-      ctx.beginPath();
-      ctx.arc(0, 0, scaledR, 0, Math.PI * 2);
-      ctx.fillStyle = grad;
-      ctx.fill();
-    }
-
-    if (pos.id === leaderIdNow) {
-      ctx.beginPath();
-      ctx.arc(0, 0, scaledR + 3, 0, Math.PI * 2);
-      ctx.strokeStyle = '#ffcc00';
-      ctx.lineWidth   = 3;
-      ctx.shadowColor = '#ffcc00';
-      ctx.shadowBlur  = 14;
-      ctx.stroke();
-    }
-    ctx.restore();
-
-    ctx.font = '900 12px Nunito';
-    ctx.textAlign = 'center';
-    ctx.fillStyle = '#fff';
-    ctx.shadowColor = '#000';
-    ctx.shadowBlur  = 4;
-    ctx.fillText(m.name, sx, sy + scaledR + 14);
-    ctx.shadowBlur = 0;
-  });
-}
-
 function lighten(hex, amt) {
   const n = parseInt(hex.replace('#', ''), 16);
-  const r = Math.min(255, (n >> 16) + amt);
-  const g = Math.min(255, ((n >> 8) & 0xff) + amt);
-  const b = Math.min(255, (n & 0xff) + amt);
-  return `rgb(${r},${g},${b})`;
+  return `rgb(${Math.min(255,(n>>16)+amt)},${Math.min(255,((n>>8)&255)+amt)},${Math.min(255,(n&255)+amt)})`;
 }
 
-function updateCamera() {
-  if (!positions.length) return;
-  const leader  = positions.reduce((a, b) => a.y > b.y ? a : b);
-  const targetY = leader.y - H * 0.35;
-  cameraY += (targetY - cameraY) * 0.08;
-  cameraY  = Math.max(0, cameraY);
-}
-
+// ─── LOOP ───────────────────────────────────────────────────────────
 function loop() {
-  if (state.phase === 'racing' || state.phase === 'results') {
-    ctx.clearRect(0, 0, W, H);
-    updateCamera();
-    drawTrack();
-    drawMarbles();
-  }
+  ctx.clearRect(0, 0, W, H);
+  drawArena();
+  gladState.forEach(g => drawGladiator(g));
   requestAnimationFrame(loop);
 }
 requestAnimationFrame(loop);
 
+// ─── PREVIEW ────────────────────────────────────────────────────────
 function renderMarblePreview() {
   const el = document.getElementById('marblePreview');
   el.innerHTML = marbles.map(m => {
-    const ballStyle = m.image
+    const s = m.image
       ? `background:url('${m.image}') center/cover; border-color:${m.color};`
       : `background:${m.color};`;
-    return `
-      <div class="previewBall">
-        <div class="ball" style="${ballStyle}"></div>
-        <span>${m.name}</span>
-      </div>`;
+    return `<div class="previewBall"><div class="ball" style="${s}"></div><span>${m.name}</span></div>`;
   }).join('');
 }
 
+// ─── SOCKET ─────────────────────────────────────────────────────────
 const socket = io();
 
 socket.on('stateUpdate', s => {
-  state   = s;
-  marbles = s.marbles || [];
+  gamePhase = s.phase;
+  marbles   = s.marbles || [];
+  roundNum  = s.round;
+  scores    = s.scores || {};
   preloadImages();
   renderMarblePreview();
   document.getElementById('roundLabel').textContent = 'RONDA ' + s.round;
@@ -570,61 +384,50 @@ socket.on('stateUpdate', s => {
   if (s.phase === 'racing') {
     overlay.style.display = 'none';
     document.getElementById('winner').style.display = 'none';
-    raceEnded = false;
-  } else if (s.phase === 'lobby' || s.phase === 'setup') {
+    gladState = [];
+  } else {
     overlay.style.display = 'flex';
-    document.getElementById('overlay').querySelector('p').textContent =
-      s.phase === 'lobby' ? 'La carrera est\u00e1 a punto de comenzar\u2026' : 'Esperando al host\u2026';
-  } else if (s.phase === 'ready') {
-    overlay.style.display = 'flex';
-    document.getElementById('overlay').querySelector('p').textContent = '\u00a1Preparados!';
+    const txt = { setup:'Configurando...', lobby:'Esperando...', ready:'Preparados...', results:'Batalla finalizada' };
+    document.querySelector('#overlay p').textContent = txt[s.phase] || s.phase;
   }
 
-  if (s.currentLeader && s.phase === 'racing') {
-    playLeaderAudio(s.currentLeader);
-    updateLeaderHud(s.currentLeader);
+  if (s.phase === 'results') {
+    document.querySelector('#overlay p').textContent = '\u{1f3c6} \u00a1Batalla finalizada!';
   }
 });
 
-socket.on('trackData', data => {
-  trackBodies = data;
-  cameraY     = 0;
+socket.on('battleState', data => {
+  gladState = data;
 });
 
-socket.on('positions', data => {
-  positions = data.positions || data;
-  if (data.fanPhase !== undefined) fanPhase = data.fanPhase;
-});
-
-socket.on('leaderChange', leaderId => {
-  playLeaderAudio(leaderId);
-  updateLeaderHud(leaderId);
-});
-
-socket.on('raceWinner', data => {
-  if (raceEnded) return;
-  raceEnded = true;
-  stopAudioCompletely();
-
-  const m  = marbles.find(m => m.id === data.winnerId);
+socket.on('battleWinner', data => {
+  stopAudio();
   const el = document.getElementById('winner');
+  document.getElementById('winnerName').textContent = data.winnerName || 'Nadie';
+  const m = marbles.find(mm => mm.id === data.winnerId);
+  if (m && m.image) {
+    document.getElementById('winnerImg').src = m.image;
+    document.getElementById('winnerImg').style.display = 'block';
+  } else {
+    document.getElementById('winnerImg').style.display = 'none';
+  }
   el.style.display = 'flex';
-  document.getElementById('winnerName').textContent = m ? m.name : '???';
-  const img = document.getElementById('winnerImg');
-  if (m && m.image) { img.src = m.image; img.style.display = 'block'; }
-  else              { img.style.display = 'none'; }
+
+  if (data.winnerSound) {
+    const a = new Audio(data.winnerSound);
+    a.loop = true;
+    a.volume = userVolume;
+    a.play().catch(() => {});
+    currentAudio = a;
+  }
 });
 
-socket.on('raceReset', () => {
-  stopAudioCompletely();
-  raceEnded   = false;
-  positions   = [];
-  trackBodies = [];
-  cameraY     = 0;
-  document.getElementById('winner').style.display  = 'none';
+socket.on('battleReset', () => {
+  stopAudio();
+  gladState = [];
+  document.getElementById('winner').style.display = 'none';
   document.getElementById('overlay').style.display = 'flex';
-  document.getElementById('overlay').querySelector('p').textContent = '\u00a1Preparados para la siguiente!';
-  document.getElementById('leaderHud').style.display = 'none';
+  document.querySelector('#overlay p').textContent = '\u00a1Preparados!';
 });
 </script>
 </body>
