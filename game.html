@@ -180,12 +180,11 @@ window.addEventListener('resize', () => {
 });
 
 // ────────────────────────────────────────────────────────────────────
-// ESCALA: el mundo de física tiene WORLD_W px de ancho.
-// El canvas puede tener cualquier ancho. Escalamos todo uniformemente.
+// ESCALA
 // ────────────────────────────────────────────────────────────────────
 function scaleX(x) { return x * (W / WORLD_W); }
-function scaleY(y) { return y; }           // Y no se escala (scroll vertical)
-function scaleLen(l) { return l * (W / WORLD_W); } // longitudes horizontales
+function scaleY(y) { return y; }
+function scaleLen(l) { return l * (W / WORLD_W); }
 
 // ────────────────────────────────────────────────────────────────────
 // ESTADO LOCAL
@@ -247,9 +246,9 @@ function switchLeaderAudio(leaderId) {
 
   a.load();
 
-a.oncanplaythrough = () => {
-  a.play().catch(() => {});
-};
+  a.oncanplaythrough = () => {
+    a.play().catch(() => {});
+  };
 
   const fadeIn = setInterval(() => {
     if (a.volume < userVolume - 0.05) {
@@ -282,82 +281,228 @@ function updateLeaderHud(leaderId) {
 }
 
 // ────────────────────────────────────────────────────────────────────
-// DIBUJO DEL ESCENARIO
-// Usamos b.rw / b.rh (dimensiones reales pre-rotación) enviadas por
-// el servidor. NUNCA usamos el bounding box de Matter.js.
+// DIBUJO DEL ESCENARIO — colores y estilos por tipo de elemento
 // ────────────────────────────────────────────────────────────────────
 function drawTrack() {
   ctx.save();
 
-  // Fondo
-  ctx.fillStyle = '#2a1f1f';
+  // Fondo degradado vertical
+  const bgGrad = ctx.createLinearGradient(0, 0, 0, H);
+  bgGrad.addColorStop(0, '#0d0d1a');
+  bgGrad.addColorStop(1, '#1a0d0d');
+  ctx.fillStyle = bgGrad;
   ctx.fillRect(0, 0, W, H);
 
-  // Línea de meta
+  // Líneas de fondo decorativas (efecto grid tenue)
+  ctx.strokeStyle = '#ffffff06';
+  ctx.lineWidth = 1;
+  for (let gx = 0; gx < W; gx += 60) {
+    ctx.beginPath(); ctx.moveTo(gx, 0); ctx.lineTo(gx, H); ctx.stroke();
+  }
+  for (let gy = -cameraY % 60; gy < H; gy += 60) {
+    ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(W, gy); ctx.stroke();
+  }
+
+  // Línea de meta elaborada
   const finY = scaleY(FINISH_Y) - cameraY;
-  if (finY > 0 && finY < H) {
+  if (finY > -40 && finY < H + 40) {
+    // Fondo de meta
+    const metaGrad = ctx.createLinearGradient(0, finY - 20, 0, finY + 20);
+    metaGrad.addColorStop(0, '#ffcc0000');
+    metaGrad.addColorStop(0.5, '#ffcc0044');
+    metaGrad.addColorStop(1, '#ffcc0000');
+    ctx.fillStyle = metaGrad;
+    ctx.fillRect(0, finY - 20, W, 40);
+
+    // Línea punteada
     ctx.strokeStyle = '#ffcc00';
-    ctx.lineWidth   = 4;
-    ctx.setLineDash([16, 8]);
+    ctx.lineWidth   = 3;
+    ctx.setLineDash([20, 10]);
     ctx.beginPath();
     ctx.moveTo(0, finY); ctx.lineTo(W, finY);
     ctx.stroke();
     ctx.setLineDash([]);
-    ctx.font = '700 16px Nunito';
+
+    // Texto
+    ctx.font = '900 18px Nunito';
+    ctx.textAlign = 'center';
     ctx.fillStyle = '#ffcc00';
-    ctx.fillText('🏁 META', W / 2 - 30, finY - 8);
+    ctx.shadowColor = '#ffcc00';
+    ctx.shadowBlur  = 16;
+    ctx.fillText('🏁  M E T A  🏁', W / 2, finY - 10);
+    ctx.shadowBlur = 0;
   }
 
   // Cuerpos del escenario
   trackBodies.forEach(b => {
-    // Posición escalada al ancho de pantalla
     const sx = scaleX(b.x);
     const sy = b.y - cameraY;
 
-    // Culling: no dibujar si está muy lejos de la cámara
-    if (sy < -200 || sy > H + 200) return;
+    if (sy < -300 || sy > H + 300) return;
 
     ctx.save();
     ctx.translate(sx, sy);
     ctx.rotate(b.angle);
 
-    if (b.radius !== null) {
-      // ── BUMPER (círculo) ──
+    // ── BUMPER estándar ──
+    if (b.label === 'bumper') {
       const r = scaleLen(b.radius);
+      // Halo exterior
+      const halo = ctx.createRadialGradient(0, 0, r * 0.5, 0, 0, r * 1.8);
+      halo.addColorStop(0, '#ff6b2b55');
+      halo.addColorStop(1, '#ff6b2b00');
+      ctx.beginPath();
+      ctx.arc(0, 0, r * 1.8, 0, Math.PI * 2);
+      ctx.fillStyle = halo;
+      ctx.fill();
+      // Cuerpo
+      const grad = ctx.createRadialGradient(-r * 0.3, -r * 0.3, 1, 0, 0, r);
+      grad.addColorStop(0, '#ffaa55');
+      grad.addColorStop(1, '#cc3300');
       ctx.beginPath();
       ctx.arc(0, 0, r, 0, Math.PI * 2);
-      ctx.fillStyle   = '#ff6b2b';
+      ctx.fillStyle = grad;
       ctx.shadowColor = '#ff6b2b';
-      ctx.shadowBlur  = 12;
+      ctx.shadowBlur  = 18;
       ctx.fill();
-      ctx.shadowBlur  = 0;
+      ctx.shadowBlur = 0;
+      // Borde
+      ctx.strokeStyle = '#ff9944';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+    // ── BUMPER GRANDE (embudo central) ──
+    } else if (b.label === 'bumper_big') {
+      const r = scaleLen(b.radius);
+      const grad = ctx.createRadialGradient(-r * 0.3, -r * 0.3, 2, 0, 0, r);
+      grad.addColorStop(0, '#ff44cc');
+      grad.addColorStop(1, '#880055');
+      ctx.beginPath();
+      ctx.arc(0, 0, r, 0, Math.PI * 2);
+      ctx.fillStyle = grad;
+      ctx.shadowColor = '#ff44cc';
+      ctx.shadowBlur  = 24;
+      ctx.fill();
+      ctx.shadowBlur = 0;
+      ctx.strokeStyle = '#ff88ee';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+      // Cruz decorativa
+      ctx.strokeStyle = '#ffffff44';
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(-r, 0); ctx.lineTo(r, 0); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(0, -r); ctx.lineTo(0, r); ctx.stroke();
+
+    // ── BUMPERS ZONA META ──
+    } else if (b.label === 'bumper_finish') {
+      const r = scaleLen(b.radius);
+      const grad = ctx.createRadialGradient(-r * 0.3, -r * 0.3, 1, 0, 0, r);
+      grad.addColorStop(0, '#ffee55');
+      grad.addColorStop(1, '#cc8800');
+      ctx.beginPath();
+      ctx.arc(0, 0, r, 0, Math.PI * 2);
+      ctx.fillStyle = grad;
+      ctx.shadowColor = '#ffcc00';
+      ctx.shadowBlur  = 20;
+      ctx.fill();
+      ctx.shadowBlur = 0;
+      ctx.strokeStyle = '#ffee99';
+      ctx.lineWidth = 2;
+      ctx.stroke();
 
     } else if (b.rw !== null && b.rh !== null) {
-      // ── RECTÁNGULO (rampa, pared, suelo) ──
-      // Escalamos ancho y alto con la misma proporción que X
       const rw = scaleLen(b.rw);
       const rh = scaleLen(b.rh);
 
+      // ── PARED ──
       if (b.label === 'wall') {
-        ctx.fillStyle = '#333355';
+        const wallGrad = ctx.createLinearGradient(-rw / 2, 0, rw / 2, 0);
+        wallGrad.addColorStop(0, '#1a1a33');
+        wallGrad.addColorStop(0.5, '#2a2a55');
+        wallGrad.addColorStop(1, '#1a1a33');
+        ctx.fillStyle = wallGrad;
         ctx.fillRect(-rw / 2, -rh / 2, rw, rh);
+
+      // ── SUELO ──
       } else if (b.label === 'floor') {
-        ctx.fillStyle = '#222244';
+        ctx.fillStyle = '#111122';
         ctx.fillRect(-rw / 2, -rh / 2, rw, rh);
-      } else {
-        // Rampa
-        ctx.fillStyle   = '#4455aa';
-        ctx.shadowColor = '#8899ff44';
-        ctx.shadowBlur  = 8;
-        ctx.beginPath();
-        // roundRect puede no existir en todos los navegadores; usamos fillRect seguro
+        ctx.strokeStyle = '#3333aa44';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(-rw / 2, -rh / 2, rw, rh);
+
+      // ── PLATAFORMA CORTA (obstáculo) ──
+      } else if (b.label === 'platform') {
+        const platGrad = ctx.createLinearGradient(-rw / 2, -rh / 2, rw / 2, rh / 2);
+        platGrad.addColorStop(0, '#33aaff');
+        platGrad.addColorStop(1, '#0055aa');
+        ctx.fillStyle = platGrad;
+        ctx.shadowColor = '#33aaff';
+        ctx.shadowBlur  = 10;
         ctx.fillRect(-rw / 2, -rh / 2, rw, rh);
         ctx.shadowBlur = 0;
-
-        // Borde decorativo
-        ctx.strokeStyle = '#6677cc';
-        ctx.lineWidth   = 1;
+        ctx.strokeStyle = '#88ccff';
+        ctx.lineWidth = 1.5;
         ctx.strokeRect(-rw / 2, -rh / 2, rw, rh);
+
+      // ── EMBUDO ──
+      } else if (b.label === 'funnel') {
+        const funnelGrad = ctx.createLinearGradient(-rw / 2, 0, rw / 2, 0);
+        funnelGrad.addColorStop(0, '#aa44ff');
+        funnelGrad.addColorStop(1, '#5500cc');
+        ctx.fillStyle = funnelGrad;
+        ctx.shadowColor = '#aa44ff';
+        ctx.shadowBlur  = 12;
+        ctx.fillRect(-rw / 2, -rh / 2, rw, rh);
+        ctx.shadowBlur = 0;
+        ctx.strokeStyle = '#cc88ff';
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(-rw / 2, -rh / 2, rw, rh);
+
+      // ── RAMPA DE ACELERACIÓN ──
+      } else if (b.label === 'ramp_fast') {
+        const rampFastGrad = ctx.createLinearGradient(-rw / 2, 0, rw / 2, 0);
+        rampFastGrad.addColorStop(0, '#39ff14');
+        rampFastGrad.addColorStop(0.5, '#00cc00');
+        rampFastGrad.addColorStop(1, '#39ff14');
+        ctx.fillStyle = rampFastGrad;
+        ctx.shadowColor = '#39ff14';
+        ctx.shadowBlur  = 16;
+        ctx.fillRect(-rw / 2, -rh / 2, rw, rh);
+        ctx.shadowBlur = 0;
+        ctx.strokeStyle = '#88ff66';
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(-rw / 2, -rh / 2, rw, rh);
+        // Flechas indicadoras de velocidad
+        ctx.strokeStyle = '#ffffff55';
+        ctx.lineWidth = 1;
+        for (let fx = -rw / 2 + 20; fx < rw / 2 - 10; fx += 40) {
+          ctx.beginPath();
+          ctx.moveTo(fx, 0); ctx.lineTo(fx + 14, 0);
+          ctx.moveTo(fx + 9, -4); ctx.lineTo(fx + 14, 0); ctx.lineTo(fx + 9, 4);
+          ctx.stroke();
+        }
+
+      // ── RAMPA NORMAL ──
+      } else {
+        const rampGrad = ctx.createLinearGradient(0, -rh / 2, 0, rh / 2);
+        rampGrad.addColorStop(0, '#6677dd');
+        rampGrad.addColorStop(1, '#334499');
+        ctx.fillStyle = rampGrad;
+        ctx.shadowColor = '#8899ff44';
+        ctx.shadowBlur  = 10;
+        ctx.fillRect(-rw / 2, -rh / 2, rw, rh);
+        ctx.shadowBlur = 0;
+        ctx.strokeStyle = '#8899ff';
+        ctx.lineWidth   = 1.5;
+        ctx.strokeRect(-rw / 2, -rh / 2, rw, rh);
+        // Línea brillante en el borde superior
+        ctx.strokeStyle = '#aabbff88';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(-rw / 2, -rh / 2);
+        ctx.lineTo(rw / 2, -rh / 2);
+        ctx.stroke();
       }
     }
 
