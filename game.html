@@ -3,481 +3,297 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>GLADIATOR ARENA</title>
+<title>STICK ARENA</title>
 <script src="/socket.io/socket.io.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { background: #0a0a0f; overflow: hidden; font-family: 'Nunito', sans-serif; }
 canvas { display: block; }
-
-#hud {
-  position: fixed; top: 0; left: 0; right: 0;
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 10px 18px;
-  background: linear-gradient(#000000cc, transparent);
-  pointer-events: none; z-index: 20;
-}
-#roundLabel {
-  font-family: 'Bebas Neue', sans-serif;
-  font-size: 1.4rem; letter-spacing: 4px;
-  color: #ffcc00;
-}
-
-#winner {
-  display: none;
-  position: fixed; inset: 0;
-  flex-direction: column; align-items: center; justify-content: center;
-  background: #000000dd; color: white; z-index: 40; text-align: center;
-}
-#winner h1 {
-  font-family: 'Bebas Neue', sans-serif;
-  font-size: 4rem; letter-spacing: 6px;
-  color: #ffcc00; text-shadow: 0 0 40px #ffcc0099; margin-bottom: 10px;
-}
-#winnerName {
-  font-family: 'Bebas Neue', sans-serif;
-  font-size: 2.6rem; letter-spacing: 3px; color: #fff;
-}
-#winnerImg {
-  width: 120px; height: 120px; border-radius: 50%;
-  object-fit: cover; border: 5px solid gold; margin-top: 16px; display: none;
-}
-
-#overlay {
-  position: fixed; inset: 0;
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  background: #0a0a0f; z-index: 50;
-}
-#overlay h1 {
-  font-family: 'Bebas Neue', sans-serif;
-  font-size: 3rem; letter-spacing: 6px;
-  color: #ff4444; text-shadow: 0 0 30px #ff444488; margin-bottom: 8px;
-}
-#overlay p { color: #6666aa; font-size: .95rem; }
-
-#volBox {
-  position: fixed; bottom: 16px; right: 16px;
-  background: #13131eee; border: 1px solid #ffffff22;
-  border-radius: 12px; padding: 10px 14px;
-  display: flex; flex-direction: column; align-items: center; gap: 6px;
-  z-index: 30; pointer-events: all;
-}
-#volBox label { font-size: .65rem; font-weight: 700; color: #6666aa; text-transform: uppercase; letter-spacing: 1px; }
-#volSlider { -webkit-appearance: none; width: 100px; height: 5px; border-radius: 3px; background: #333; outline: none; cursor: pointer; }
-#volSlider::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: #ff4444; cursor: pointer; }
-#volIcon { font-size: 1.2rem; }
-
-.marblePreview {
-  display: flex; flex-wrap: wrap; gap: 10px;
-  justify-content: center; margin-top: 20px; max-width: 450px;
-}
-.previewBall {
-  display: flex; flex-direction: column; align-items: center; gap: 4px;
-  font-size: .7rem; color: #aaa; font-weight: 700;
-}
-.previewBall .ball {
-  width: 46px; height: 46px; border-radius: 50%; object-fit: cover;
-  border: 3px solid #ffffff33;
-}
+#hud { position:fixed; top:0; left:0; right:0; display:flex; align-items:center; justify-content:space-between; padding:8px 14px; background:linear-gradient(#000000cc,transparent); pointer-events:none; z-index:20; }
+#roundLabel { font-family:'Bebas Neue',sans-serif; font-size:1.2rem; letter-spacing:3px; color:#ffcc00; }
+#winner { display:none; position:fixed; inset:0; flex-direction:column; align-items:center; justify-content:center; background:#000000dd; color:white; z-index:40; text-align:center; }
+#winner h1 { font-family:'Bebas Neue',sans-serif; font-size:3.5rem; letter-spacing:6px; color:#ffcc00; text-shadow:0 0 40px #ffcc0099; margin-bottom:10px; }
+#winnerName { font-family:'Bebas Neue',sans-serif; font-size:2.2rem; letter-spacing:3px; color:#fff; }
+#winnerImg { width:100px; height:100px; border-radius:50%; object-fit:cover; border:5px solid gold; margin-top:14px; display:none; }
+#overlay { position:fixed; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; background:#0a0a0f; z-index:50; }
+#overlay h1 { font-family:'Bebas Neue',sans-serif; font-size:2.8rem; letter-spacing:6px; color:#ff4444; text-shadow:0 0 30px #ff444488; margin-bottom:8px; }
+#overlay p { color:#6666aa; font-size:.9rem; }
+#volBox { position:fixed; bottom:12px; right:12px; background:#13131eee; border:1px solid #ffffff22; border-radius:10px; padding:8px 12px; display:flex; flex-direction:column; align-items:center; gap:4px; z-index:30; pointer-events:all; }
+#volBox label { font-size:.6rem; font-weight:700; color:#6666aa; text-transform:uppercase; letter-spacing:1px; }
+#volSlider { -webkit-appearance:none; width:80px; height:4px; border-radius:2px; background:#333; outline:none; cursor:pointer; }
+#volSlider::-webkit-slider-thumb { -webkit-appearance:none; width:14px; height:14px; border-radius:50%; background:#ff4444; cursor:pointer; }
+#volIcon { font-size:1rem; }
+.marblePreview { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-top:16px; max-width:400px; }
+.previewBall { display:flex; flex-direction:column; align-items:center; gap:3px; font-size:.65rem; color:#aaa; font-weight:700; }
+.previewBall .ball { width:40px; height:40px; border-radius:50%; object-fit:cover; border:3px solid #ffffff33; }
 </style>
 </head>
 <body>
-
 <div id="overlay">
-  <h1>&#x2694; GLADIATOR ARENA &#x2694;</h1>
+  <h1>&#x2694; STICK ARENA &#x2694;</h1>
   <p>Esperando al host&#x2026;</p>
   <div id="marblePreview" class="marblePreview"></div>
 </div>
-
 <canvas id="c"></canvas>
-
 <div id="hud">
   <div id="roundLabel">RONDA 1</div>
-  <div style="color:#888;font-size:.8rem">&#x2694; COLISEO &#x2694;</div>
+  <div style="color:#888;font-size:.75rem">&#x1f3ad; COLISEO &#x1f3ad;</div>
   <div></div>
 </div>
-
 <div id="volBox">
   <div id="volIcon">&#x1f50a;</div>
   <label>Vol</label>
   <input type="range" id="volSlider" min="0" max="1" step="0.05" value="0.6">
 </div>
-
 <div id="winner">
   <h1>&#x1f3c6; CAMPE&#xd3;N &#x1f3c6;</h1>
   <div id="winnerName"></div>
   <img id="winnerImg" src="" alt="">
-  <div style="color:#888;font-size:.85rem;margin-top:10px">&#x1f3b5; Tema del campe&#xf3;n &#x1f3b5;</div>
+  <div style="color:#888;font-size:.8rem;margin-top:8px">&#x1f3b5; Tema del campe&#xf3;n &#x1f3b5;</div>
 </div>
 
 <script>
-const W_W = 800, W_H = 500, G_Y = 440, R_BODY = 22;
+const W_W = 800, W_H = 500;
 
 const canvas = document.getElementById('c');
-const ctx    = canvas.getContext('2d');
-let W = window.innerWidth;
-let H = window.innerHeight;
-canvas.width  = W;
-canvas.height = H;
-window.addEventListener('resize', () => {
-  W = window.innerWidth;
-  H = window.innerHeight;
-  canvas.width  = W;
-  canvas.height = H;
-});
+const ctx = canvas.getContext('2d');
+let W = window.innerWidth, H = window.innerHeight;
+canvas.width = W; canvas.height = H;
+window.addEventListener('resize', () => { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; });
 
 function sx(x) { return x * (W / W_W); }
 function sy(y) { return y * (H / W_H); }
-function sl(l) { return l * (W / W_W); }
+function sl(l) { return l * Math.min(W / W_W, H / W_H); }
 
-let marbles    = [];
-let gladState  = [];
-let gamePhase  = 'setup';
-let roundNum   = 1;
-let scores     = {};
-let userVolume = 0.6;
+let marbles = [], gladState = [], projState = [], gamePhase = 'setup', roundNum = 1, userVolume = 0.6;
 
 document.getElementById('volSlider').addEventListener('input', e => {
   userVolume = parseFloat(e.target.value);
-  document.getElementById('volIcon').textContent =
-    userVolume === 0 ? '\u{1f507}' : userVolume < 0.4 ? '\u{1f509}' : '\u{1f50a}';
+  document.getElementById('volIcon').textContent = userVolume === 0 ? '\u{1f507}' : userVolume < 0.4 ? '\u{1f509}' : '\u{1f50a}';
 });
 
 let currentAudio = null;
-
 function stopAudio() {
-  if (currentAudio) {
-    try { currentAudio.pause(); currentAudio.currentTime = 0; currentAudio.src = ''; currentAudio.load(); } catch(e) {}
-    currentAudio = null;
-  }
+  if (currentAudio) { try { currentAudio.pause(); currentAudio.currentTime = 0; currentAudio.src = ''; currentAudio.load(); } catch(e) {} currentAudio = null; }
 }
 
 // ─── PARTICLES ──────────────────────────────────────────────────────
-let particles = [];
-function spawnHitParticles(x, y, color) {
-  for (let i = 0; i < 8; i++) {
-    particles.push({
-      x, y, color,
-      vx: (Math.random() - 0.5) * 6,
-      vy: -Math.random() * 6 - 1,
-      life: 30 + Math.random() * 20
-    });
+let parts = [];
+function spawnParts(x, y, col, n) {
+  for (let i = 0; i < (n || 6); i++) parts.push({ x, y, col, vx: (Math.random() - 0.5) * 5, vy: -Math.random() * 5 - 1, life: 20 + Math.random() * 15 });
+}
+function updParts() {
+  for (let i = parts.length - 1; i >= 0; i--) {
+    const p = parts[i]; p.x += p.vx; p.y += p.vy; p.vy += 0.15; p.life--;
+    if (p.life <= 0) parts.splice(i, 1);
   }
 }
-function updateParticles() {
-  for (let i = particles.length - 1; i >= 0; i--) {
-    const p = particles[i];
-    p.x += p.vx; p.y += p.vy; p.vy += 0.2;
-    p.life--;
-    if (p.life <= 0) particles.splice(i, 1);
-  }
-}
-function drawParticles() {
-  particles.forEach(p => {
-    const alpha = p.life / 40;
-    ctx.globalAlpha = alpha;
-    ctx.fillStyle = p.color;
-    ctx.beginPath();
-    ctx.arc(sx(p.x), sy(p.y), sl(2 + alpha * 2), 0, Math.PI * 2);
-    ctx.fill();
-  });
+function drwParts() {
+  parts.forEach(p => { ctx.globalAlpha = p.life / 25; ctx.fillStyle = p.col; ctx.beginPath(); ctx.arc(sx(p.x), sy(p.y), sl(1.5 + (1 - p.life / 25) * 2), 0, Math.PI * 2); ctx.fill(); });
   ctx.globalAlpha = 1;
 }
 
+// ─── PLATFORM DATA ──────────────────────────────────────────────────
+const PLATS = [
+  { x: W_W / 2, y: 460, w: W_W, h: 30 },
+  { x: 150, y: 360, w: 160, h: 12 }, { x: 500, y: 360, w: 180, h: 12 },
+  { x: 350, y: 280, w: 200, h: 12 }, { x: 120, y: 280, w: 110, h: 12 }, { x: 620, y: 280, w: 110, h: 12 },
+  { x: 400, y: 200, w: 160, h: 12 }, { x: 220, y: 200, w: 100, h: 12 }, { x: 580, y: 200, w: 100, h: 12 },
+  { x: 400, y: 130, w: 120, h: 12 },
+];
+
+let prevHp = {};
+
 // ─── DRAW ───────────────────────────────────────────────────────────
-function drawBackground() {
-  const grad = ctx.createLinearGradient(0, 0, 0, H);
-  grad.addColorStop(0, '#0d0a1a');
-  grad.addColorStop(0.4, '#1a0d2a');
-  grad.addColorStop(0.7, '#2a1a0a');
-  grad.addColorStop(1, '#0a0502');
-  ctx.fillStyle = grad;
-  ctx.fillRect(0, 0, W, H);
-
-  for (let i = 0; i < 30; i++) {
-    ctx.fillStyle = `rgba(255,200,100,${0.02 + Math.random() * 0.02})`;
-    ctx.fillRect(Math.random() * W, Math.random() * H * 0.5, 2, 1);
-  }
+function drawBG() {
+  const g = ctx.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0, '#0a0a1a'); g.addColorStop(0.3, '#1a0d1a'); g.addColorStop(0.6, '#2a1508'); g.addColorStop(1, '#0a0500');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  for (let i = 0; i < 20; i++) { ctx.fillStyle = `rgba(255,200,100,${0.01 + Math.random() * 0.015})`; ctx.fillRect(Math.random() * W, Math.random() * H * 0.4, 1.5, 1); }
 }
 
-function drawGround() {
-  const gy = sy(G_Y);
-  const gH = H - gy + 5;
-
-  ctx.fillStyle = '#2a1a0a';
-  ctx.fillRect(0, gy, W, gH);
-  ctx.fillStyle = '#3a2a15';
-  ctx.fillRect(0, gy, W, 4);
-
-  ctx.strokeStyle = '#5a3a1a44';
-  ctx.lineWidth = 1;
-  for (let tx = 0; tx < W; tx += 30) {
-    ctx.beginPath(); ctx.moveTo(tx, gy + 6); ctx.lineTo(tx + 20, gy + gH - 5); ctx.stroke();
-  }
-  for (let tx = 15; tx < W; tx += 30) {
-    ctx.beginPath(); ctx.moveTo(tx, gy + gH - 5); ctx.lineTo(tx + 25, gy + 6); ctx.stroke();
-  }
-
-  // Pillars
-  ctx.fillStyle = '#1a0f05';
-  ctx.fillRect(0, 0, 6, H);
-  ctx.fillRect(W - 6, 0, 6, H);
+function drawPlats() {
+  PLATS.forEach(p => {
+    const x = sx(p.x), y = sy(p.y), w = sx(p.w), h = sy(p.h);
+    const g = ctx.createLinearGradient(x - w / 2, y - h / 2, x + w / 2, y + h / 2);
+    g.addColorStop(0, '#3a2a1a'); g.addColorStop(0.5, '#2a1a0a'); g.addColorStop(1, '#1a0f05');
+    ctx.fillStyle = g;
+    ctx.shadowColor = '#ffcc0022'; ctx.shadowBlur = sl(6);
+    ctx.fillRect(x - w / 2, y - h / 2, w, h);
+    ctx.shadowBlur = 0;
+    ctx.strokeStyle = '#5a3a1a44'; ctx.lineWidth = sl(1);
+    ctx.strokeRect(x - w / 2, y - h / 2, w, h);
+    ctx.fillStyle = '#ffcc0011'; ctx.fillRect(x - w / 2, y - h / 2, w, sl(2));
+  });
 }
 
-function drawGladiator(g) {
+function drawStick(g) {
   if (!g.alive) return;
   const x = sx(g.x), y = sy(g.y);
   const m = marbles.find(mm => mm.id === g.id);
   const col = m ? m.color : '#ff4444';
   const name = m ? m.name : '?';
 
-  // Facing direction
-  const nDist = 1;
-  let fx = 1, fy = 0;
+  let fx = 1;
   let nearest = null, minD = Infinity;
-  gladState.forEach(o => {
-    if (o.id === g.id || !o.alive) return;
-    const dx = o.x - g.x, dy = o.y - g.y;
-    const d = Math.sqrt(dx * dx + dy * dy);
-    if (d < minD) { minD = d; nearest = o; }
-  });
-  if (nearest) { fx = nearest.x - g.x; fy = nearest.y - g.y; }
-  const fl = Math.sqrt(fx * fx + fy * fy) || 1;
-  fx /= fl; fy /= fl;
-
-  const facingRight = fx > 0;
-  const sc = sl(1);
+  gladState.forEach(o => { if (o.id === g.id || !o.alive) return; const dx = o.x - g.x; const d = dx * dx + (o.y - g.y) ** 2; if (d < minD) { minD = d; nearest = o; } });
+  if (nearest) fx = nearest.x - g.x;
+  const right = fx > 0;
 
   ctx.save();
   ctx.translate(x, y);
-  if (!facingRight) ctx.scale(-1, 1);
-  ctx.scale(sc, sl(1));
+  if (!right) ctx.scale(-1, 1);
+  const sc = Math.min(W / W_W, H / W_H);
 
   const walk = g.walkPhase || 0;
-  const att  = g.attacking ? Math.min(1, (Date.now() - g.lastAttack + 250) / 250) : 0;
+  const att = g.attacking ? 1 : 0;
+  const S = sl(1);
 
-  // Shadow
-  ctx.fillStyle = 'rgba(0,0,0,0.3)';
-  ctx.beginPath();
-  ctx.ellipse(0, sl(20), sl(14), sl(4), 0, 0, Math.PI * 2);
-  ctx.fill();
-
-  // -------
-  // LEGS
-  // -------
+  // ── LEGS ──
   ctx.lineCap = 'round';
-  ctx.lineWidth = sl(4);
+  const lw = sl(2.5);
+  const legSw = Math.sin(walk) * 0.5;
 
-  const legSwing = Math.sin(walk) * 0.4;
-  const bodyH = sl(20);
-  const legLen = sl(14);
+  ctx.strokeStyle = '#444';
+  ctx.lineWidth = lw;
+  const legY = sl(10), legLen = sl(10);
+  [-1, 1].forEach(s => {
+    ctx.beginPath();
+    ctx.moveTo(s * sl(3), legY);
+    ctx.lineTo(s * sl(3) + Math.sin(legSw * s + 0.2) * legLen, legY + legLen * Math.cos(legSw * s + 0.2));
+    ctx.stroke();
+  });
 
-  // Left leg
-  ctx.strokeStyle = darken(col, 40);
+  // ── BODY (thin line) ──
+  ctx.strokeStyle = col;
+  ctx.lineWidth = lw;
   ctx.beginPath();
-  ctx.moveTo(sl(-4), bodyH);
-  ctx.lineTo(sl(-4) - Math.sin(legSwing + 0.3) * legLen, bodyH + legLen * Math.cos(legSwing + 0.3));
+  ctx.moveTo(0, sl(2));
+  ctx.lineTo(0, legY);
   ctx.stroke();
 
-  // Right leg
-  ctx.strokeStyle = darken(col, 30);
-  ctx.beginPath();
-  ctx.moveTo(sl(4), bodyH);
-  ctx.lineTo(sl(4) - Math.sin(-legSwing + 0.3) * legLen, bodyH + legLen * Math.cos(-legSwing + 0.3));
-  ctx.stroke();
-
-  // -------
-  // BODY (rectangle collision hull visual)
-  // -------
-  const bh = sl(22);
-  const bw = sl(13);
-  const bodyGrad = ctx.createLinearGradient(-bw, -bh, bw, bh);
-  bodyGrad.addColorStop(0, lighten(col, 40));
-  bodyGrad.addColorStop(0.5, col);
-  bodyGrad.addColorStop(1, darken(col, 30));
-  ctx.fillStyle = bodyGrad;
-  ctx.shadowColor = col + '44';
-  ctx.shadowBlur = sl(8);
-  ctx.fillRect(-bw, -bh, bw * 2, bh * 2);
-  ctx.shadowBlur = 0;
-
-  // Belt
-  ctx.fillStyle = darken(col, 50);
-  ctx.fillRect(-bw - 1, sl(2), bw * 2 + 2, sl(4));
-  ctx.fillStyle = '#ffcc0055';
-  ctx.fillRect(sl(-2), sl(2), sl(4), sl(4));
-
-  // -------
-  // ARMS
-  // -------
-  ctx.lineWidth = sl(3.5);
-  const armLen = sl(13);
-  const armSwing = Math.sin(walk + Math.PI) * 0.3;
+  // ── ARMS ──
+  const armSw = Math.sin(walk + Math.PI) * 0.3;
+  ctx.lineWidth = lw * 0.8;
+  const armLen = sl(9);
 
   // Back arm
-  ctx.strokeStyle = darken(col, 20);
-  const baEndX = sl(-8) + Math.sin(-armSwing) * armLen;
-  const baEndY = sl(-5) + Math.cos(-armSwing) * armLen;
+  ctx.strokeStyle = darken(col, 40);
   ctx.beginPath();
-  ctx.moveTo(sl(-6), sl(-5));
-  ctx.lineTo(baEndX, baEndY);
+  ctx.moveTo(sl(-2), sl(4));
+  ctx.lineTo(sl(-2) + Math.sin(-armSw) * armLen, sl(4) + Math.cos(-armSw) * armLen);
   ctx.stroke();
 
-  // Front arm (with weapon)
-  ctx.strokeStyle = lighten(col, 20);
-  let faEndX, faEndY;
-  if (g.attacking && att > 0) {
-    const ext = 1 + (1 - att) * 0.8;
-    faEndX = sl(6) + armLen * ext;
-    faEndY = sl(-3) - (1 - att) * sl(8);
+  // Front arm (weapon)
+  ctx.strokeStyle = col;
+  let faX, faY;
+  if (g.attacking) {
+    faX = sl(2) + armLen + sl(5); faY = sl(2) - sl(3);
   } else {
-    faEndX = sl(6) + Math.sin(armSwing) * armLen;
-    faEndY = sl(-5) + Math.cos(armSwing) * armLen;
+    faX = sl(2) + Math.sin(armSw) * armLen; faY = sl(4) + Math.cos(armSw) * armLen;
   }
   ctx.beginPath();
-  ctx.moveTo(sl(6), sl(-5));
-  ctx.lineTo(faEndX, faEndY);
+  ctx.moveTo(sl(2), sl(4));
+  ctx.lineTo(faX, faY);
   ctx.stroke();
 
-  // Weapon
-  ctx.font = `${sl(12)}px Arial`;
+  // Weapon icon
+  ctx.font = `${sl(9) | 0}px Arial`;
   ctx.textAlign = 'center';
-  ctx.fillText(g.weapon.icon, faEndX + sl(6), faEndY + sl(2));
+  ctx.fillStyle = '#fff';
+  ctx.fillText(g.weapon.icon, faX + sl(4), faY + sl(1));
 
-  // -------
-  // HEAD (marble / ball)
-  // -------
-  const headR = sl(11);
-  const headY = -bh - headR + sl(2);
+  // ── HEAD ──
+  const hr = sl(6);
+  const hy = -hr - sl(1);
   const img = m && marbleImages[m.id];
   ctx.save();
   ctx.beginPath();
-  ctx.arc(0, headY, headR, 0, Math.PI * 2);
-  ctx.shadowColor = col + '88';
-  ctx.shadowBlur = sl(12);
-
+  ctx.arc(0, hy, hr, 0, Math.PI * 2);
+  ctx.shadowColor = col + '66';
+  ctx.shadowBlur = sl(8);
   if (img && img.complete && img.naturalWidth > 0) {
     ctx.clip();
-    ctx.drawImage(img, -headR, headY - headR, headR * 2, headR * 2);
+    ctx.drawImage(img, -hr, hy - hr, hr * 2, hr * 2);
   } else {
     ctx.fillStyle = col;
     ctx.fill();
-    ctx.strokeStyle = lighten(col, 40);
-    ctx.lineWidth = sl(1.5);
-    ctx.stroke();
+    ctx.strokeStyle = lighten(col, 50); ctx.lineWidth = sl(1); ctx.stroke();
   }
   ctx.restore();
 
   // Eye dot
-  ctx.fillStyle = '#fff';
-  ctx.beginPath();
-  ctx.arc(sl(3), headY - sl(2), sl(2), 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = '#000';
-  ctx.beginPath();
-  ctx.arc(sl(4), headY - sl(2), sl(1), 0, Math.PI * 2);
-  ctx.fill();
+  ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(sl(2), hy - sl(1), sl(1.5), 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#000'; ctx.beginPath(); ctx.arc(sl(3), hy - sl(1), sl(0.8), 0, Math.PI * 2); ctx.fill();
 
-  // -------
-  // HP BAR
-  // -------
-  const barW = sl(36);
-  const barH = sl(5);
-  const barY = headY - headR - sl(10);
-
+  // ── HP BAR ──
+  const bw = sl(24), bh = sl(4), by = hy - hr - sl(8);
   ctx.fillStyle = '#1a0000cc';
-  ctx.fillRect(-barW / 2, barY, barW, barH);
+  ctx.fillRect(-bw / 2, by, bw, bh);
   const pct = g.hp / g.maxHp;
-  const hpCol = pct > 0.5 ? '#39ff14' : pct > 0.25 ? '#ffcc00' : '#ff2244';
-  ctx.shadowColor = hpCol + '66';
-  ctx.shadowBlur = sl(6);
-  ctx.fillStyle = hpCol;
-  ctx.fillRect(-barW / 2 + 1, barY + 1, (barW - 2) * pct, barH - 2);
+  const hc = pct > 0.5 ? '#39ff14' : pct > 0.25 ? '#ffcc00' : '#ff2244';
+  ctx.shadowColor = hc + '88'; ctx.shadowBlur = sl(6);
+  ctx.fillStyle = hc;
+  ctx.fillRect(-bw / 2 + 1, by + 1, (bw - 2) * pct, bh - 2);
   ctx.shadowBlur = 0;
 
-  ctx.fillStyle = '#ffffff22';
-  ctx.fillRect(-barW / 2, barY, barW, sl(2));
-
-  // HP text
-  ctx.font = `700 ${sl(8)}px Nunito`;
-  ctx.fillStyle = '#fff';
-  ctx.shadowColor = '#000';
-  ctx.shadowBlur = sl(4);
+  ctx.font = `700 ${sl(7) | 0}px Nunito`;
   ctx.textAlign = 'center';
-  ctx.fillText(Math.ceil(g.hp), 0, barY + barH + sl(10));
-  ctx.shadowBlur = 0;
-
-  // Name
-  ctx.font = `700 ${sl(9)}px Nunito`;
   ctx.fillStyle = '#fff';
-  ctx.shadowColor = '#000';
-  ctx.shadowBlur = sl(3);
-  ctx.fillText(name, 0, barY - sl(3));
+  ctx.shadowColor = '#000'; ctx.shadowBlur = sl(3);
+  ctx.fillText(Math.ceil(g.hp), 0, by + bh + sl(8));
+  ctx.fillStyle = '#ddd';
+  ctx.fillText(name, 0, by - sl(2));
   ctx.shadowBlur = 0;
 
   ctx.restore();
 }
 
-const marbleImages = {};
-function preloadImages() {
-  marbles.forEach(m => {
-    if (m.image && !marbleImages[m.id]) {
-      const img = new Image(); img.src = m.image;
-      marbleImages[m.id] = img;
-    }
+function drawProjectiles() {
+  projState.forEach(p => {
+    ctx.fillStyle = '#ffcc00';
+    ctx.shadowColor = '#ffcc00'; ctx.shadowBlur = sl(10);
+    ctx.beginPath(); ctx.arc(sx(p.x), sy(p.y), sl(3), 0, Math.PI * 2); ctx.fill();
+    ctx.shadowBlur = 0;
   });
 }
 
-function lighten(hex, amt) {
-  const n = parseInt(hex.replace('#', ''), 16);
-  return `rgb(${Math.min(255,(n>>16)+amt)},${Math.min(255,((n>>8)&255)+amt)},${Math.min(255,(n&255)+amt)})`;
+const marbleImages = {};
+function preloadImages() {
+  marbles.forEach(m => { if (m.image && !marbleImages[m.id]) { const img = new Image(); img.src = m.image; marbleImages[m.id] = img; } });
 }
-function darken(hex, amt) {
-  const n = parseInt(hex.replace('#', ''), 16);
-  return `rgb(${Math.max(0,(n>>16)-amt)},${Math.max(0,((n>>8)&255)-amt)},${Math.max(0,(n&255)-amt)})`;
-}
+function lighten(hex, a) { const n = parseInt(hex.replace('#', ''), 16); return `rgb(${Math.min(255,(n>>16)+a)},${Math.min(255,((n>>8)&255)+a)},${Math.min(255,(n&255)+a)})`; }
+function darken(hex, a) { const n = parseInt(hex.replace('#', ''), 16); return `rgb(${Math.max(0,(n>>16)-a)},${Math.max(0,((n>>8)&255)-a)},${Math.max(0,(n&255)-a)})`; }
 
 // ─── LOOP ───────────────────────────────────────────────────────────
 function loop() {
   ctx.clearRect(0, 0, W, H);
-  drawBackground();
-  drawGround();
-  gladState.forEach(g => drawGladiator(g));
-  updateParticles();
-  drawParticles();
+  drawBG(); drawPlats();
+  gladState.forEach(g => drawStick(g));
+  drawProjectiles();
+  updParts(); drwParts();
   requestAnimationFrame(loop);
 }
 requestAnimationFrame(loop);
 
-// ─── PREVIEW ────────────────────────────────────────────────────────
 function renderPreview() {
   const el = document.getElementById('marblePreview');
   el.innerHTML = marbles.map(m => {
-    const s = m.image
-      ? `background:url('${m.image}') center/cover; border-color:${m.color};`
-      : `background:${m.color};`;
+    const s = m.image ? `background:url('${m.image}') center/cover; border-color:${m.color};` : `background:${m.color};`;
     return `<div class="previewBall"><div class="ball" style="${s}"></div><span>${m.name}</span></div>`;
   }).join('');
 }
 
-// ─── SOCKET ─────────────────────────────────────────────────────────
 const socket = io();
 
 socket.on('stateUpdate', s => {
-  gamePhase = s.phase;
-  marbles   = s.marbles || [];
-  roundNum  = s.round;
-  scores    = s.scores || {};
-  preloadImages();
-  renderPreview();
+  gamePhase = s.phase; marbles = s.marbles || []; roundNum = s.round;
+  preloadImages(); renderPreview();
   document.getElementById('roundLabel').textContent = 'RONDA ' + s.round;
-
   const overlay = document.getElementById('overlay');
   if (s.phase === 'racing') {
-    overlay.style.display = 'none';
-    document.getElementById('winner').style.display = 'none';
-    gladState = [];
+    overlay.style.display = 'none'; document.getElementById('winner').style.display = 'none'; gladState = []; prevHp = {};
   } else {
     overlay.style.display = 'flex';
     const txt = { setup:'Configurando...', lobby:'Esperando...', ready:'Preparados...', results:'\u{1f3c6} Batalla finalizada!' };
@@ -486,41 +302,27 @@ socket.on('stateUpdate', s => {
 });
 
 socket.on('battleState', data => {
-  gladState = data;
-  data.forEach(g => {
-    if (g.hp <= 0 || g.hp === g.maxHp) return;
-    const prev = gladState.find(p => p.id === g.id);
-    if (prev && prev.hp > g.hp && g.hp > 0) {
-      spawnHitParticles(g.x, g.y, '#ffcc00');
-    }
+  gladState = data.gladiators || [];
+  projState = data.projectiles || [];
+  gladState.forEach(g => {
+    const prev = prevHp[g.id];
+    if (prev !== undefined && prev > g.hp && g.hp > 0) { spawnParts(g.x, g.y, '#ffcc00', 5); spawnParts(g.x, g.y, g.weapon.icon, 3); }
+    prevHp[g.id] = g.hp;
   });
 });
 
 socket.on('battleWinner', data => {
   stopAudio();
-  const el = document.getElementById('winner');
+  document.getElementById('winner').style.display = 'flex';
   document.getElementById('winnerName').textContent = data.winnerName || 'Nadie';
   const m = marbles.find(mm => mm.id === data.winnerId);
-  if (m && m.image) {
-    document.getElementById('winnerImg').src = m.image;
-    document.getElementById('winnerImg').style.display = 'block';
-  } else {
-    document.getElementById('winnerImg').style.display = 'none';
-  }
-  el.style.display = 'flex';
-
-  if (data.winnerSound) {
-    const a = new Audio(data.winnerSound);
-    a.loop = true; a.volume = userVolume;
-    a.play().catch(() => {});
-    currentAudio = a;
-  }
+  if (m && m.image) { document.getElementById('winnerImg').src = m.image; document.getElementById('winnerImg').style.display = 'block'; }
+  else { document.getElementById('winnerImg').style.display = 'none'; }
+  if (data.winnerSound) { const a = new Audio(data.winnerSound); a.loop = true; a.volume = userVolume; a.play().catch(() => {}); currentAudio = a; }
 });
 
 socket.on('battleReset', () => {
-  stopAudio();
-  gladState = [];
-  particles = [];
+  stopAudio(); gladState = []; projState = []; parts = []; prevHp = {};
   document.getElementById('winner').style.display = 'none';
   document.getElementById('overlay').style.display = 'flex';
   document.querySelector('#overlay p').textContent = '\u00a1Preparados!';
