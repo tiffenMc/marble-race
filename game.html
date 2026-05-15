@@ -16,28 +16,24 @@ canvas { display: block; }
   display: flex; align-items: center; justify-content: space-between;
   padding: 10px 18px;
   background: linear-gradient(#000000cc, transparent);
-  pointer-events: none;
-  z-index: 20;
+  pointer-events: none; z-index: 20;
 }
 #roundLabel {
   font-family: 'Bebas Neue', sans-serif;
   font-size: 1.4rem; letter-spacing: 4px;
   color: #ffcc00;
 }
-#hudCenter { color: #888; font-size: .85rem; text-align: center; }
 
 #winner {
   display: none;
   position: fixed; inset: 0;
   flex-direction: column; align-items: center; justify-content: center;
-  background: #000000dd;
-  color: white; z-index: 40; text-align: center;
+  background: #000000dd; color: white; z-index: 40; text-align: center;
 }
 #winner h1 {
   font-family: 'Bebas Neue', sans-serif;
   font-size: 4rem; letter-spacing: 6px;
-  color: #ffcc00; text-shadow: 0 0 40px #ffcc0099;
-  margin-bottom: 10px;
+  color: #ffcc00; text-shadow: 0 0 40px #ffcc0099; margin-bottom: 10px;
 }
 #winnerName {
   font-family: 'Bebas Neue', sans-serif;
@@ -45,8 +41,7 @@ canvas { display: block; }
 }
 #winnerImg {
   width: 120px; height: 120px; border-radius: 50%;
-  object-fit: cover; border: 5px solid gold;
-  margin-top: 16px; display: none;
+  object-fit: cover; border: 5px solid gold; margin-top: 16px; display: none;
 }
 
 #overlay {
@@ -56,56 +51,35 @@ canvas { display: block; }
 }
 #overlay h1 {
   font-family: 'Bebas Neue', sans-serif;
-  font-size: 3.5rem; letter-spacing: 6px;
-  color: #ff4444; text-shadow: 0 0 30px #ff444488;
-  margin-bottom: 8px;
+  font-size: 3rem; letter-spacing: 6px;
+  color: #ff4444; text-shadow: 0 0 30px #ff444488; margin-bottom: 8px;
 }
 #overlay p { color: #6666aa; font-size: .95rem; }
 
 #volBox {
-  position: fixed; bottom: 20px; right: 20px;
+  position: fixed; bottom: 16px; right: 16px;
   background: #13131eee; border: 1px solid #ffffff22;
-  border-radius: 14px; padding: 14px 18px;
-  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  border-radius: 12px; padding: 10px 14px;
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
   z-index: 30; pointer-events: all;
 }
-#volBox label { font-size: .7rem; font-weight: 700; color: #6666aa; text-transform: uppercase; letter-spacing: 1px; }
-#volSlider {
-  -webkit-appearance: none;
-  width: 120px; height: 6px; border-radius: 3px; background: #333;
-  outline: none; cursor: pointer;
-}
-#volSlider::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  width: 18px; height: 18px; border-radius: 50%; background: #ff4444; cursor: pointer;
-}
-#volIcon { font-size: 1.4rem; }
+#volBox label { font-size: .65rem; font-weight: 700; color: #6666aa; text-transform: uppercase; letter-spacing: 1px; }
+#volSlider { -webkit-appearance: none; width: 100px; height: 5px; border-radius: 3px; background: #333; outline: none; cursor: pointer; }
+#volSlider::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: #ff4444; cursor: pointer; }
+#volIcon { font-size: 1.2rem; }
 
 .marblePreview {
-  display: flex; flex-wrap: wrap; gap: 12px;
-  justify-content: center; margin-top: 28px; max-width: 500px;
+  display: flex; flex-wrap: wrap; gap: 10px;
+  justify-content: center; margin-top: 20px; max-width: 450px;
 }
 .previewBall {
   display: flex; flex-direction: column; align-items: center; gap: 4px;
-  font-size: .75rem; color: #aaa; font-weight: 700;
+  font-size: .7rem; color: #aaa; font-weight: 700;
 }
 .previewBall .ball {
-  width: 54px; height: 54px; border-radius: 50%; object-fit: cover;
+  width: 46px; height: 46px; border-radius: 50%; object-fit: cover;
   border: 3px solid #ffffff33;
 }
-
-#killFeed {
-  position: fixed; left: 16px; top: 70px;
-  z-index: 15; display: flex; flex-direction: column; gap: 4px;
-  pointer-events: none;
-}
-.killMsg {
-  background: #00000099; color: #ff6666;
-  padding: 4px 12px; border-radius: 8px;
-  font-size: .75rem; font-weight: 700;
-  animation: fadeKill 2s forwards;
-}
-@keyframes fadeKill { 0%{opacity:1;transform:translateX(0)} 100%{opacity:0;transform:translateX(-30px)} }
 </style>
 </head>
 <body>
@@ -120,13 +94,13 @@ canvas { display: block; }
 
 <div id="hud">
   <div id="roundLabel">RONDA 1</div>
-  <div id="hudCenter">&#x2694; &#x1f3ad; BATALLA &#x1f3ad; &#x2694;</div>
+  <div style="color:#888;font-size:.8rem">&#x2694; COLISEO &#x2694;</div>
   <div></div>
 </div>
 
 <div id="volBox">
   <div id="volIcon">&#x1f50a;</div>
-  <label>Volumen</label>
+  <label>Vol</label>
   <input type="range" id="volSlider" min="0" max="1" step="0.05" value="0.6">
 </div>
 
@@ -134,15 +108,11 @@ canvas { display: block; }
   <h1>&#x1f3c6; CAMPE&#xd3;N &#x1f3c6;</h1>
   <div id="winnerName"></div>
   <img id="winnerImg" src="" alt="">
-  <div style="color:#888;font-size:.9rem;margin-top:10px">&#x1f3b5; Tema del campe&#xf3;n &#x1f3b5;</div>
+  <div style="color:#888;font-size:.85rem;margin-top:10px">&#x1f3b5; Tema del campe&#xf3;n &#x1f3b5;</div>
 </div>
 
-<div id="killFeed"></div>
-
 <script>
-const W_W = 800;
-const A_H = 600;
-const R   = 25;
+const W_W = 800, W_H = 500, G_Y = 440, R_BODY = 22;
 
 const canvas = document.getElementById('c');
 const ctx    = canvas.getContext('2d');
@@ -158,7 +128,7 @@ window.addEventListener('resize', () => {
 });
 
 function sx(x) { return x * (W / W_W); }
-function sy(y) { return y * (H / A_H); }
+function sy(y) { return y * (H / W_H); }
 function sl(l) { return l * (W / W_W); }
 
 let marbles    = [];
@@ -174,160 +144,276 @@ document.getElementById('volSlider').addEventListener('input', e => {
     userVolume === 0 ? '\u{1f507}' : userVolume < 0.4 ? '\u{1f509}' : '\u{1f50a}';
 });
 
-// ─── AUDIO ──────────────────────────────────────────────────────────
-let currentAudio  = null;
-let currentAudioId = null;
-let audioFader    = null;
+let currentAudio = null;
 
 function stopAudio() {
-  if (audioFader) { clearInterval(audioFader); audioFader = null; }
   if (currentAudio) {
     try { currentAudio.pause(); currentAudio.currentTime = 0; currentAudio.src = ''; currentAudio.load(); } catch(e) {}
     currentAudio = null;
   }
-  currentAudioId = null;
 }
 
-function playSound(soundData, vol) {
-  if (!soundData) return;
-  const a = new Audio(soundData);
-  a.volume = vol || userVolume;
-  a.play().catch(() => {});
-  return a;
+// ─── PARTICLES ──────────────────────────────────────────────────────
+let particles = [];
+function spawnHitParticles(x, y, color) {
+  for (let i = 0; i < 8; i++) {
+    particles.push({
+      x, y, color,
+      vx: (Math.random() - 0.5) * 6,
+      vy: -Math.random() * 6 - 1,
+      life: 30 + Math.random() * 20
+    });
+  }
+}
+function updateParticles() {
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const p = particles[i];
+    p.x += p.vx; p.y += p.vy; p.vy += 0.2;
+    p.life--;
+    if (p.life <= 0) particles.splice(i, 1);
+  }
+}
+function drawParticles() {
+  particles.forEach(p => {
+    const alpha = p.life / 40;
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = p.color;
+    ctx.beginPath();
+    ctx.arc(sx(p.x), sy(p.y), sl(2 + alpha * 2), 0, Math.PI * 2);
+    ctx.fill();
+  });
+  ctx.globalAlpha = 1;
 }
 
-// ─── DIBUJO ─────────────────────────────────────────────────────────
-function drawArena() {
-  const grad = ctx.createRadialGradient(W / 2, H / 2, 0, W / 2, H / 2, Math.max(W, H) * 0.6);
-  grad.addColorStop(0, '#2a1a0a');
-  grad.addColorStop(0.5, '#1a0f05');
+// ─── DRAW ───────────────────────────────────────────────────────────
+function drawBackground() {
+  const grad = ctx.createLinearGradient(0, 0, 0, H);
+  grad.addColorStop(0, '#0d0a1a');
+  grad.addColorStop(0.4, '#1a0d2a');
+  grad.addColorStop(0.7, '#2a1a0a');
   grad.addColorStop(1, '#0a0502');
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, W, H);
 
-  const cx = W / 2, cy = H / 2;
-  ctx.strokeStyle = '#ffcc0011';
+  for (let i = 0; i < 30; i++) {
+    ctx.fillStyle = `rgba(255,200,100,${0.02 + Math.random() * 0.02})`;
+    ctx.fillRect(Math.random() * W, Math.random() * H * 0.5, 2, 1);
+  }
+}
+
+function drawGround() {
+  const gy = sy(G_Y);
+  const gH = H - gy + 5;
+
+  ctx.fillStyle = '#2a1a0a';
+  ctx.fillRect(0, gy, W, gH);
+  ctx.fillStyle = '#3a2a15';
+  ctx.fillRect(0, gy, W, 4);
+
+  ctx.strokeStyle = '#5a3a1a44';
   ctx.lineWidth = 1;
-  for (let r = 50; r < Math.max(W, H); r += 60) {
-    ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.stroke();
+  for (let tx = 0; tx < W; tx += 30) {
+    ctx.beginPath(); ctx.moveTo(tx, gy + 6); ctx.lineTo(tx + 20, gy + gH - 5); ctx.stroke();
+  }
+  for (let tx = 15; tx < W; tx += 30) {
+    ctx.beginPath(); ctx.moveTo(tx, gy + gH - 5); ctx.lineTo(tx + 25, gy + 6); ctx.stroke();
   }
 
-  ctx.strokeStyle = '#ffffff08';
-  ctx.lineWidth = 2;
-  ctx.strokeRect(0, 0, W, H);
+  // Pillars
+  ctx.fillStyle = '#1a0f05';
+  ctx.fillRect(0, 0, 6, H);
+  ctx.fillRect(W - 6, 0, 6, H);
 }
 
 function drawGladiator(g) {
   if (!g.alive) return;
-  const x = sx(g.x);
-  const y = sy(g.y);
-  const r = sl(R);
+  const x = sx(g.x), y = sy(g.y);
+  const m = marbles.find(mm => mm.id === g.id);
+  const col = m ? m.color : '#ff4444';
+  const name = m ? m.name : '?';
 
-  const m = marbles.find(m => m.id === g.id);
-  const color = m ? m.color : '#ff4444';
-  const name  = m ? m.name : '?';
-
-  // Facing direction: find nearest enemy
-  let fx = 0, fy = 0;
+  // Facing direction
+  const nDist = 1;
+  let fx = 1, fy = 0;
   let nearest = null, minD = Infinity;
   gladState.forEach(o => {
     if (o.id === g.id || !o.alive) return;
-    const d = Math.sqrt((o.x - g.x) ** 2 + (o.y - g.y) ** 2);
+    const dx = o.x - g.x, dy = o.y - g.y;
+    const d = Math.sqrt(dx * dx + dy * dy);
     if (d < minD) { minD = d; nearest = o; }
   });
   if (nearest) { fx = nearest.x - g.x; fy = nearest.y - g.y; }
-  const fLen = Math.sqrt(fx * fx + fy * fy) || 1;
-  const fnx = fx / fLen, fny = fy / fLen;
+  const fl = Math.sqrt(fx * fx + fy * fy) || 1;
+  fx /= fl; fy /= fl;
+
+  const facingRight = fx > 0;
+  const sc = sl(1);
 
   ctx.save();
   ctx.translate(x, y);
+  if (!facingRight) ctx.scale(-1, 1);
+  ctx.scale(sc, sl(1));
 
-  const bodyLen = r * 0.9;
-  const armLen  = r * 0.8;
-  const legLen  = r * 0.7;
+  const walk = g.walkPhase || 0;
+  const att  = g.attacking ? Math.min(1, (Date.now() - g.lastAttack + 250) / 250) : 0;
 
   // Shadow
   ctx.fillStyle = 'rgba(0,0,0,0.3)';
-  ctx.beginPath(); ctx.ellipse(2, 2, r, r * 0.6, 0, 0, Math.PI * 2); ctx.fill();
-
-  // Body (torso)
-  ctx.strokeStyle = color;
-  ctx.lineWidth = 3;
   ctx.beginPath();
-  ctx.moveTo(fnx * 5, fny * 5);
-  ctx.lineTo(fnx * bodyLen, fny * bodyLen);
+  ctx.ellipse(0, sl(20), sl(14), sl(4), 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // -------
+  // LEGS
+  // -------
+  ctx.lineCap = 'round';
+  ctx.lineWidth = sl(4);
+
+  const legSwing = Math.sin(walk) * 0.4;
+  const bodyH = sl(20);
+  const legLen = sl(14);
+
+  // Left leg
+  ctx.strokeStyle = darken(col, 40);
+  ctx.beginPath();
+  ctx.moveTo(sl(-4), bodyH);
+  ctx.lineTo(sl(-4) - Math.sin(legSwing + 0.3) * legLen, bodyH + legLen * Math.cos(legSwing + 0.3));
   ctx.stroke();
 
-  // Arms (left/right of body)
-  const perpX = -fny, perpY = fnx;
-  ctx.lineWidth = 2.5;
-  const armSwing = g.attacking ? 0.6 : 0.3;
-  [-1, 1].forEach(s => {
-    const endX = fnx * 6 + perpX * s * armLen;
-    const endY = fny * 6 + perpY * s * armLen;
-    ctx.beginPath();
-    ctx.moveTo(fnx * 4, fny * 4);
-    ctx.lineTo(endX + fnx * armSwing * s * 10, endY + fny * armSwing * s * 10);
-    ctx.stroke();
-  });
+  // Right leg
+  ctx.strokeStyle = darken(col, 30);
+  ctx.beginPath();
+  ctx.moveTo(sl(4), bodyH);
+  ctx.lineTo(sl(4) - Math.sin(-legSwing + 0.3) * legLen, bodyH + legLen * Math.cos(-legSwing + 0.3));
+  ctx.stroke();
 
-  // Legs
-  ctx.lineWidth = 2.5;
-  [-1, 1].forEach(s => {
-    const lx = fnx * bodyLen + perpX * s * legLen * 0.6;
-    const ly = fny * bodyLen + perpY * s * legLen * 0.6;
-    ctx.beginPath();
-    ctx.moveTo(fnx * bodyLen, fny * bodyLen);
-    ctx.lineTo(lx, ly);
-    ctx.stroke();
-  });
+  // -------
+  // BODY (rectangle collision hull visual)
+  // -------
+  const bh = sl(22);
+  const bw = sl(13);
+  const bodyGrad = ctx.createLinearGradient(-bw, -bh, bw, bh);
+  bodyGrad.addColorStop(0, lighten(col, 40));
+  bodyGrad.addColorStop(0.5, col);
+  bodyGrad.addColorStop(1, darken(col, 30));
+  ctx.fillStyle = bodyGrad;
+  ctx.shadowColor = col + '44';
+  ctx.shadowBlur = sl(8);
+  ctx.fillRect(-bw, -bh, bw * 2, bh * 2);
+  ctx.shadowBlur = 0;
 
-  // Head (the physics body)
-  ctx.shadowColor = color + '66';
-  ctx.shadowBlur  = 12;
-  const img = m && marbleImages[m.id];
-  if (img && img.complete && img.naturalWidth > 0) {
-    ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.clip();
-    ctx.drawImage(img, -r, -r, r * 2, r * 2);
-    ctx.shadowBlur = 0;
+  // Belt
+  ctx.fillStyle = darken(col, 50);
+  ctx.fillRect(-bw - 1, sl(2), bw * 2 + 2, sl(4));
+  ctx.fillStyle = '#ffcc0055';
+  ctx.fillRect(sl(-2), sl(2), sl(4), sl(4));
+
+  // -------
+  // ARMS
+  // -------
+  ctx.lineWidth = sl(3.5);
+  const armLen = sl(13);
+  const armSwing = Math.sin(walk + Math.PI) * 0.3;
+
+  // Back arm
+  ctx.strokeStyle = darken(col, 20);
+  const baEndX = sl(-8) + Math.sin(-armSwing) * armLen;
+  const baEndY = sl(-5) + Math.cos(-armSwing) * armLen;
+  ctx.beginPath();
+  ctx.moveTo(sl(-6), sl(-5));
+  ctx.lineTo(baEndX, baEndY);
+  ctx.stroke();
+
+  // Front arm (with weapon)
+  ctx.strokeStyle = lighten(col, 20);
+  let faEndX, faEndY;
+  if (g.attacking && att > 0) {
+    const ext = 1 + (1 - att) * 0.8;
+    faEndX = sl(6) + armLen * ext;
+    faEndY = sl(-3) - (1 - att) * sl(8);
   } else {
-    const grad = ctx.createRadialGradient(-r * 0.3, -r * 0.3, 1, 0, 0, r);
-    grad.addColorStop(0, lighten(color, 60));
-    grad.addColorStop(1, color);
-    ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2);
-    ctx.fillStyle = grad;
+    faEndX = sl(6) + Math.sin(armSwing) * armLen;
+    faEndY = sl(-5) + Math.cos(armSwing) * armLen;
+  }
+  ctx.beginPath();
+  ctx.moveTo(sl(6), sl(-5));
+  ctx.lineTo(faEndX, faEndY);
+  ctx.stroke();
+
+  // Weapon
+  ctx.font = `${sl(12)}px Arial`;
+  ctx.textAlign = 'center';
+  ctx.fillText(g.weapon.icon, faEndX + sl(6), faEndY + sl(2));
+
+  // -------
+  // HEAD (marble / ball)
+  // -------
+  const headR = sl(11);
+  const headY = -bh - headR + sl(2);
+  const img = m && marbleImages[m.id];
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(0, headY, headR, 0, Math.PI * 2);
+  ctx.shadowColor = col + '88';
+  ctx.shadowBlur = sl(12);
+
+  if (img && img.complete && img.naturalWidth > 0) {
+    ctx.clip();
+    ctx.drawImage(img, -headR, headY - headR, headR * 2, headR * 2);
+  } else {
+    ctx.fillStyle = col;
     ctx.fill();
-    ctx.shadowBlur = 0;
-    ctx.strokeStyle = lighten(color, 30);
-    ctx.lineWidth = 2;
+    ctx.strokeStyle = lighten(col, 40);
+    ctx.lineWidth = sl(1.5);
     ctx.stroke();
   }
+  ctx.restore();
 
-  // Weapon icon
-  ctx.shadowBlur = 0;
-  ctx.font = `${sl(14)}px Arial`;
-  ctx.textAlign = 'center';
-  ctx.fillText(g.weapon.icon, fnx * (bodyLen + r * 0.5), fny * (bodyLen + r * 0.5) - sl(8));
+  // Eye dot
+  ctx.fillStyle = '#fff';
+  ctx.beginPath();
+  ctx.arc(sl(3), headY - sl(2), sl(2), 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#000';
+  ctx.beginPath();
+  ctx.arc(sl(4), headY - sl(2), sl(1), 0, Math.PI * 2);
+  ctx.fill();
 
-  // HP bar
-  const barW = r * 2.2;
-  const barH = 5;
-  const barY = -r - sl(12);
-  ctx.fillStyle = '#333';
+  // -------
+  // HP BAR
+  // -------
+  const barW = sl(36);
+  const barH = sl(5);
+  const barY = headY - headR - sl(10);
+
+  ctx.fillStyle = '#1a0000cc';
   ctx.fillRect(-barW / 2, barY, barW, barH);
-  const hpPct = g.hp / g.maxHp;
-  ctx.fillStyle = hpPct > 0.5 ? '#39ff14' : hpPct > 0.25 ? '#ffcc00' : '#ff2244';
-  ctx.fillRect(-barW / 2, barY, barW * hpPct, barH);
-  ctx.strokeStyle = '#ffffff22';
-  ctx.lineWidth = 1;
-  ctx.strokeRect(-barW / 2, barY, barW, barH);
+  const pct = g.hp / g.maxHp;
+  const hpCol = pct > 0.5 ? '#39ff14' : pct > 0.25 ? '#ffcc00' : '#ff2244';
+  ctx.shadowColor = hpCol + '66';
+  ctx.shadowBlur = sl(6);
+  ctx.fillStyle = hpCol;
+  ctx.fillRect(-barW / 2 + 1, barY + 1, (barW - 2) * pct, barH - 2);
+  ctx.shadowBlur = 0;
 
-  // Name
-  ctx.font = `700 ${sl(10)}px Nunito`;
+  ctx.fillStyle = '#ffffff22';
+  ctx.fillRect(-barW / 2, barY, barW, sl(2));
+
+  // HP text
+  ctx.font = `700 ${sl(8)}px Nunito`;
   ctx.fillStyle = '#fff';
   ctx.shadowColor = '#000';
-  ctx.shadowBlur = 4;
-  ctx.fillText(name, 0, barY - sl(4));
+  ctx.shadowBlur = sl(4);
+  ctx.textAlign = 'center';
+  ctx.fillText(Math.ceil(g.hp), 0, barY + barH + sl(10));
+  ctx.shadowBlur = 0;
+
+  // Name
+  ctx.font = `700 ${sl(9)}px Nunito`;
+  ctx.fillStyle = '#fff';
+  ctx.shadowColor = '#000';
+  ctx.shadowBlur = sl(3);
+  ctx.fillText(name, 0, barY - sl(3));
   ctx.shadowBlur = 0;
 
   ctx.restore();
@@ -347,18 +433,25 @@ function lighten(hex, amt) {
   const n = parseInt(hex.replace('#', ''), 16);
   return `rgb(${Math.min(255,(n>>16)+amt)},${Math.min(255,((n>>8)&255)+amt)},${Math.min(255,(n&255)+amt)})`;
 }
+function darken(hex, amt) {
+  const n = parseInt(hex.replace('#', ''), 16);
+  return `rgb(${Math.max(0,(n>>16)-amt)},${Math.max(0,((n>>8)&255)-amt)},${Math.max(0,(n&255)-amt)})`;
+}
 
 // ─── LOOP ───────────────────────────────────────────────────────────
 function loop() {
   ctx.clearRect(0, 0, W, H);
-  drawArena();
+  drawBackground();
+  drawGround();
   gladState.forEach(g => drawGladiator(g));
+  updateParticles();
+  drawParticles();
   requestAnimationFrame(loop);
 }
 requestAnimationFrame(loop);
 
 // ─── PREVIEW ────────────────────────────────────────────────────────
-function renderMarblePreview() {
+function renderPreview() {
   const el = document.getElementById('marblePreview');
   el.innerHTML = marbles.map(m => {
     const s = m.image
@@ -377,7 +470,7 @@ socket.on('stateUpdate', s => {
   roundNum  = s.round;
   scores    = s.scores || {};
   preloadImages();
-  renderMarblePreview();
+  renderPreview();
   document.getElementById('roundLabel').textContent = 'RONDA ' + s.round;
 
   const overlay = document.getElementById('overlay');
@@ -387,17 +480,20 @@ socket.on('stateUpdate', s => {
     gladState = [];
   } else {
     overlay.style.display = 'flex';
-    const txt = { setup:'Configurando...', lobby:'Esperando...', ready:'Preparados...', results:'Batalla finalizada' };
+    const txt = { setup:'Configurando...', lobby:'Esperando...', ready:'Preparados...', results:'\u{1f3c6} Batalla finalizada!' };
     document.querySelector('#overlay p').textContent = txt[s.phase] || s.phase;
-  }
-
-  if (s.phase === 'results') {
-    document.querySelector('#overlay p').textContent = '\u{1f3c6} \u00a1Batalla finalizada!';
   }
 });
 
 socket.on('battleState', data => {
   gladState = data;
+  data.forEach(g => {
+    if (g.hp <= 0 || g.hp === g.maxHp) return;
+    const prev = gladState.find(p => p.id === g.id);
+    if (prev && prev.hp > g.hp && g.hp > 0) {
+      spawnHitParticles(g.x, g.y, '#ffcc00');
+    }
+  });
 });
 
 socket.on('battleWinner', data => {
@@ -415,8 +511,7 @@ socket.on('battleWinner', data => {
 
   if (data.winnerSound) {
     const a = new Audio(data.winnerSound);
-    a.loop = true;
-    a.volume = userVolume;
+    a.loop = true; a.volume = userVolume;
     a.play().catch(() => {});
     currentAudio = a;
   }
@@ -425,6 +520,7 @@ socket.on('battleWinner', data => {
 socket.on('battleReset', () => {
   stopAudio();
   gladState = [];
+  particles = [];
   document.getElementById('winner').style.display = 'none';
   document.getElementById('overlay').style.display = 'flex';
   document.querySelector('#overlay p').textContent = '\u00a1Preparados!';
