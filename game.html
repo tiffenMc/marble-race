@@ -152,7 +152,7 @@ function drawStick(g) {
 
   // ── LEGS ──
   ctx.lineCap = 'round';
-  const k = 1.6;
+  const k = 1.8;
   const lw = sl(2.5 * k);
   const legSw = Math.sin(walk) * 0.5;
   const legY = sl(10 * k), legLen = sl(10 * k);
@@ -200,7 +200,7 @@ function drawStick(g) {
   ctx.fillStyle = '#fff';
   if (g.weapon) ctx.fillText(g.weapon.icon, faX + sl(4 * k), faY + sl(1 * k));
 
-  const hr = sl(6 * k);
+  const hr = sl(10 * k);
   const hy = -hr - sl(1 * k);
   const img = m && marbleImages[m.id];
   ctx.save();
@@ -218,9 +218,11 @@ function drawStick(g) {
   }
   ctx.restore();
 
-  // Eye dot
-  ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(sl(3 * k), hy - sl(1 * k), sl(2 * k), 0, Math.PI * 2); ctx.fill();
-  ctx.fillStyle = '#000'; ctx.beginPath(); ctx.arc(sl(4 * k), hy - sl(1 * k), sl(1 * k), 0, Math.PI * 2); ctx.fill();
+  // Eye dot (solo si no hay imagen)
+  if (!img || !img.complete || !img.naturalWidth) {
+    ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(sl(4 * k), hy - sl(2 * k), sl(2.5 * k), 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#000'; ctx.beginPath(); ctx.arc(sl(5 * k), hy - sl(2 * k), sl(1.5 * k), 0, Math.PI * 2); ctx.fill();
+  }
 
   // ── HP BAR ──
   const bw = sl(30 * k), bh = sl(4 * k), by = hy - hr - sl(8 * k);
