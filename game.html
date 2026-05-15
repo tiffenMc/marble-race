@@ -288,10 +288,14 @@ socket.on('stateUpdate', s => {
   document.getElementById('roundLabel').textContent = 'RONDA ' + s.round;
   const overlay = document.getElementById('overlay');
   if (s.phase === 'racing') {
-    overlay.style.display = 'none'; document.getElementById('winner').style.display = 'none'; gladState = []; prevHp = {};
+    overlay.style.display = 'none';
+    document.getElementById('winner').style.display = 'none';
+    gladState = []; prevHp = {};
+  } else if (s.phase === 'results') {
+    // No mostrar overlay cuando hay ganador visible
   } else {
     overlay.style.display = 'flex';
-    const txt = { setup:'Configurando...', lobby:'Esperando...', ready:'Preparados...', results:'\u{1f3c6} Batalla finalizada!' };
+    const txt = { setup:'Configurando...', lobby:'Esperando...', ready:'Preparados...' };
     document.querySelector('#overlay p').textContent = txt[s.phase] || s.phase;
   }
 });
@@ -308,6 +312,7 @@ socket.on('battleState', data => {
 
 socket.on('battleWinner', data => {
   stopAudio();
+  document.getElementById('overlay').style.display = 'none';
   document.getElementById('winner').style.display = 'flex';
   document.getElementById('winnerName').textContent = data.winnerName || 'Nadie';
   const m = marbles.find(mm => mm.id === data.winnerId);
