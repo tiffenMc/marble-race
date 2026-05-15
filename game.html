@@ -1,85 +1,516 @@
 <!DOCTYPE html>
-justify-content:center;
-flex-direction:column;
-background:#000c;
-color:white;
-font-size:50px;
-z-index:10;
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MARBLE RACE</title>
+<script src="/socket.io/socket.io.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #0a0a0f; overflow: hidden; font-family: 'Nunito', sans-serif; }
+canvas { display: block; }
+
+/* ── HUD ── */
+#hud {
+  position: fixed; top: 0; left: 0; right: 0;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 18px;
+  background: linear-gradient(#000000cc, transparent);
+  pointer-events: none;
+  z-index: 20;
+}
+#roundLabel {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.6rem; letter-spacing: 4px;
+  color: #ffcc00;
+  text-shadow: 0 0 12px #ffcc0088;
+}
+#leaderHud {
+  display: flex; align-items: center; gap: 10px;
+  background: #ffffff15; border-radius: 30px;
+  padding: 6px 16px;
+}
+#leaderAvatar {
+  width: 36px; height: 36px; border-radius: 50%;
+  border: 2px solid gold; object-fit: cover;
+}
+#leaderName {
+  font-weight: 900; font-size: .9rem; color: #ffcc00;
+  max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 
-#winner img{
-width:150px;
-height:150px;
-border-radius:50%;
-object-fit:cover;
-margin-top:20px;
-border:5px solid gold;
+/* ── CONTROL DE VOLUMEN ── */
+#volBox {
+  position: fixed; bottom: 20px; right: 20px;
+  background: #13131eee; border: 1px solid #ffffff22;
+  border-radius: 14px; padding: 14px 18px;
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  z-index: 30; pointer-events: all;
+}
+#volBox label {
+  font-size: .7rem; font-weight: 700; color: #6666aa;
+  text-transform: uppercase; letter-spacing: 1px;
+}
+#volSlider {
+  -webkit-appearance: none;
+  width: 120px; height: 6px;
+  border-radius: 3px; background: #333;
+  outline: none; cursor: pointer;
+}
+#volSlider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px; height: 18px; border-radius: 50%;
+  background: #ff6b2b; cursor: pointer;
+}
+#volIcon { font-size: 1.4rem; }
+
+/* ── WINNER ── */
+#winner {
+  display: none;
+  position: fixed; inset: 0;
+  flex-direction: column; align-items: center; justify-content: center;
+  background: #000000cc;
+  color: white;
+  z-index: 40;
+  text-align: center;
+}
+#winner h1 {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 4rem; letter-spacing: 6px;
+  color: #ffcc00; text-shadow: 0 0 40px #ffcc0099;
+  margin-bottom: 10px;
+}
+#winnerName {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 2.6rem; letter-spacing: 3px; color: #fff;
+}
+#winnerImg {
+  width: 150px; height: 150px; border-radius: 50%;
+  object-fit: cover; border: 5px solid gold;
+  margin-top: 16px; display: none;
+}
+
+/* ── LOBBY / WAITING ── */
+#overlay {
+  position: fixed; inset: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  background: #0a0a0f;
+  z-index: 50;
+}
+#overlay h1 {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 4rem; letter-spacing: 6px;
+  color: #ff6b2b; text-shadow: 0 0 30px #ff6b2b88;
+  margin-bottom: 8px;
+}
+#overlay p { color: #6666aa; font-size: .95rem; }
+#marblePreview {
+  display: flex; flex-wrap: wrap; gap: 12px;
+  justify-content: center; margin-top: 28px; max-width: 500px;
+}
+.previewBall {
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  font-size: .75rem; color: #aaa; font-weight: 700;
+}
+.previewBall .ball {
+  width: 54px; height: 54px; border-radius: 50%; object-fit: cover;
+  border: 3px solid #ffffff33;
 }
 </style>
 </head>
 <body>
 
+<!-- Overlay de espera -->
+<div id="overlay">
+  <h1>🎱 MARBLE RACE</h1>
+  <p>Esperando al host…</p>
+  <div id="marblePreview"></div>
+</div>
+
+<!-- Canvas del juego -->
 <canvas id="c"></canvas>
 
+<!-- HUD superior -->
+<div id="hud">
+  <div id="roundLabel">RONDA 1</div>
+  <div id="leaderHud" style="display:none">
+    <img id="leaderAvatar" src="" alt="">
+    <div id="leaderName">—</div>
+  </div>
+</div>
+
+<!-- Control de volumen -->
+<div id="volBox">
+  <div id="volIcon">🔊</div>
+  <label>Volumen</label>
+  <input type="range" id="volSlider" min="0" max="1" step="0.05" value="0.6">
+</div>
+
+<!-- Pantalla de ganador -->
 <div id="winner">
-<div>🏆 GANADOR 🏆</div>
-<div id="winnerName"></div>
-<div id="winnerImg"></div>
+  <h1>🏆 GANADOR 🏆</h1>
+  <div id="winnerName"></div>
+  <img id="winnerImg" src="" alt="">
 </div>
 
 <script>
+// ────────────────────────────────────────────────────────────────────
+// CONSTANTES (deben coincidir con server.js)
+// ────────────────────────────────────────────────────────────────────
+const WORLD_W  = 800;
+const TRACK_H  = 7000;
+const FINISH_Y = TRACK_H - 200;
+const R        = 22;
 
-const socket = io();
-
-const Engine = Matter.Engine;
-const World = Matter.World;
-const Bodies = Matter.Bodies;
-const Body = Matter.Body;
-const Runner = Matter.Runner;
-
-const engine = Engine.create();
-engine.gravity.y = 0.7;
-
-const world = engine.world;
-const runner = Runner.create();
-Runner.run(runner, engine);
-
-const canvas = document.getElementById("c");
-const ctx = canvas.getContext("2d");
-
+// ────────────────────────────────────────────────────────────────────
+// CANVAS
+// ────────────────────────────────────────────────────────────────────
+const canvas = document.getElementById('c');
+const ctx    = canvas.getContext('2d');
 let W = window.innerWidth;
 let H = window.innerHeight;
-
-canvas.width = W;
+canvas.width  = W;
 canvas.height = H;
-
-window.addEventListener("resize",()=>{
-W = window.innerWidth;
-H = window.innerHeight;
-canvas.width = W;
-canvas.height = H;
+window.addEventListener('resize', () => {
+  W = window.innerWidth; H = window.innerHeight;
+  canvas.width = W; canvas.height = H;
 });
 
-let marbles = [];
-let state = {};
-let started = false;
-let raceEnded = false;
-let currentLeader = null;
+// ────────────────────────────────────────────────────────────────────
+// ESTADO LOCAL
+// ────────────────────────────────────────────────────────────────────
+let marbles     = [];   // datos visuales de las canicas
+let positions   = [];   // posiciones recibidas del servidor
+let trackBodies = [];   // geometría del escenario
+let state       = { phase: 'setup', round: 1, currentLeader: null };
+let leaderIdNow = null;
+let raceEnded   = false;
+let cameraY     = 0;    // offset de cámara
 
-const TRACK_HEIGHT = 8000;
-const FINISH_Y = TRACK_HEIGHT - 300;
+// ────────────────────────────────────────────────────────────────────
+// AUDIO DEL LÍDER
+// ────────────────────────────────────────────────────────────────────
+const audios      = {};   // id → HTMLAudioElement
+let   currentAudio = null;
+let   userVolume   = 0.6;
 
-const audios = {};
-let currentAudio = null;
+document.getElementById('volSlider').addEventListener('input', e => {
+  userVolume = parseFloat(e.target.value);
+  if (currentAudio) currentAudio.volume = userVolume;
+  document.getElementById('volIcon').textContent =
+    userVolume === 0 ? '🔇' : userVolume < 0.4 ? '🔉' : '🔊';
+});
 
-function seededRandom(seed){
-return function(){
-seed = (seed * 9301 + 49297) % 233280;
-return seed / 233280;
+function switchLeaderAudio(leaderId) {
+  if (leaderIdNow === leaderId) return;
+  leaderIdNow = leaderId;
+
+  // Parar audio anterior con fade
+  if (currentAudio) {
+    const old = currentAudio;
+    const fade = setInterval(() => {
+      if (old.volume > 0.05) {
+        old.volume = Math.max(0, old.volume - 0.05);
+      } else {
+        old.pause();
+        old.currentTime = 0;
+        clearInterval(fade);
+      }
+    }, 50);
+    currentAudio = null;
+  }
+
+  if (!leaderId) return;
+
+  const marble = marbles.find(m => m.id === leaderId);
+  if (!marble || !marble.sound) return;
+
+  // Crear o reutilizar el audio del nuevo líder
+  if (!audios[leaderId]) {
+    const a = new Audio(marble.sound);
+    a.loop   = true;
+    a.volume = 0;
+    audios[leaderId] = a;
+  }
+
+  const a = audios[leaderId];
+  currentAudio = a;
+  a.play().catch(() => {});
+
+  // Fade in
+  const fadeIn = setInterval(() => {
+    if (a.volume < userVolume - 0.05) {
+      a.volume = Math.min(userVolume, a.volume + 0.05);
+    } else {
+      a.volume = userVolume;
+      clearInterval(fadeIn);
+    }
+  }, 50);
 }
+
+function stopAllAudio() {
+  Object.values(audios).forEach(a => { a.pause(); a.currentTime = 0; });
+  currentAudio = null;
+  leaderIdNow  = null;
 }
 
-function clearWorld(){
-const all = Matter.Composite.allBodies(world);
-all.forEach(b=>World.remove(world,b));
+// ────────────────────────────────────────────────────────────────────
+// HUD
+// ────────────────────────────────────────────────────────────────────
+function updateLeaderHud(leaderId) {
+  const m = marbles.find(m => m.id === leaderId);
+  const hud = document.getElementById('leaderHud');
+  if (!m) { hud.style.display = 'none'; return; }
+  hud.style.display = 'flex';
+  document.getElementById('leaderName').textContent = m.name;
+  const av = document.getElementById('leaderAvatar');
+  if (m.image) { av.src = m.image; av.style.display = 'block'; }
+  else         { av.style.display = 'none'; }
+}
+
+// ────────────────────────────────────────────────────────────────────
+// DIBUJO DEL ESCENARIO
+// ────────────────────────────────────────────────────────────────────
+function drawTrack() {
+  ctx.save();
+  ctx.fillStyle = '#2a1f1f';
+  ctx.fillRect(0, 0, W, H);
+
+  // Línea de meta
+  const finY = FINISH_Y - cameraY;
+  if (finY > 0 && finY < H) {
+    ctx.strokeStyle = '#ffcc00';
+    ctx.lineWidth   = 4;
+    ctx.setLineDash([16, 8]);
+    ctx.beginPath();
+    ctx.moveTo(0, finY); ctx.lineTo(W, finY);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.font = '700 16px Nunito';
+    ctx.fillStyle = '#ffcc00';
+    ctx.fillText('🏁 META', W / 2 - 30, finY - 8);
+  }
+
+  // Escenario (rampas, bumpers)
+  trackBodies.forEach(b => {
+    const sy = b.y - cameraY;
+    if (sy < -100 || sy > H + 100) return; // culling
+
+    ctx.save();
+    ctx.translate(b.x, sy);
+    ctx.rotate(b.angle);
+
+    if (b.radius) {
+      // Bumper circular
+      ctx.beginPath();
+      ctx.arc(0, 0, b.radius, 0, Math.PI * 2);
+      ctx.fillStyle   = '#ff6b2b';
+      ctx.shadowColor = '#ff6b2b';
+      ctx.shadowBlur  = 12;
+      ctx.fill();
+    } else if (b.label === 'wall') {
+      ctx.fillStyle = '#333355';
+      ctx.fillRect(-b.width / 2, -b.height / 2, b.width, b.height);
+    } else {
+      // Rampa
+      ctx.fillStyle = '#4455aa';
+      ctx.shadowColor = '#8899ff44';
+      ctx.shadowBlur  = 8;
+      ctx.beginPath();
+      ctx.roundRect(-b.width / 2, -b.height / 2, b.width, b.height, 4);
+      ctx.fill();
+    }
+
+    ctx.restore();
+  });
+
+  ctx.restore();
+}
+
+// ────────────────────────────────────────────────────────────────────
+// DIBUJO DE CANICAS
+// ────────────────────────────────────────────────────────────────────
+// Precargamos imágenes
+const marbleImages = {};
+function preloadImages() {
+  marbles.forEach(m => {
+    if (m.image && !marbleImages[m.id]) {
+      const img = new Image();
+      img.src = m.image;
+      marbleImages[m.id] = img;
+    }
+  });
+}
+
+function drawMarbles() {
+  positions.forEach(pos => {
+    const m = marbles.find(m => m.id === pos.id);
+    if (!m) return;
+    const sx = pos.x * (W / WORLD_W);  // escalar X al ancho de pantalla
+    const sy = pos.y - cameraY;
+    if (sy < -60 || sy > H + 60) return;
+
+    ctx.save();
+    ctx.translate(sx, sy);
+    ctx.rotate(pos.angle);
+
+    // Sombra
+    ctx.shadowColor = '#00000066';
+    ctx.shadowBlur  = 8;
+
+    const img = marbleImages[m.id];
+    if (img && img.complete) {
+      // Foto de perfil circular
+      ctx.beginPath();
+      ctx.arc(0, 0, R, 0, Math.PI * 2);
+      ctx.clip();
+      ctx.drawImage(img, -R, -R, R * 2, R * 2);
+    } else {
+      // Canica de color
+      const grad = ctx.createRadialGradient(-R * 0.35, -R * 0.35, 2, 0, 0, R);
+      grad.addColorStop(0, lighten(m.color, 60));
+      grad.addColorStop(1, m.color);
+      ctx.beginPath();
+      ctx.arc(0, 0, R, 0, Math.PI * 2);
+      ctx.fillStyle = grad;
+      ctx.fill();
+    }
+
+    // Borde del líder
+    if (pos.id === leaderIdNow) {
+      ctx.beginPath();
+      ctx.arc(0, 0, R + 3, 0, Math.PI * 2);
+      ctx.strokeStyle = '#ffcc00';
+      ctx.lineWidth   = 3;
+      ctx.shadowColor = '#ffcc00';
+      ctx.shadowBlur  = 14;
+      ctx.stroke();
+    }
+
+    ctx.restore();
+
+    // Nombre debajo
+    ctx.font = `900 12px Nunito`;
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#fff';
+    ctx.shadowColor = '#000';
+    ctx.shadowBlur  = 4;
+    ctx.fillText(m.name, sx, sy + R + 14);
+    ctx.shadowBlur = 0;
+  });
+}
+
+function lighten(hex, amt) {
+  const n = parseInt(hex.replace('#',''), 16);
+  const r = Math.min(255, (n >> 16) + amt);
+  const g = Math.min(255, ((n >> 8) & 0xff) + amt);
+  const b = Math.min(255, (n & 0xff) + amt);
+  return `rgb(${r},${g},${b})`;
+}
+
+// ────────────────────────────────────────────────────────────────────
+// CÁMARA (sigue al líder)
+// ────────────────────────────────────────────────────────────────────
+function updateCamera() {
+  if (!positions.length) return;
+  // Seguir a la canica más avanzada (mayor Y)
+  const leader = positions.reduce((a, b) => a.y > b.y ? a : b);
+  const targetY = leader.y - H * 0.35;
+  cameraY += (targetY - cameraY) * 0.08; // suavizado
+  cameraY = Math.max(0, cameraY);
+}
+
+// ────────────────────────────────────────────────────────────────────
+// LOOP DE RENDER
+// ────────────────────────────────────────────────────────────────────
+function loop() {
+  if (state.phase === 'racing' || state.phase === 'results') {
+    ctx.clearRect(0, 0, W, H);
+    updateCamera();
+    drawTrack();
+    drawMarbles();
+  }
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+// ────────────────────────────────────────────────────────────────────
+// OVERLAY DE CANICAS (lobby / ready)
+// ────────────────────────────────────────────────────────────────────
+function renderMarblePreview() {
+  const el = document.getElementById('marblePreview');
+  el.innerHTML = marbles.map(m => {
+    const ballStyle = m.image
+      ? `background:url('${m.image}') center/cover; border-color:${m.color};`
+      : `background:${m.color};`;
+    return `
+      <div class="previewBall">
+        <div class="ball" style="${ballStyle}"></div>
+        <span>${m.name}</span>
+      </div>`;
+  }).join('');
+}
+
+// ────────────────────────────────────────────────────────────────────
+// SOCKET
+// ────────────────────────────────────────────────────────────────────
+const socket = io();
+
+socket.on('stateUpdate', s => {
+  state   = s;
+  marbles = s.marbles || [];
+  preloadImages();
+  renderMarblePreview();
+  document.getElementById('roundLabel').textContent = 'RONDA ' + s.round;
+
+  const overlay = document.getElementById('overlay');
+  if (s.phase === 'racing') {
+    overlay.style.display = 'none';
+    document.getElementById('winner').style.display = 'none';
+    raceEnded = false;
+  } else if (s.phase === 'lobby' || s.phase === 'setup') {
+    overlay.style.display = 'flex';
+    document.getElementById('overlay').querySelector('p').textContent =
+      s.phase === 'lobby' ? 'La carrera está a punto de comenzar…' : 'Esperando al host…';
+  } else if (s.phase === 'ready') {
+    overlay.style.display = 'flex';
+    document.getElementById('overlay').querySelector('p').textContent = '¡Preparados!';
+  }
+
+  if (s.currentLeader && s.phase === 'racing') {
+    switchLeaderAudio(s.currentLeader);
+    updateLeaderHud(s.currentLeader);
+  }
+});
+
+socket.on('trackData', data => {
+  trackBodies = data;
+  cameraY     = 0;
+});
+
+socket.on('positions', data => {
+  positions = data;
+});
+
+socket.on('leaderChange', leaderId => {
+  switchLeaderAudio(leaderId);
+  updateLeaderHud(leaderId);
+});
+
+socket.on('raceWinner', data => {
+  if (raceEnded) return;
+  raceEnded = true;
+  stopAllAudio();
+
+  const m = marbles.find(m => m.id === data.winnerId);
+  const el = document.getElementById('winner');
+  el.style.display = 'flex';
+  document.getElementById('winnerName').textContent = m ? m.name : '???';
+  const img = document.getElementById('winnerImg');
+  if (m && m.image) { img.src = m.image; img.style.display = 'block'; }
+  else              { img.style.display = 'none'; }
+});
+</script>
+</body>
 </html>
