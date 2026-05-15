@@ -211,8 +211,18 @@ io.on('connection', socket => {
     socket.emit('trackData', gameState.trackBodies);
   }
 
-  socket.on('setMarbles', marbles => {
-    gameState.marbles = marbles;
+
+socket.on('setMarbles', marbles => {
+
+  gameState.marbles = marbles.map(m => ({
+    id: m.id,
+    name: m.name,
+    color: m.color,
+    image: m.image || null,
+    sound: m.sound || null,
+    soundName: m.soundName || ''
+  }));
+  
     marbles.forEach(m => { if (gameState.scores[m.id] === undefined) gameState.scores[m.id] = 0; });
     broadcastState();
   });
