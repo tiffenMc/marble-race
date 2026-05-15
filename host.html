@@ -134,7 +134,6 @@ h1 { font-family: 'Bebas Neue', sans-serif; font-size: 3rem; letter-spacing: 4px
 
         <hr class="divider">
         <div class="phase-label">Acciones de emergencia</div>
-        <!-- NUEVO: reset de carrera (conserva canicas y puntos) -->
         <button class="btn btn-warning" id="btnResetRace">⏹ Parar carrera actual</button>
         <button class="btn btn-danger" id="btnReset" style="margin-top:4px">🗑️ Reset total (borra todo)</button>
       </div>
@@ -251,7 +250,6 @@ document.getElementById('btnReady').addEventListener('click', function() { socke
 document.getElementById('btnStart').addEventListener('click', function() { socket.emit('startRace'); });
 document.getElementById('btnNext').addEventListener('click',  function() { socket.emit('nextRound'); });
 
-// NUEVO: parar carrera actual (conserva canicas y puntos)
 document.getElementById('btnResetRace').addEventListener('click', function() {
   if (!confirm('¿Parar la carrera actual? Se conservan las canicas y los puntos.')) return;
   socket.emit('resetRace');
@@ -297,7 +295,6 @@ function updateUI(state) {
   document.getElementById('btnReady').disabled  = state.phase !== 'lobby';
   document.getElementById('btnStart').disabled  = state.phase !== 'ready';
 
-  // Botón "parar carrera" solo activo cuando hay carrera en curso
   document.getElementById('btnResetRace').disabled = (state.phase !== 'racing' && state.phase !== 'results');
 
   var btnNext = document.getElementById('btnNext');
