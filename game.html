@@ -155,305 +155,521 @@ canvas { display: block; }
 </div>
 
 <script>
+// ────────────────────────────────────────────────────────────────────
+// CONSTANTES — deben coincidir con server.js
+// ────────────────────────────────────────────────────────────────────
 const WORLD_W  = 800;
 const TRACK_H  = 7000;
 const FINISH_Y = TRACK_H - 200;
 const R        = 22;
 
+// ────────────────────────────────────────────────────────────────────
+// CANVAS
+// ────────────────────────────────────────────────────────────────────
 const canvas = document.getElementById('c');
 const ctx    = canvas.getContext('2d');
-
 let W = window.innerWidth;
 let H = window.innerHeight;
-
 canvas.width  = W;
 canvas.height = H;
-
 window.addEventListener('resize', () => {
-
   W = window.innerWidth;
   H = window.innerHeight;
-
   canvas.width  = W;
   canvas.height = H;
 });
 
-function scaleX(x) {
-  return x * (W / WORLD_W);
-}
+// ────────────────────────────────────────────────────────────────────
+// ESCALA
+// ────────────────────────────────────────────────────────────────────
+function scaleX(x) { return x * (W / WORLD_W); }
+function scaleY(y) { return y; }
+function scaleLen(l) { return l * (W / WORLD_W); }
 
-function scaleLen(l) {
-  return l * (W / WORLD_W);
-}
-
+// ────────────────────────────────────────────────────────────────────
+// ESTADO LOCAL
+// ────────────────────────────────────────────────────────────────────
 let marbles     = [];
 let positions   = [];
 let trackBodies = [];
-
-let state = {
-  phase: 'setup',
-  round: 1,
-  currentLeader: null
-};
-
+let state       = { phase: 'setup', round: 1, currentLeader: null };
 let leaderIdNow = null;
 let raceEnded   = false;
 let cameraY     = 0;
 
-// AUDIO FIX
+// ────────────────────────────────────────────────────────────────────
+// AUDIO DEL LÍDER
+// ────────────────────────────────────────────────────────────────────
 const audios       = {};
-let currentAudio   = null;
-let userVolume     = 0.6;
-let fadeInterval   = null;
+let   currentAudio = null;
+let   userVolume   = 0.6;
 
-window.addEventListener('click', () => {
-
-  Object.values(audios).forEach(a => {
-
-    a.play()
-      .then(() => {
-        a.pause();
-        a.currentTime = 0;
-      })
-      .catch(() => {});
-  });
-
-}, { once: true });
-
-document.getElementById('volSlider')
-.addEventListener('input', e => {
-
+document.getElementById('volSlider').addEventListener('input', e => {
   userVolume = parseFloat(e.target.value);
-
-  if (currentAudio) {
-    currentAudio.volume = userVolume;
-  }
-
+  if (currentAudio) currentAudio.volume = userVolume;
   document.getElementById('volIcon').textContent =
-    userVolume === 0
-      ? '🔇'
-      : userVolume < 0.4
-        ? '🔉'
-        : '🔊';
+    userVolume === 0 ? '🔇' : userVolume < 0.4 ? '🔉' : '🔊';
 });
 
 function switchLeaderAudio(leaderId) {
-
   if (leaderIdNow === leaderId) return;
-
   leaderIdNow = leaderId;
 
-  if (fadeInterval) {
-    clearInterval(fadeInterval);
-    fadeInterval = null;
-  }
-
   if (currentAudio) {
-
-    const oldAudio = currentAudio;
-
-    fadeInterval = setInterval(() => {
-
-      oldAudio.volume -= 0.05;
-
-      if (oldAudio.volume <= 0.05) {
-
-        oldAudio.pause();
-        oldAudio.currentTime = 0;
-        oldAudio.volume = userVolume;
-
-        clearInterval(fadeInterval);
+    const old = currentAudio;
+    const fade = setInterval(() => {
+      if (old.volume > 0.05) {
+        old.volume = Math.max(0, old.volume - 0.05);
+      } else {
+        old.pause();
+        old.currentTime = 0;
+        clearInterval(fade);
       }
-
-    }, 40);
+    }, 50);
+    currentAudio = null;
   }
-
-  currentAudio = null;
 
   if (!leaderId) return;
 
   const marble = marbles.find(m => m.id === leaderId);
-
   if (!marble || !marble.sound) return;
 
   if (!audios[leaderId]) {
-
-    const audio = new Audio(marble.sound);
-
-    audio.loop = true;
-    audio.preload = 'auto';
-    audio.volume = 0;
-
-    audios[leaderId] = audio;
+    const a = new Audio(marble.sound);
+    a.loop   = true;
+    a.volume = 0;
+    audios[leaderId] = a;
   }
 
-  const audio = audios[leaderId];
+  const a = audios[leaderId];
+  currentAudio = a;
 
-  currentAudio = audio;
+  a.load();
 
-  audio.play().catch(() => {});
+  a.oncanplaythrough = () => {
+    a.play().catch(() => {});
+  };
 
-  fadeInterval = setInterval(() => {
-
-    if (audio.volume < userVolume) {
-
-      audio.volume = Math.min(
-        userVolume,
-        audio.volume + 0.05
-      );
-
+  const fadeIn = setInterval(() => {
+    if (a.volume < userVolume - 0.05) {
+      a.volume = Math.min(userVolume, a.volume + 0.05);
     } else {
-
-      clearInterval(fadeInterval);
+      a.volume = userVolume;
+      clearInterval(fadeIn);
     }
-
-  }, 40);
+  }, 50);
 }
 
 function stopAllAudio() {
-
-  if (fadeInterval) {
-
-    clearInterval(fadeInterval);
-    fadeInterval = null;
-  }
-
-  Object.values(audios).forEach(audio => {
-
-    audio.pause();
-    audio.currentTime = 0;
-    audio.volume = userVolume;
-  });
-
+  Object.values(audios).forEach(a => { a.pause(); a.currentTime = 0; });
   currentAudio = null;
   leaderIdNow  = null;
 }
 
-function drawTrack() {
+// ────────────────────────────────────────────────────────────────────
+// HUD
+// ────────────────────────────────────────────────────────────────────
+function updateLeaderHud(leaderId) {
+  const m   = marbles.find(m => m.id === leaderId);
+  const hud = document.getElementById('leaderHud');
+  if (!m) { hud.style.display = 'none'; return; }
+  hud.style.display = 'flex';
+  document.getElementById('leaderName').textContent = m.name;
+  const av = document.getElementById('leaderAvatar');
+  if (m.image) { av.src = m.image; av.style.display = 'block'; }
+  else         { av.style.display = 'none'; }
+}
 
-  ctx.fillStyle = '#111';
+// ────────────────────────────────────────────────────────────────────
+// DIBUJO DEL ESCENARIO — colores y estilos por tipo de elemento
+// ────────────────────────────────────────────────────────────────────
+function drawTrack() {
+  ctx.save();
+
+  // Fondo degradado vertical
+  const bgGrad = ctx.createLinearGradient(0, 0, 0, H);
+  bgGrad.addColorStop(0, '#0d0d1a');
+  bgGrad.addColorStop(1, '#1a0d0d');
+  ctx.fillStyle = bgGrad;
   ctx.fillRect(0, 0, W, H);
 
-  trackBodies.forEach(b => {
+  // Líneas de fondo decorativas (efecto grid tenue)
+  ctx.strokeStyle = '#ffffff06';
+  ctx.lineWidth = 1;
+  for (let gx = 0; gx < W; gx += 60) {
+    ctx.beginPath(); ctx.moveTo(gx, 0); ctx.lineTo(gx, H); ctx.stroke();
+  }
+  for (let gy = -cameraY % 60; gy < H; gy += 60) {
+    ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(W, gy); ctx.stroke();
+  }
 
+  // Línea de meta elaborada
+  const finY = scaleY(FINISH_Y) - cameraY;
+  if (finY > -40 && finY < H + 40) {
+    // Fondo de meta
+    const metaGrad = ctx.createLinearGradient(0, finY - 20, 0, finY + 20);
+    metaGrad.addColorStop(0, '#ffcc0000');
+    metaGrad.addColorStop(0.5, '#ffcc0044');
+    metaGrad.addColorStop(1, '#ffcc0000');
+    ctx.fillStyle = metaGrad;
+    ctx.fillRect(0, finY - 20, W, 40);
+
+    // Línea punteada
+    ctx.strokeStyle = '#ffcc00';
+    ctx.lineWidth   = 3;
+    ctx.setLineDash([20, 10]);
+    ctx.beginPath();
+    ctx.moveTo(0, finY); ctx.lineTo(W, finY);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Texto
+    ctx.font = '900 18px Nunito';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#ffcc00';
+    ctx.shadowColor = '#ffcc00';
+    ctx.shadowBlur  = 16;
+    ctx.fillText('🏁  M E T A  🏁', W / 2, finY - 10);
+    ctx.shadowBlur = 0;
+  }
+
+  // Cuerpos del escenario
+  trackBodies.forEach(b => {
     const sx = scaleX(b.x);
     const sy = b.y - cameraY;
 
     if (sy < -300 || sy > H + 300) return;
 
     ctx.save();
-
     ctx.translate(sx, sy);
     ctx.rotate(b.angle);
 
-    if (b.radius) {
-
+    // ── BUMPER estándar ──
+    if (b.label === 'bumper') {
+      const r = scaleLen(b.radius);
+      // Halo exterior
+      const halo = ctx.createRadialGradient(0, 0, r * 0.5, 0, 0, r * 1.8);
+      halo.addColorStop(0, '#ff6b2b55');
+      halo.addColorStop(1, '#ff6b2b00');
       ctx.beginPath();
-      ctx.arc(0, 0, scaleLen(b.radius), 0, Math.PI * 2);
-      ctx.fillStyle = '#ff6b2b';
+      ctx.arc(0, 0, r * 1.8, 0, Math.PI * 2);
+      ctx.fillStyle = halo;
       ctx.fill();
+      // Cuerpo
+      const grad = ctx.createRadialGradient(-r * 0.3, -r * 0.3, 1, 0, 0, r);
+      grad.addColorStop(0, '#ffaa55');
+      grad.addColorStop(1, '#cc3300');
+      ctx.beginPath();
+      ctx.arc(0, 0, r, 0, Math.PI * 2);
+      ctx.fillStyle = grad;
+      ctx.shadowColor = '#ff6b2b';
+      ctx.shadowBlur  = 18;
+      ctx.fill();
+      ctx.shadowBlur = 0;
+      // Borde
+      ctx.strokeStyle = '#ff9944';
+      ctx.lineWidth = 2;
+      ctx.stroke();
 
-    } else {
+    // ── BUMPER GRANDE (embudo central) ──
+    } else if (b.label === 'bumper_big') {
+      const r = scaleLen(b.radius);
+      const grad = ctx.createRadialGradient(-r * 0.3, -r * 0.3, 2, 0, 0, r);
+      grad.addColorStop(0, '#ff44cc');
+      grad.addColorStop(1, '#880055');
+      ctx.beginPath();
+      ctx.arc(0, 0, r, 0, Math.PI * 2);
+      ctx.fillStyle = grad;
+      ctx.shadowColor = '#ff44cc';
+      ctx.shadowBlur  = 24;
+      ctx.fill();
+      ctx.shadowBlur = 0;
+      ctx.strokeStyle = '#ff88ee';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+      // Cruz decorativa
+      ctx.strokeStyle = '#ffffff44';
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(-r, 0); ctx.lineTo(r, 0); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(0, -r); ctx.lineTo(0, r); ctx.stroke();
 
-      ctx.fillStyle = '#6677dd';
+    // ── BUMPERS ZONA META ──
+    } else if (b.label === 'bumper_finish') {
+      const r = scaleLen(b.radius);
+      const grad = ctx.createRadialGradient(-r * 0.3, -r * 0.3, 1, 0, 0, r);
+      grad.addColorStop(0, '#ffee55');
+      grad.addColorStop(1, '#cc8800');
+      ctx.beginPath();
+      ctx.arc(0, 0, r, 0, Math.PI * 2);
+      ctx.fillStyle = grad;
+      ctx.shadowColor = '#ffcc00';
+      ctx.shadowBlur  = 20;
+      ctx.fill();
+      ctx.shadowBlur = 0;
+      ctx.strokeStyle = '#ffee99';
+      ctx.lineWidth = 2;
+      ctx.stroke();
 
-      ctx.fillRect(
-        -scaleLen(b.rw) / 2,
-        -b.rh / 2,
-        scaleLen(b.rw),
-        b.rh
-      );
+    } else if (b.rw !== null && b.rh !== null) {
+      const rw = scaleLen(b.rw);
+      const rh = scaleLen(b.rh);
+
+      // ── PARED ──
+      if (b.label === 'wall') {
+        const wallGrad = ctx.createLinearGradient(-rw / 2, 0, rw / 2, 0);
+        wallGrad.addColorStop(0, '#1a1a33');
+        wallGrad.addColorStop(0.5, '#2a2a55');
+        wallGrad.addColorStop(1, '#1a1a33');
+        ctx.fillStyle = wallGrad;
+        ctx.fillRect(-rw / 2, -rh / 2, rw, rh);
+
+      // ── SUELO ──
+      } else if (b.label === 'floor') {
+        ctx.fillStyle = '#111122';
+        ctx.fillRect(-rw / 2, -rh / 2, rw, rh);
+        ctx.strokeStyle = '#3333aa44';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(-rw / 2, -rh / 2, rw, rh);
+
+      // ── PLATAFORMA CORTA (obstáculo) ──
+      } else if (b.label === 'platform') {
+        const platGrad = ctx.createLinearGradient(-rw / 2, -rh / 2, rw / 2, rh / 2);
+        platGrad.addColorStop(0, '#33aaff');
+        platGrad.addColorStop(1, '#0055aa');
+        ctx.fillStyle = platGrad;
+        ctx.shadowColor = '#33aaff';
+        ctx.shadowBlur  = 10;
+        ctx.fillRect(-rw / 2, -rh / 2, rw, rh);
+        ctx.shadowBlur = 0;
+        ctx.strokeStyle = '#88ccff';
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(-rw / 2, -rh / 2, rw, rh);
+
+      // ── EMBUDO ──
+      } else if (b.label === 'funnel') {
+        const funnelGrad = ctx.createLinearGradient(-rw / 2, 0, rw / 2, 0);
+        funnelGrad.addColorStop(0, '#aa44ff');
+        funnelGrad.addColorStop(1, '#5500cc');
+        ctx.fillStyle = funnelGrad;
+        ctx.shadowColor = '#aa44ff';
+        ctx.shadowBlur  = 12;
+        ctx.fillRect(-rw / 2, -rh / 2, rw, rh);
+        ctx.shadowBlur = 0;
+        ctx.strokeStyle = '#cc88ff';
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(-rw / 2, -rh / 2, rw, rh);
+
+      // ── RAMPA DE ACELERACIÓN ──
+      } else if (b.label === 'ramp_fast') {
+        const rampFastGrad = ctx.createLinearGradient(-rw / 2, 0, rw / 2, 0);
+        rampFastGrad.addColorStop(0, '#39ff14');
+        rampFastGrad.addColorStop(0.5, '#00cc00');
+        rampFastGrad.addColorStop(1, '#39ff14');
+        ctx.fillStyle = rampFastGrad;
+        ctx.shadowColor = '#39ff14';
+        ctx.shadowBlur  = 16;
+        ctx.fillRect(-rw / 2, -rh / 2, rw, rh);
+        ctx.shadowBlur = 0;
+        ctx.strokeStyle = '#88ff66';
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(-rw / 2, -rh / 2, rw, rh);
+        // Flechas indicadoras de velocidad
+        ctx.strokeStyle = '#ffffff55';
+        ctx.lineWidth = 1;
+        for (let fx = -rw / 2 + 20; fx < rw / 2 - 10; fx += 40) {
+          ctx.beginPath();
+          ctx.moveTo(fx, 0); ctx.lineTo(fx + 14, 0);
+          ctx.moveTo(fx + 9, -4); ctx.lineTo(fx + 14, 0); ctx.lineTo(fx + 9, 4);
+          ctx.stroke();
+        }
+
+      // ── RAMPA NORMAL ──
+      } else {
+        const rampGrad = ctx.createLinearGradient(0, -rh / 2, 0, rh / 2);
+        rampGrad.addColorStop(0, '#6677dd');
+        rampGrad.addColorStop(1, '#334499');
+        ctx.fillStyle = rampGrad;
+        ctx.shadowColor = '#8899ff44';
+        ctx.shadowBlur  = 10;
+        ctx.fillRect(-rw / 2, -rh / 2, rw, rh);
+        ctx.shadowBlur = 0;
+        ctx.strokeStyle = '#8899ff';
+        ctx.lineWidth   = 1.5;
+        ctx.strokeRect(-rw / 2, -rh / 2, rw, rh);
+        // Línea brillante en el borde superior
+        ctx.strokeStyle = '#aabbff88';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(-rw / 2, -rh / 2);
+        ctx.lineTo(rw / 2, -rh / 2);
+        ctx.stroke();
+      }
     }
 
     ctx.restore();
   });
+
+  ctx.restore();
 }
 
-function drawMarbles() {
-
-  const scaledR = scaleLen(R);
-
-  positions.forEach(pos => {
-
-    const marble = marbles.find(m => m.id === pos.id);
-
-    if (!marble) return;
-
-    const sx = scaleX(pos.x);
-    const sy = pos.y - cameraY;
-
-    ctx.beginPath();
-    ctx.arc(sx, sy, scaledR, 0, Math.PI * 2);
-
-    ctx.fillStyle = marble.color;
-    ctx.fill();
-
-    if (leaderIdNow === pos.id) {
-
-      ctx.beginPath();
-      ctx.arc(sx, sy, scaledR + 4, 0, Math.PI * 2);
-      ctx.strokeStyle = 'gold';
-      ctx.lineWidth = 3;
-      ctx.stroke();
+// ────────────────────────────────────────────────────────────────────
+// DIBUJO DE CANICAS
+// ────────────────────────────────────────────────────────────────────
+const marbleImages = {};
+function preloadImages() {
+  marbles.forEach(m => {
+    if (m.image && !marbleImages[m.id]) {
+      const img = new Image();
+      img.src = m.image;
+      marbleImages[m.id] = img;
     }
   });
 }
 
-function updateCamera() {
+function drawMarbles() {
+  const scaledR = scaleLen(R);
 
-  if (!positions.length) return;
+  positions.forEach(pos => {
+    const m = marbles.find(m => m.id === pos.id);
+    if (!m) return;
 
-  const leader = positions.reduce((a, b) =>
-    a.y > b.y ? a : b
-  );
+    const sx = scaleX(pos.x);
+    const sy = pos.y - cameraY;
+    if (sy < -60 || sy > H + 60) return;
 
-  const targetY = leader.y - H * 0.35;
+    ctx.save();
+    ctx.translate(sx, sy);
+    ctx.rotate(pos.angle);
 
-  cameraY += (targetY - cameraY) * 0.08;
+    ctx.shadowColor = '#00000066';
+    ctx.shadowBlur  = 8;
 
-  cameraY = Math.max(0, cameraY);
+    const img = marbleImages[m.id];
+    if (img && img.complete && img.naturalWidth > 0) {
+      ctx.beginPath();
+      ctx.arc(0, 0, scaledR, 0, Math.PI * 2);
+      ctx.clip();
+      ctx.drawImage(img, -scaledR, -scaledR, scaledR * 2, scaledR * 2);
+    } else {
+      const grad = ctx.createRadialGradient(
+        -scaledR * 0.35, -scaledR * 0.35, 2,
+        0, 0, scaledR
+      );
+      grad.addColorStop(0, lighten(m.color, 60));
+      grad.addColorStop(1, m.color);
+      ctx.beginPath();
+      ctx.arc(0, 0, scaledR, 0, Math.PI * 2);
+      ctx.fillStyle = grad;
+      ctx.fill();
+    }
+
+    // Corona del líder
+    if (pos.id === leaderIdNow) {
+      ctx.beginPath();
+      ctx.arc(0, 0, scaledR + 3, 0, Math.PI * 2);
+      ctx.strokeStyle = '#ffcc00';
+      ctx.lineWidth   = 3;
+      ctx.shadowColor = '#ffcc00';
+      ctx.shadowBlur  = 14;
+      ctx.stroke();
+    }
+
+    ctx.restore();
+
+    // Nombre (no rotado)
+    ctx.font = `900 12px Nunito`;
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#fff';
+    ctx.shadowColor = '#000';
+    ctx.shadowBlur  = 4;
+    ctx.fillText(m.name, sx, sy + scaledR + 14);
+    ctx.shadowBlur = 0;
+  });
 }
 
+function lighten(hex, amt) {
+  const n = parseInt(hex.replace('#', ''), 16);
+  const r = Math.min(255, (n >> 16) + amt);
+  const g = Math.min(255, ((n >> 8) & 0xff) + amt);
+  const b = Math.min(255, (n & 0xff) + amt);
+  return `rgb(${r},${g},${b})`;
+}
+
+// ────────────────────────────────────────────────────────────────────
+// CÁMARA — sigue a la canica más avanzada
+// ────────────────────────────────────────────────────────────────────
+function updateCamera() {
+  if (!positions.length) return;
+  const leader  = positions.reduce((a, b) => a.y > b.y ? a : b);
+  const targetY = leader.y - H * 0.35;
+  cameraY += (targetY - cameraY) * 0.08;
+  cameraY  = Math.max(0, cameraY);
+}
+
+// ────────────────────────────────────────────────────────────────────
+// LOOP DE RENDER
+// ────────────────────────────────────────────────────────────────────
 function loop() {
-
-  if (
-    state.phase === 'racing' ||
-    state.phase === 'results'
-  ) {
-
+  if (state.phase === 'racing' || state.phase === 'results') {
     ctx.clearRect(0, 0, W, H);
-
     updateCamera();
     drawTrack();
     drawMarbles();
   }
-
   requestAnimationFrame(loop);
 }
-
 requestAnimationFrame(loop);
 
+// ────────────────────────────────────────────────────────────────────
+// OVERLAY DE CANICAS
+// ────────────────────────────────────────────────────────────────────
+function renderMarblePreview() {
+  const el = document.getElementById('marblePreview');
+  el.innerHTML = marbles.map(m => {
+    const ballStyle = m.image
+      ? `background:url('${m.image}') center/cover; border-color:${m.color};`
+      : `background:${m.color};`;
+    return `
+      <div class="previewBall">
+        <div class="ball" style="${ballStyle}"></div>
+        <span>${m.name}</span>
+      </div>`;
+  }).join('');
+}
+
+// ────────────────────────────────────────────────────────────────────
+// SOCKET
+// ────────────────────────────────────────────────────────────────────
 const socket = io();
 
 socket.on('stateUpdate', s => {
-
   state   = s;
   marbles = s.marbles || [];
+  preloadImages();
+  renderMarblePreview();
+  document.getElementById('roundLabel').textContent = 'RONDA ' + s.round;
 
-  document.getElementById('roundLabel')
-    .textContent = 'RONDA ' + s.round;
+  const overlay = document.getElementById('overlay');
+  if (s.phase === 'racing') {
+    overlay.style.display = 'none';
+    document.getElementById('winner').style.display = 'none';
+    raceEnded = false;
+  } else if (s.phase === 'lobby' || s.phase === 'setup') {
+    overlay.style.display = 'flex';
+    document.getElementById('overlay').querySelector('p').textContent =
+      s.phase === 'lobby' ? 'La carrera está a punto de comenzar…' : 'Esperando al host…';
+  } else if (s.phase === 'ready') {
+    overlay.style.display = 'flex';
+    document.getElementById('overlay').querySelector('p').textContent = '¡Preparados!';
+  }
 
-  if (
-    s.currentLeader &&
-    s.phase === 'racing'
-  ) {
-
+  if (s.currentLeader && s.phase === 'racing') {
     switchLeaderAudio(s.currentLeader);
+    updateLeaderHud(s.currentLeader);
   }
 });
 
 socket.on('trackData', data => {
-
   trackBodies = data;
   cameraY     = 0;
 });
@@ -464,27 +680,34 @@ socket.on('positions', data => {
 
 socket.on('leaderChange', leaderId => {
   switchLeaderAudio(leaderId);
+  updateLeaderHud(leaderId);
 });
 
-socket.on('raceWinner', () => {
-
+socket.on('raceWinner', data => {
   if (raceEnded) return;
-
   raceEnded = true;
-
   stopAllAudio();
+
+  const m  = marbles.find(m => m.id === data.winnerId);
+  const el = document.getElementById('winner');
+  el.style.display = 'flex';
+  document.getElementById('winnerName').textContent = m ? m.name : '???';
+  const img = document.getElementById('winnerImg');
+  if (m && m.image) { img.src = m.image; img.style.display = 'block'; }
+  else              { img.style.display = 'none'; }
 });
 
 socket.on('raceReset', () => {
-
   stopAllAudio();
-
   raceEnded   = false;
   positions   = [];
   trackBodies = [];
   cameraY     = 0;
+  document.getElementById('winner').style.display  = 'none';
+  document.getElementById('overlay').style.display = 'flex';
+  document.getElementById('overlay').querySelector('p').textContent = '¡Preparados para la siguiente!';
+  document.getElementById('leaderHud').style.display = 'none';
 });
 </script>
-  
 </body>
 </html>
