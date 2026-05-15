@@ -22,39 +22,49 @@ const W_H    = 500;
 const TICK   = 1000 / 60;
 
 const WEAPONS = [
-  { name: 'Lancero',  dmg: 5,  kb: 3,  range: 65, cd: 1500, speed: 0.0012, icon: '\u{1f531}', type: 'melee' },
-  { name: 'Espada',   dmg: 15, kb: 8,  range: 22, cd: 1200, speed: 0.0025, icon: '\u{2694}\u{fe0f}', type: 'melee' },
-  { name: 'Arquero',  dmg: 4,  kb: 1,  range: 95, cd: 2000, speed: 0.0018, icon: '\u{1f3f9}', type: 'ranged' },
-  { name: 'Katana',   dmg: 10, kb: 5,  range: 18, cd: 450,  speed: 0.0045, icon: '\u{1f5e1}\u{fe0f}', type: 'melee' },
-  { name: 'Maza',     dmg: 18, kb: 14, range: 26, cd: 1800, speed: 0.001,  icon: '\u{1f528}', type: 'melee' },
-  { name: 'Martillo', dmg: 14, kb: 10, range: 24, cd: 1400, speed: 0.0015, icon: '\u{1f528}', type: 'melee' },
-  { name: 'Hacha',    dmg: 13, kb: 7,  range: 28, cd: 1000, speed: 0.0022, icon: '\u{1fa93}', type: 'melee' },
-  { name: 'Ballesta', dmg: 7,  kb: 2,  range: 80, cd: 2200, speed: 0.0015, icon: '\u{1f3f9}', type: 'ranged' },
-  { name: 'Daga',     dmg: 6,  kb: 2,  range: 16, cd: 300,  speed: 0.005,  icon: '\u{1f5e1}\u{fe0f}', type: 'melee' },
-  { name: 'Bast\u00f3n', dmg: 8,  kb: 6,  range: 40, cd: 900,  speed: 0.003,  icon: '\u{1fa86}', type: 'melee' },
-  { name: 'Hoz',      dmg: 7,  kb: 3,  range: 20, cd: 400,  speed: 0.0035, icon: '\u{1f5e1}\u{fe0f}', type: 'melee' },
-  { name: 'Pu\u00f1os', dmg: 3,  kb: 1,  range: 14, cd: 200,  speed: 0.006,  icon: '\u{1f44a}', type: 'melee' },
-  { name: 'Escudo',   dmg: 2,  kb: 8,  range: 18, cd: 500,  speed: 0.003,  icon: '\u{1f6e1}\u{fe0f}', type: 'melee' },
-  { name: 'Lanza',    dmg: 9,  kb: 5,  range: 50, cd: 1300, speed: 0.002,  icon: '\u{1f531}', type: 'melee' },
-  { name: 'Patada',   dmg: 5,  kb: 6,  range: 20, cd: 600,  speed: 0.004,  icon: '\u{1f9b6}', type: 'melee' },
-  { name: 'Vara',     dmg: 6,  kb: 4,  range: 45, cd: 800,  speed: 0.0028, icon: '\u{1fa84}', type: 'melee' },
-  { name: 'Alabarda', dmg: 11, kb: 7,  range: 48, cd: 1500, speed: 0.0016, icon: '\u{2694}\u{fe0f}', type: 'melee' },
-  { name: 'Mandoble', dmg: 16, kb: 9,  range: 34, cd: 1600, speed: 0.0013, icon: '\u{2694}\u{fe0f}', type: 'melee' },
-  { name: 'Honda',    dmg: 3,  kb: 1,  range: 85, cd: 1500, speed: 0.002,  icon: '\u{1f300}', type: 'ranged' },
-  { name: 'Cimitarra',dmg: 11, kb: 4,  range: 24, cd: 700,  speed: 0.0032, icon: '\u{1f5e1}\u{fe0f}', type: 'melee' },
+  { name: 'Maza Pesada',      dmg: 30, kb: 12, range: 26, cd: 4200, speed: 0.0007, icon: '\u{1f528}', type: 'melee' },
+  { name: 'Martillo Guerra',  dmg: 25, kb: 10, range: 24, cd: 3700, speed: 0.0009, icon: '\u{1f528}', type: 'melee' },
+  { name: 'Espad\u00f3n',       dmg: 28, kb: 9,  range: 34, cd: 4000, speed: 0.0008, icon: '\u{2694}\u{fe0f}', type: 'melee' },
+  { name: 'Alabarda',         dmg: 22, kb: 8,  range: 48, cd: 3600, speed: 0.001,  icon: '\u{2694}\u{fe0f}', type: 'melee' },
+  { name: 'Hacha Batalla',    dmg: 24, kb: 7,  range: 28, cd: 3400, speed: 0.0011, icon: '\u{1fa93}', type: 'melee' },
+  { name: 'Espada Larga',     dmg: 18, kb: 6,  range: 24, cd: 3000, speed: 0.0016, icon: '\u{2694}\u{fe0f}', type: 'melee' },
+  { name: 'Lanza',            dmg: 15, kb: 5,  range: 50, cd: 3200, speed: 0.0013, icon: '\u{1f531}', type: 'melee' },
+  { name: 'Lancero',          dmg: 10, kb: 4,  range: 65, cd: 3400, speed: 0.001,  icon: '\u{1f531}', type: 'melee' },
+  { name: 'Bast\u00f3n',        dmg: 14, kb: 6,  range: 42, cd: 2800, speed: 0.0018, icon: '\u{1fa86}', type: 'melee' },
+  { name: 'Cimitarra',        dmg: 16, kb: 5,  range: 26, cd: 2600, speed: 0.002,  icon: '\u{1f5e1}\u{fe0f}', type: 'melee' },
+  { name: 'Katana',           dmg: 12, kb: 4,  range: 20, cd: 2000, speed: 0.0026, icon: '\u{1f5e1}\u{fe0f}', type: 'melee' },
+  { name: 'Daga',             dmg: 8,  kb: 2,  range: 18, cd: 1600, speed: 0.003,  icon: '\u{1f5e1}\u{fe0f}', type: 'melee' },
+  { name: 'Hoz',              dmg: 10, kb: 3,  range: 22, cd: 1800, speed: 0.0028, icon: '\u{1f5e1}\u{fe0f}', type: 'melee' },
+  { name: 'Pu\u00f1os',        dmg: 5,  kb: 1,  range: 16, cd: 1200, speed: 0.0035, icon: '\u{1f44a}', type: 'melee' },
+  { name: 'Patada',           dmg: 8,  kb: 6,  range: 22, cd: 2200, speed: 0.0028, icon: '\u{1f9b6}', type: 'melee' },
+  { name: 'Arco Largo',       dmg: 6,  kb: 2,  range: 100,cd: 3800, speed: 0.0013, icon: '\u{1f3f9}', type: 'ranged' },
+  { name: 'Ballesta',         dmg: 10, kb: 3,  range: 85, cd: 4200, speed: 0.001,  icon: '\u{1f3f9}', type: 'ranged' },
+  { name: 'Honda',            dmg: 4,  kb: 1,  range: 90, cd: 3200, speed: 0.0016, icon: '\u{1f300}', type: 'ranged' },
+  { name: 'Vara M\u00e1gica',   dmg: 7,  kb: 3,  range: 60, cd: 2700, speed: 0.0018, icon: '\u{1fa84}', type: 'ranged' },
+  { name: 'Jabalina',         dmg: 12, kb: 5,  range: 70, cd: 3800, speed: 0.0011, icon: '\u{1f531}', type: 'ranged' },
+  { name: 'Escudo',           dmg: 4,  kb: 8,  range: 20, cd: 2400, speed: 0.0022, icon: '\u{1f6e1}\u{fe0f}', type: 'melee' },
+  { name: 'Red',              dmg: 3,  kb: 1,  range: 55, cd: 4200, speed: 0.0018, icon: '\u{1f3f9}', type: 'ranged' },
+  { name: 'L\u00e1tigo',       dmg: 7,  kb: 4,  range: 45, cd: 2400, speed: 0.0025, icon: '\u{1f3f9}', type: 'melee' },
+  { name: 'Hacha Arrojadiza', dmg: 8,  kb: 3,  range: 60, cd: 3000, speed: 0.002,  icon: '\u{1fa93}', type: 'ranged' },
+  { name: 'B\u00fameran',      dmg: 5,  kb: 1,  range: 80, cd: 3200, speed: 0.0018, icon: '\u{1fa81}', type: 'ranged' },
+  { name: 'Estrella Ninja',   dmg: 6,  kb: 1,  range: 60, cd: 2200, speed: 0.0022, icon: '\u{2b50}', type: 'ranged' },
+  { name: 'Soplete Fuego',    dmg: 8,  kb: 3,  range: 40, cd: 3000, speed: 0.0018, icon: '\u{1f525}', type: 'ranged' },
+  { name: 'Pico',             dmg: 14, kb: 5,  range: 26, cd: 2800, speed: 0.0018, icon: '\u{26cf}\u{fe0f}', type: 'melee' },
+  { name: 'Mayal',            dmg: 20, kb: 8,  range: 32, cd: 3600, speed: 0.0009, icon: '\u{1f528}', type: 'melee' },
+  { name: 'Tridente',         dmg: 16, kb: 6,  range: 44, cd: 3200, speed: 0.0014, icon: '\u{1f531}', type: 'melee' },
 ];
 
 const PLATFORMS = [
-  { x: W_W / 2,   y: 460, w: W_W,    h: 30  },
-  { x: 150,       y: 360, w: 160,    h: 12  },
-  { x: 500,       y: 360, w: 180,    h: 12  },
-  { x: 350,       y: 280, w: 200,    h: 12  },
-  { x: 120,       y: 280, w: 110,    h: 12  },
-  { x: 620,       y: 280, w: 110,    h: 12  },
-  { x: 400,       y: 200, w: 160,    h: 12  },
-  { x: 220,       y: 200, w: 100,    h: 12  },
-  { x: 580,       y: 200, w: 100,    h: 12  },
-  { x: 400,       y: 130, w: 120,    h: 12  },
+  { x: W_W / 2, y: 460, w: W_W,    h: 30 },
+  { x: 150,     y: 360, w: 160,    h: 12 },
+  { x: 500,     y: 360, w: 180,    h: 12 },
+  { x: 350,     y: 280, w: 200,    h: 12 },
+  { x: 120,     y: 280, w: 110,    h: 12 },
+  { x: 620,     y: 280, w: 110,    h: 12 },
+  { x: 400,     y: 200, w: 160,    h: 12 },
+  { x: 220,     y: 200, w: 100,    h: 12 },
+  { x: 580,     y: 200, w: 100,    h: 12 },
+  { x: 400,     y: 130, w: 120,    h: 12 },
 ];
 
 let gameState = {
@@ -96,7 +106,7 @@ function startBattle() {
 
   PLATFORMS.forEach(p => {
     World.add(engine.world, Bodies.rectangle(p.x, p.y, p.w, p.h, {
-      isStatic: true, restitution: 0.1, friction: 0.4, label: 'plat'
+      isStatic: true, restitution: 0.05, friction: 0.5, label: 'plat'
     }));
   });
 
@@ -105,10 +115,10 @@ function startBattle() {
   gladiators = [];
 
   gameState.marbles.forEach((m, i) => {
-    const x = 50 + rand() * (W_W - 100);
+    const x = 60 + rand() * (W_W - 120);
     const body = Bodies.rectangle(x, 300 + rand() * 100, 8, 24, {
-      restitution: 0.1, friction: 0.3, frictionAir: 0.008,
-      frictionAngular: 0.05, density: 0.001,
+      restitution: 0.05, friction: 0.3, frictionAir: 0.01,
+      frictionAngular: 0.06, density: 0.001,
       label: 'g_' + m.id
     });
     World.add(engine.world, body);
@@ -118,7 +128,7 @@ function startBattle() {
     gladiators.push({
       id: m.id, name: m.name, color: m.color,
       image: m.image, sound: m.sound,
-      hp: 100, maxHp: 100, weapon: wp,
+      hp: 200, maxHp: 200, weapon: wp,
       body, lastAttack: Date.now(), alive: true,
       walkPhase: rand() * Math.PI * 2
     });
@@ -149,8 +159,8 @@ function tick() {
         g.hp = Math.max(0, g.hp - p.dmg);
         const fl = Math.sqrt(dx * dx + dy * dy) || 1;
         Body.setVelocity(g.body, {
-          x: g.body.velocity.x + (dx / fl) * 3,
-          y: g.body.velocity.y - 2
+          x: g.body.velocity.x + (dx / fl) * 2,
+          y: g.body.velocity.y - 1.5
         });
         if (g.hp <= 0) { g.alive = false; World.remove(engine.world, g.body); }
         try { World.remove(engine.world, p.body); } catch(e) {}
@@ -178,49 +188,52 @@ function tick() {
     const dy = nearest.body.position.y - g.body.position.y;
     const dist = Math.sqrt(dx * dx + dy * dy) || 1;
 
-    // Walk toward
+    // Walk toward nearest enemy
     Body.applyForce(g.body, g.body.position, {
       x: (dx / dist) * g.weapon.speed,
       y: 0
     });
 
-    // Jump if enemy is above or below
+    // Jump if enemy is on different platform or randomly
     const onGround = g.body.position.y > 420 || PLATFORMS.some(p =>
       Math.abs(g.body.position.x - p.x) < p.w / 2 &&
-      Math.abs(g.body.position.y + 12 - p.y) < 5
+      Math.abs(g.body.position.y + 12 - p.y) < 6
     );
 
-    if (onGround && (dy < -30 || Math.random() < 0.01)) {
+    if (onGround && (dy < -40 || Math.random() < 0.008)) {
       Body.setVelocity(g.body, {
-        x: g.body.velocity.x + (dx / dist) * 1.5,
+        x: g.body.velocity.x + (dx / dist) * 1.2,
         y: -7 + Math.random() * -2
       });
     }
 
-    g.walkPhase += Math.abs(g.body.velocity.x) * 0.08;
+    g.walkPhase += Math.abs(g.body.velocity.x) * 0.06;
 
-    // Melee attack
+    // ─── Melee attack ────────────────────────────────────────
     if (g.weapon.type === 'melee' && dist < g.weapon.range + 12 && now - g.lastAttack > g.weapon.cd) {
       g.lastAttack = now;
-      const dmg = g.weapon.dmg + Math.floor(Math.random() * 3) - 1;
+      const dmg = g.weapon.dmg + Math.floor(Math.random() * 5) - 2;
       nearest.hp = Math.max(0, nearest.hp - dmg);
       Body.setVelocity(nearest.body, {
-        x: nearest.body.velocity.x + (dx / dist) * g.weapon.kb * 0.8,
-        y: nearest.body.velocity.y - g.weapon.kb * 0.3
+        x: nearest.body.velocity.x + (dx / dist) * g.weapon.kb,
+        y: nearest.body.velocity.y - g.weapon.kb * 0.4
       });
       if (nearest.hp <= 0) { nearest.alive = false; World.remove(engine.world, nearest.body); }
     }
 
-    // Ranged attack
-    if (g.weapon.type === 'ranged' && dist > 30 && dist < g.weapon.range + 50 && now - g.lastAttack > g.weapon.cd) {
+    // ─── Ranged attack ──────────────────────────────────────
+    if (g.weapon.type === 'ranged' && dist > 25 && dist < g.weapon.range + 50 && now - g.lastAttack > g.weapon.cd) {
       g.lastAttack = now;
-      const pBody = Bodies.circle(g.body.position.x + (dx / dist) * 15, g.body.position.y - 5, 3, {
-        restitution: 0.2, friction: 0, frictionAir: 0, density: 0.0005,
+      const pBody = Bodies.circle(g.body.position.x + (dx / dist) * 16, g.body.position.y - 4, 3, {
+        restitution: 0.1, friction: 0, frictionAir: 0, density: 0.0003,
         label: 'proj_' + g.id
       });
-      Body.setVelocity(pBody, { x: (dx / dist) * 8 + g.body.velocity.x, y: (dy / dist) * 4 - 1 });
+      Body.setVelocity(pBody, {
+        x: (dx / dist) * 7 + g.body.velocity.x * 0.3,
+        y: (dy / dist) * 3 - 0.5
+      });
       World.add(engine.world, pBody);
-      projectiles.push({ body: pBody, owner: g.id, dmg: g.weapon.dmg, life: 90 });
+      projectiles.push({ body: pBody, owner: g.id, dmg: g.weapon.dmg, life: 100 });
     }
   });
 
