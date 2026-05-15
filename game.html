@@ -177,6 +177,7 @@ let state       = { phase: 'setup', round: 1, currentLeader: null };
 let leaderIdNow = null;
 let raceEnded   = false;
 let cameraY     = 0;
+let fanPhase    = 0;
 
 let userVolume = 0.6;
 
@@ -309,24 +310,22 @@ function drawTrack() {
   const fanTop = scaleY(FAN_TOP) - cameraY;
   const fanBot = scaleY(FAN_BOT) - cameraY;
   if (fanBot > 0 && fanTop < H) {
-    const fanAlpha = 0.06 + 0.04 * Math.sin(Date.now() * 0.003);
-    const fanPhase = Math.sin(Date.now() * 0.002);
-    const visTop   = Math.max(0, fanTop);
-    const visBot   = Math.min(H, fanBot);
-    const visH     = visBot - visTop;
+    const visTop = Math.max(0, fanTop);
+    const visBot = Math.min(H, fanBot);
+    const visH   = visBot - visTop;
 
-    ctx.fillStyle = `rgba(0, 150, 255, ${fanAlpha})`;
+    ctx.fillStyle = `rgba(0, 150, 255, ${0.06 + 0.04 * Math.sin(Date.now() * 0.003)})`;
     ctx.fillRect(0, visTop, W, visH);
 
-    ctx.strokeStyle = `rgba(100, 200, 255, ${0.12 + 0.08 * Math.sin(Date.now() * 0.004)})`;
+    ctx.strokeStyle = `rgba(100, 200, 255, ${0.15 + 0.08 * Math.sin(Date.now() * 0.004)})`;
     ctx.lineWidth = 2;
     for (let lx = 0; lx < W; lx += 35) {
-      const wx = lx + fanPhase * 25;
+      const wx = lx + fanPhase * 30;
       if (wx < -10 || wx > W + 10) continue;
       ctx.setLineDash([8, 12]);
       ctx.beginPath();
       ctx.moveTo(wx, visTop);
-      ctx.lineTo(wx + 12 + fanPhase * 8, visBot);
+      ctx.lineTo(wx + 15 + fanPhase * 10, visBot);
       ctx.stroke();
     }
     ctx.setLineDash([]);
@@ -374,6 +373,43 @@ function drawTrack() {
       ctx.strokeStyle = isGold ? '#ffee99' : '#ff9944';
       ctx.lineWidth = 2;
       ctx.stroke();
+
+    } else if (b.label === 'spinner') {
+      const rw = scaleLen(b.rw);
+      const rh = scaleLen(b.rh);
+      const grad = ctx.createLinearGradient(-rw / 2, -rh / 2, rw / 2, rh / 2);
+      grad.addColorStop(0, '#ff3366');
+      grad.addColorStop(1, '#990033');
+      ctx.fillStyle = grad;
+      ctx.shadowColor = '#ff3366';
+      ctx.shadowBlur  = 14;
+      ctx.fillRect(-rw / 2, -rh / 2, rw, rh);
+      ctx.shadowBlur = 0;
+      ctx.strokeStyle = '#ff6699';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(-rw / 2, -rh / 2, rw, rh);
+      ctx.fillStyle = '#ffffff44';
+      ctx.fillRect(-rw / 2, -rh / 2, rw * 0.15, rh);
+      ctx.fillRect(rw / 2 - rw * 0.15, -rh / 2, rw * 0.15, rh);
+
+    } else if (b.label === 'pendulum') {
+      const rw = scaleLen(b.rw);
+      const rh = scaleLen(b.rh);
+      const grad = ctx.createLinearGradient(-rw / 2, -rh / 2, rw / 2, rh / 2);
+      grad.addColorStop(0, '#33ffaa');
+      grad.addColorStop(1, '#009966');
+      ctx.fillStyle = grad;
+      ctx.shadowColor = '#33ffaa';
+      ctx.shadowBlur  = 12;
+      ctx.fillRect(-rw / 2, -rh / 2, rw, rh);
+      ctx.shadowBlur = 0;
+      ctx.strokeStyle = '#66ffcc';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(-rw / 2, -rh / 2, rw, rh);
+      ctx.beginPath();
+      ctx.arc(rw / 2 - 8, 0, rh * 0.6, 0, Math.PI * 2);
+      ctx.fillStyle = '#ffffff33';
+      ctx.fill();
 
     } else if (b.rw !== null && b.rh !== null) {
       const rw = scaleLen(b.rw);
@@ -556,7 +592,8 @@ socket.on('trackData', data => {
 });
 
 socket.on('positions', data => {
-  positions = data;
+  positions = data.positions || data;
+  if (data.fanPhase !== undefined) fanPhase = data.fanPhase;
 });
 
 socket.on('leaderChange', leaderId => {
