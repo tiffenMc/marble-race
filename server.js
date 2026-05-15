@@ -49,169 +49,97 @@ function buildTrack(rand) {
   const bodies = [];
 
   const WALL_W = 15;
-  const wallL = Bodies.rectangle(WALL_W / 2,           TRACK_H / 2, WALL_W, TRACK_H, { isStatic: true, label: 'wall' });
+  const wallL = Bodies.rectangle(WALL_W / 2, TRACK_H / 2, WALL_W, TRACK_H, { isStatic: true, label: 'wall' });
   const wallR = Bodies.rectangle(WORLD_W - WALL_W / 2, TRACK_H / 2, WALL_W, TRACK_H, { isStatic: true, label: 'wall' });
-  const floor = Bodies.rectangle(WORLD_W / 2, TRACK_H + 10, WORLD_W, 20,   { isStatic: true, label: 'floor' });
-
+  const floor = Bodies.rectangle(WORLD_W / 2, TRACK_H + 10, WORLD_W, 20, { isStatic: true, label: 'floor' });
   wallL._rw = WALL_W;  wallL._rh = TRACK_H;
   wallR._rw = WALL_W;  wallR._rh = TRACK_H;
   floor._rw = WORLD_W; floor._rh = 20;
-
   bodies.push(wallL, wallR, floor);
 
-  // ─── RAMPAS PRINCIPALES (estilo zigzag amplio) ──────────────────────
-  // 30 rampas espaciadas ~220px. Cada rampa se solapa en X con la
-  // siguiente para que la canica siempre caiga sobre una superficie.
-  const RAMP_COUNT = 30;
+  // ─── RAMPLAS EN ZIGZAG CON SOLAPAMIENTO GARANTIZADO ────────────────
+  // Cada rampa empieza en su pared y apunta hacia el centro.
+  // Ancho mínimo 360px → las rampas izquierda y derecha SE SOLAPAN
+  // en el centro entre 40-120px. La canica SIEMPRE cae sobre la siguiente.
+  const RAMP_COUNT = 35;
   const GAP        = TRACK_H / (RAMP_COUNT + 1);
-  const MIN_GAP    = R * 2.5 + 6; // ~61px mínimo libre
-  const CORRIDOR   = WORLD_W - WALL_W * 2; // 770px útil
+  const MIN_RW     = 360;
+  const MAX_RW     = 480;
 
   for (let i = 0; i < RAMP_COUNT; i++) {
-    const y     = GAP * (i + 1);
-    const side  = i % 2 === 0 ? 'left' : 'right';
-    const rw    = 140 + rand() * 160;           // 140-300px
-    const deg   = 4 + rand() * 10;              // 4-14 grados
+    const y    = GAP * (i + 1);
+    const side = i % 2 === 0 ? 'left' : 'right';
+    const rw   = MIN_RW + rand() * (MAX_RW - MIN_RW);
+    const deg  = 5 + rand() * 8;
     const angle = deg * (Math.PI / 180) * (side === 'left' ? 1 : -1);
 
-    // La rampa arranca pegada a su pared y apunta hacia el centro
-    const margin = WALL_W + 5;                    // 20px desde el borde
-    const x = side === 'left'
-      ? margin + rw / 2
-      : WORLD_W - margin - rw / 2;
+    const x = side === 'left' ? WALL_W + rw / 2 : WORLD_W - WALL_W - rw / 2;
 
     const ramp = Bodies.rectangle(x, y, rw, 10, {
-      isStatic: true, angle, label: 'ramp', friction: 0.03, restitution: 0.35
+      isStatic: true, angle, label: 'ramp',
+      friction: 0.02, restitution: 0.35
     });
     ramp._rw = rw; ramp._rh = 10;
     bodies.push(ramp);
-
-    // Bumper al final de la rampa (desvía hacia el centro)
-    const bumpDir = side === 'left' ? 1 : -1;
-    const bumpX = x + bumpDir * (rw / 2 + 18 + rand() * 20);
-    const bumpR = 10 + rand() * 10;
-    const bump = Bodies.circle(bumpX, y + 20 + rand() * 15, bumpR, {
-      isStatic: true, label: 'bumper', restitution: 0.75, friction: 0
-    });
-    bump._radius = bumpR;
-    bodies.push(bump);
-
-    // Bumper pequeño en la pared opuesta (rebote)
-    const oppX = side === 'left' ? WORLD_W - margin - 10 : margin + 10;
-    const oppBump = Bodies.circle(oppX, y - 30 + rand() * 40, 8 + rand() * 6, {
-      isStatic: true, label: 'bumper', restitution: 0.8, friction: 0
-    });
-    oppBump._radius = oppBump.circleRadius;
-    bodies.push(oppBump);
   }
 
-  // ─── ZONA DE OBSTÁCULOS (estilo paintball) ─────────────────────────
-  // Obstáculos redondos dispersos con separación ≥ 60px.
-  // Cada grupo tiene 2-4 bumpers formando una "barrera" que obliga a
-  // las canicas a rodearlos, pero sin cerrar el paso.
-  const obsStartY = GAP * 3;
-  const obsEndY   = GAP * 27;
-
-  for (let row = 0; row < 18; row++) {
-    const y = obsStartY + (obsEndY - obsStartY) * (row / 17);
-    const count = 2 + Math.floor(rand() * 2); // 2-3 por fila (más espacios)
-    const spacing = CORRIDOR / (count + 1);
-    const offsetX = (rand() - 0.5) * spacing * 0.4;
-
-    for (let c = 0; c < count; c++) {
-      const centerX = spacing * (c + 1) + offsetX + (rand() - 0.5) * 20;
-      const cx = Math.max(WALL_W + 25, Math.min(WORLD_W - WALL_W - 25, centerX));
-      const rObs = 12 + rand() * 9; // 12-21px
-
-      // Verificar que no se solape con ningún otro obstáculo
-      const tooClose = bodies.some(b => {
-        if (!b.circleRadius) return false;
-        const dx = b.position.x - cx;
-        const dy = b.position.y - y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        return dist < (b.circleRadius + rObs + MIN_GAP);
-      });
-
-      if (tooClose) continue;
-
-      const obs = Bodies.circle(cx, y, rObs, {
-        isStatic: true, label: 'bumper', restitution: 0.65 + rand() * 0.2, friction: 0
-      });
-      obs._radius = rObs;
-      bodies.push(obs);
-    }
+  // ─── BUMPERS EN ZONA DE SOLAPAMIENTO (caos controlado) ─────────────
+  // Sólo en la región central donde ambas rampas se solapan,
+  // para que la canica siempre pueda pasar por izquierda o derecha.
+  for (let i = 2; i < RAMP_COUNT; i += 3) {
+    const y  = GAP * (i + 0.5);
+    const bx = WORLD_W / 2 + (rand() - 0.5) * 100;
+    const br = 10 + rand() * 10;
+    const b  = Bodies.circle(bx, y, br, {
+      isStatic: true, label: 'bumper',
+      restitution: 0.75 + rand() * 0.2, friction: 0
+    });
+    b._radius = br;
+    bodies.push(b);
   }
 
-  // ─── DEFLECTOR CENTRAL (cada ~1000px, redirige al centro) ──────────
-  const deflectorYs = [1200, 2200, 3200, 4200, 5200, 6200];
-  deflectorYs.forEach(y => {
-    const dSide = rand() > 0.5 ? 1 : -1;
-    const dx = WORLD_W / 2 + dSide * (100 + rand() * 80);
-    const dw = 140 + rand() * 60;
-    const dh = 10;
-    const dAngle = dSide * (0.15 + rand() * 0.2);
-    const def = Bodies.rectangle(dx, y, dw, dh, {
-      isStatic: true, angle: dAngle, label: 'ramp', friction: 0.02, restitution: 0.4
-    });
-    def._rw = dw; def._rh = dh;
-    bodies.push(def);
-
-    // Bumper a cada lado del deflector
-    [-1, 1].forEach(s => {
-      const bx = dx + s * (dw / 2 + 25);
-      const br = 12 + rand() * 8;
-      const bb = Bodies.circle(bx, y + 15, br, {
-        isStatic: true, label: 'bumper', restitution: 0.7, friction: 0
-      });
-      bb._radius = br;
-      bodies.push(bb);
-    });
+  // ─── ZONA RÁPIDA (pendiente suave, abierta) ───────────────────────
+  const fastY = TRACK_H * 0.68;
+  const fastRamp = Bodies.rectangle(WORLD_W / 2, fastY, 600, 12, {
+    isStatic: true, angle: 0.15, label: 'ramp_fast',
+    friction: 0.005, restitution: 0.3
   });
-
-  // ─── ZONA RÁPIDA (tramo abierto con pendiente) ─────────────────────
-  const fastY = TRACK_H * 0.7;
-  const fastRamp = Bodies.rectangle(WORLD_W / 2, fastY, 550, 12, {
-    isStatic: true, angle: 0.18, label: 'ramp_fast', friction: 0.005, restitution: 0.3
-  });
-  fastRamp._rw = 550; fastRamp._rh = 12;
+  fastRamp._rw = 600; fastRamp._rh = 12;
   bodies.push(fastRamp);
 
-  // Bumpers anchos y separados en la zona rápida
-  for (let j = 0; j < 5; j++) {
-    const bx = 80 + rand() * (WORLD_W - 160);
-    const by = fastY + 100 + rand() * 200;
-    const br = 18 + rand() * 12;
-    const bb = Bodies.circle(bx, by, br, {
-      isStatic: true, label: 'bumper', restitution: 0.8 + rand() * 0.15, friction: 0
+  for (let j = 0; j < 4; j++) {
+    const bx = 60 + rand() * (WORLD_W - 120);
+    const by = fastY + 80 + rand() * 150;
+    const br = 18 + rand() * 10;
+    const b  = Bodies.circle(bx, by, br, {
+      isStatic: true, label: 'bumper',
+      restitution: 0.8 + rand() * 0.15, friction: 0
     });
-    bb._radius = br;
-    bodies.push(bb);
+    b._radius = br;
+    bodies.push(b);
   }
 
-  // ─── PRE-META (embudo suave y abierto) ─────────────────────────────
-  const pmY = FINISH_Y - 400;
-  const fL = Bodies.rectangle(180, pmY, 300, 12, {
-    isStatic: true, angle: 0.45, label: 'wall', friction: 0.01, restitution: 0.4
+  // ─── PRE-META (embudo abierto + bumpers dorados) ──────────────────
+  const preY = FINISH_Y - 350;
+  const fL = Bodies.rectangle(220, preY, 380, 12, {
+    isStatic: true, angle: 0.35, label: 'wall', friction: 0.01, restitution: 0.4
   });
-  fL._rw = 300; fL._rh = 12;
-  const fR = Bodies.rectangle(620, pmY, 300, 12, {
-    isStatic: true, angle: -0.45, label: 'wall', friction: 0.01, restitution: 0.4
+  fL._rw = 380; fL._rh = 12;
+  const fR = Bodies.rectangle(580, preY, 380, 12, {
+    isStatic: true, angle: -0.35, label: 'wall', friction: 0.01, restitution: 0.4
   });
-  fR._rw = 300; fR._rh = 12;
+  fR._rw = 380; fR._rh = 12;
   bodies.push(fL, fR);
 
-  // Bumpers dorados guía (no bloquean)
-  const goldenYs = [pmY + 60, pmY + 140, pmY + 220];
-  goldenYs.forEach((gy, gi) => {
-    const spread = 80 + gi * 20;
-    [WORLD_W / 2 - spread, WORLD_W / 2, WORLD_W / 2 + spread].forEach(gx => {
-      const gb = Bodies.circle(gx, gy, 16, {
-        isStatic: true, label: 'bumper_finish', restitution: 0.8, friction: 0
-      });
-      gb._radius = 16;
-      bodies.push(gb);
+  for (let k = 0; k < 3; k++) {
+    const gy = preY + 50 + k * 60;
+    const gx = WORLD_W / 2 + (rand() - 0.5) * 140;
+    const gb = Bodies.circle(gx, gy, 16, {
+      isStatic: true, label: 'bumper_finish', restitution: 0.85, friction: 0
     });
-  });
+    gb._radius = 16;
+    bodies.push(gb);
+  }
 
   return bodies;
 }
