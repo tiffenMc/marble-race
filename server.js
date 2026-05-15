@@ -188,13 +188,30 @@ function tick() {
     const dy = nearest.body.position.y - g.body.position.y;
     const dist = Math.sqrt(dx * dx + dy * dy) || 1;
 
-    // Walk toward nearest enemy
-    Body.applyForce(g.body, g.body.position, {
-      x: (dx / dist) * g.weapon.speed,
-      y: 0
+    // Repulsi\u00f3n entre gladiadores (evita apelotonamiento)
+    gladiators.forEach(other => {
+      if (other.id === g.id || !other.alive) return;
+      const rdx = g.body.position.x - other.body.position.x;
+      const rdy = g.body.position.y - other.body.position.y;
+      const rd = Math.sqrt(rdx * rdx + rdy * rdy);
+      if (rd < 35 && rd > 0) {
+        const rep = 0.008 * (35 - rd) / 35;
+        Body.applyForce(g.body, g.body.position, { x: (rdx / rd) * rep, y: (rdy / rd) * rep });
+      }
     });
 
-    // Jump if enemy is on different platform or randomly
+    // Walk toward or flee
+    const flee = g.hp < g.maxHp * 0.25 && Math.random() < 0.04;
+    const moveDir = flee ? -1 : 1;
+    Body.applyForce(g.body, g.body.position, {
+      x: (dx / dist) * g.weapon.speed * moveDir,
+      y: 0
+    });
+    if (flee) {
+      Body.setVelocity(g.body, { x: g.body.velocity.x + (dx / dist) * 0.5, y: g.body.velocity.y - 1 });
+    }
+
+    // Jump if enemy is above/below or randomly
     const onGround = g.body.position.y > 420 || PLATFORMS.some(p =>
       Math.abs(g.body.position.x - p.x) < p.w / 2 &&
       Math.abs(g.body.position.y + 12 - p.y) < 6
@@ -202,7 +219,7 @@ function tick() {
 
     if (onGround && (dy < -40 || Math.random() < 0.008)) {
       Body.setVelocity(g.body, {
-        x: g.body.velocity.x + (dx / dist) * 1.2,
+        x: g.body.velocity.x + (dx / dist) * (flee ? -1 : 1.2),
         y: -7 + Math.random() * -2
       });
     }
