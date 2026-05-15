@@ -247,7 +247,7 @@ function renderMarbles() {
 
 // ── BOTONES ───────────────────────────────────────────────────────────────────
 document.getElementById('btnLobby').addEventListener('click', function() { socket.emit('setPhase', 'lobby'); });
-document.getElementById('btnReady').addEventListener('click', function() { socket.emit('setPhase', 'ready'); });
+document.getElementById('btnReady').addEventListener('click', function() { socket.emit('showTrack'); });
 document.getElementById('btnStart').addEventListener('click', function() { socket.emit('startRace'); });
 document.getElementById('btnNext').addEventListener('click',  function() { socket.emit('nextRound'); });
 
