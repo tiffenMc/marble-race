@@ -244,6 +244,17 @@ function drawStick(g) {
   ctx.fillText(name, 0, by - sl(2));
   ctx.shadowBlur = 0;
 
+  // ── CHARGE BAR ──
+  if (g.state === 'charge' && g.chargePct < 1) {
+    const cbw = sl(20 * k), cbh = sl(2 * k), cby = by - sl(1 * k);
+    ctx.fillStyle = '#333';
+    ctx.fillRect(-cbw / 2, cby, cbw, cbh);
+    ctx.fillStyle = '#ffaa00';
+    ctx.fillRect(-cbw / 2, cby, cbw * g.chargePct, cbh);
+    ctx.fillStyle = '#ffdd8844';
+    ctx.fillRect(-cbw / 2, cby, cbw, sl(1));
+  }
+
   ctx.restore(); // restore outer save (from line 144)
 }
 
