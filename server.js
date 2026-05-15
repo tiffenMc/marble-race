@@ -17,42 +17,43 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.static(path.join(__dirname)));
 app.use(express.json({ limit: '50mb' }));
 
-const WORLD_W = 800;
-const ARENA_H = 600;
-const R       = 25;
+const W_W     = 800;
+const W_H     = 500;
+const GROUND_Y = 440;
+const R       = 22;
 const TICK_MS = 1000 / 60;
 
 const WEAPONS = [
-  { name: 'Maza',     dmg: 18, kb: 8,  range: 35, cd: 1200, icon: '\u{1f528}' },
-  { name: 'Martillo', dmg: 15, kb: 7,  range: 30, cd: 1000, icon: '\u{1f528}' },
-  { name: 'Espada',   dmg: 12, kb: 4,  range: 40, cd: 800,  icon: '\u{2694}\u{fe0f}' },
-  { name: 'Katana',   dmg: 10, kb: 3,  range: 45, cd: 600,  icon: '\u{1f5e1}\u{fe0f}' },
-  { name: 'Arco',     dmg: 7,  kb: 2,  range: 80, cd: 1500, icon: '\u{1f3f9}' },
-  { name: 'Hacha',    dmg: 14, kb: 6,  range: 35, cd: 1100, icon: '\u{1fa93}' },
-  { name: 'Lanza',    dmg: 11, kb: 5,  range: 55, cd: 1300, icon: '\u{1f531}' },
-  { name: 'Ballesta', dmg: 9,  kb: 3,  range: 70, cd: 1800, icon: '\u{1f3f9}' },
-  { name: 'Cimitarra',dmg: 11, kb: 3,  range: 38, cd: 700,  icon: '\u{1f5e1}\u{fe0f}' },
-  { name: 'Alabarda', dmg: 13, kb: 6,  range: 50, cd: 1400, icon: '\u{2694}\u{fe0f}' },
-  { name: 'Hoz',      dmg: 8,  kb: 2,  range: 30, cd: 500,  icon: '\u{1f5e1}\u{fe0f}' },
-  { name: 'Mandoble', dmg: 16, kb: 5,  range: 42, cd: 1300, icon: '\u{2694}\u{fe0f}' },
-  { name: 'Pico',     dmg: 10, kb: 4,  range: 32, cd: 900,  icon: '\u{26cf}\u{fe0f}' },
-  { name: 'Vara',     dmg: 6,  kb: 3,  range: 60, cd: 700,  icon: '\u{1fa84}' },
-  { name: 'Pu\u00f1os',     dmg: 4,  kb: 1,  range: 20, cd: 300,  icon: '\u{1f44a}' },
-  { name: 'Patada',   dmg: 6,  kb: 4,  range: 25, cd: 500,  icon: '\u{1f9b6}' },
-  { name: 'Escudo',   dmg: 3,  kb: 6,  range: 22, cd: 600,  icon: '\u{1f6e1}\u{fe0f}' },
-  { name: 'Honda',    dmg: 5,  kb: 1,  range: 75, cd: 1000, icon: '\u{1f300}' },
-  { name: 'Daga',     dmg: 7,  kb: 2,  range: 25, cd: 400,  icon: '\u{1f5e1}\u{fe0f}' },
-  { name: 'Bast\u00f3n',  dmg: 9,  kb: 5,  range: 45, cd: 1000, icon: '\u{1fa86}' },
+  { name: 'Maza',     dmg: 18, kb: 10, range: 32, cd: 1200, icon: '\u{1f528}' },
+  { name: 'Martillo', dmg: 15, kb: 9,  range: 28, cd: 1000, icon: '\u{1f528}' },
+  { name: 'Espada',   dmg: 12, kb: 6,  range: 38, cd: 800,  icon: '\u{2694}\u{fe0f}' },
+  { name: 'Katana',   dmg: 10, kb: 4,  range: 42, cd: 600,  icon: '\u{1f5e1}\u{fe0f}' },
+  { name: 'Arco',     dmg: 7,  kb: 3,  range: 75, cd: 1500, icon: '\u{1f3f9}' },
+  { name: 'Hacha',    dmg: 14, kb: 7,  range: 32, cd: 1100, icon: '\u{1fa93}' },
+  { name: 'Lanza',    dmg: 11, kb: 6,  range: 50, cd: 1300, icon: '\u{1f531}' },
+  { name: 'Ballesta', dmg: 9,  kb: 4,  range: 65, cd: 1800, icon: '\u{1f3f9}' },
+  { name: 'Cimitarra',dmg: 11, kb: 5,  range: 36, cd: 700,  icon: '\u{1f5e1}\u{fe0f}' },
+  { name: 'Alabarda', dmg: 13, kb: 8,  range: 46, cd: 1400, icon: '\u{2694}\u{fe0f}' },
+  { name: 'Hoz',      dmg: 8,  kb: 3,  range: 28, cd: 500,  icon: '\u{1f5e1}\u{fe0f}' },
+  { name: 'Mandoble', dmg: 16, kb: 7,  range: 40, cd: 1300, icon: '\u{2694}\u{fe0f}' },
+  { name: 'Pico',     dmg: 10, kb: 5,  range: 30, cd: 900,  icon: '\u{26cf}\u{fe0f}' },
+  { name: 'Vara',     dmg: 6,  kb: 4,  range: 55, cd: 700,  icon: '\u{1fa84}' },
+  { name: 'Pu\u00f1os', dmg: 4,  kb: 2,  range: 18, cd: 300,  icon: '\u{1f44a}' },
+  { name: 'Patada',   dmg: 6,  kb: 5,  range: 24, cd: 500,  icon: '\u{1f9b6}' },
+  { name: 'Escudo',   dmg: 3,  kb: 8,  range: 20, cd: 600,  icon: '\u{1f6e1}\u{fe0f}' },
+  { name: 'Honda',    dmg: 5,  kb: 2,  range: 70, cd: 1000, icon: '\u{1f300}' },
+  { name: 'Daga',     dmg: 7,  kb: 3,  range: 22, cd: 400,  icon: '\u{1f5e1}\u{fe0f}' },
+  { name: 'Bast\u00f3n', dmg: 9,  kb: 6,  range: 42, cd: 1000, icon: '\u{1fa86}' },
 ];
 
 let gameState = {
   phase: 'setup', marbles: [], round: 1, scores: {}, winnerId: null
 };
 
-let engine       = null;
-let gladiators   = [];
-let battleLoop   = null;
-let tickCount    = 0;
+let engine     = null;
+let gladiators = [];
+let battleLoop = null;
+let tickCount  = 0;
 
 function broadcastState() {
   io.emit('stateUpdate', {
@@ -73,28 +74,26 @@ function startBattle() {
   gameState.phase = 'racing';
   gameState.winnerId = null;
 
-  engine = Engine.create({ gravity: { x: 0, y: 0 } });
+  engine = Engine.create({ gravity: { x: 0, y: 1 } });
 
-  const wallOpts = { isStatic: true, restitution: 0.4, friction: 0.1 };
+  const opts = { isStatic: true, restitution: 0.3, friction: 0.3 };
   World.add(engine.world, [
-    Bodies.rectangle(WORLD_W / 2, -10, WORLD_W, 20, wallOpts),
-    Bodies.rectangle(WORLD_W / 2, ARENA_H + 10, WORLD_W, 20, wallOpts),
-    Bodies.rectangle(-10, ARENA_H / 2, 20, ARENA_H, wallOpts),
-    Bodies.rectangle(WORLD_W + 10, ARENA_H / 2, 20, ARENA_H, wallOpts),
+    Bodies.rectangle(W_W / 2, GROUND_Y + 30, W_W, 60, opts),
+    Bodies.rectangle(-15, W_H / 2, 30, W_H, opts),
+    Bodies.rectangle(W_W + 15, W_H / 2, 30, W_H, opts),
   ]);
 
-  const rand = seededRandom(Date.now());
+  const rand  = seededRandom(Date.now());
   const count = gameState.marbles.length;
   gladiators = [];
 
   gameState.marbles.forEach((m, i) => {
-    const angle = (i / count) * Math.PI * 2;
-    const dist = 120 + rand() * 60;
-    const cx = WORLD_W / 2 + Math.cos(angle) * dist;
-    const cy = ARENA_H / 2 + Math.sin(angle) * dist;
+    const x = 80 + rand() * (W_W - 160);
+    const y = GROUND_Y - 30 - rand() * 20;
 
-    const body = Bodies.circle(cx, cy, R, {
-      restitution: 0.3, friction: 0.15, frictionAir: 0.015,
+    const body = Bodies.rectangle(x, y, 26, 44, {
+      restitution: 0.15, friction: 0.4, frictionAir: 0.005,
+      frictionAngular: 0.03, density: 0.002,
       label: 'g_' + m.id
     });
     World.add(engine.world, body);
@@ -106,7 +105,7 @@ function startBattle() {
       image: m.image, sound: m.sound,
       hp: 100, maxHp: 100, weapon: wp,
       body, lastAttack: 0, alive: true,
-      attackAnim: 0
+      walkPhase: rand() * Math.PI * 2
     });
   });
 
@@ -137,23 +136,31 @@ function tick() {
     const dy = nearest.body.position.y - g.body.position.y;
     const dist = Math.sqrt(dx * dx + dy * dy) || 1;
 
-    const moveF = 0.004;
+    const moveF = 0.003;
     Body.applyForce(g.body, g.body.position, {
       x: (dx / dist) * moveF,
-      y: (dy / dist) * moveF
+      y: 0
     });
 
-    if (dist < g.weapon.range + R && now - g.lastAttack > g.weapon.cd) {
+    if (g.body.position.y < GROUND_Y - 60 && Math.random() < 0.02) {
+      Body.setVelocity(g.body, {
+        x: g.body.velocity.x,
+        y: Math.min(g.body.velocity.y - 2, -4)
+      });
+    }
+
+    g.walkPhase += Math.abs(g.body.velocity.x) * 0.05;
+
+    if (dist < g.weapon.range + 25 && now - g.lastAttack > g.weapon.cd) {
       g.lastAttack = now;
-      g.attackAnim = 300;
 
       const dmg = g.weapon.dmg + Math.floor(Math.random() * 5) - 2;
       nearest.hp = Math.max(0, nearest.hp - dmg);
 
-      const kb = g.weapon.kb * 1.5;
+      const kb = g.weapon.kb * 0.8;
       Body.setVelocity(nearest.body, {
         x: nearest.body.velocity.x + (dx / dist) * kb,
-        y: nearest.body.velocity.y + (dy / dist) * kb
+        y: nearest.body.velocity.y - Math.abs(kb) * 0.4
       });
 
       if (nearest.hp <= 0) {
@@ -162,8 +169,6 @@ function tick() {
         World.remove(engine.world, nearest.body);
       }
     }
-
-    if (g.attackAnim > 0) g.attackAnim -= TICK_MS;
   });
 
   const alive = gladiators.filter(g => g.alive);
@@ -179,8 +184,10 @@ function tick() {
 
   const state = gladiators.map(g => ({
     id: g.id, x: g.body.position.x, y: g.body.position.y,
+    vx: g.body.velocity.x, vy: g.body.velocity.y,
     hp: g.hp, maxHp: g.maxHp, alive: g.alive,
-    weapon: g.weapon, attacking: now - g.lastAttack < 200
+    weapon: g.weapon, attacking: now - g.lastAttack < 250,
+    walkPhase: g.walkPhase
   }));
 
   io.emit('battleState', state);
