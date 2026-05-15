@@ -244,7 +244,12 @@ function switchLeaderAudio(leaderId) {
 
   const a = audios[leaderId];
   currentAudio = a;
+
+  a.load();
+
+a.oncanplaythrough = () => {
   a.play().catch(() => {});
+};
 
   const fadeIn = setInterval(() => {
     if (a.volume < userVolume - 0.05) {
