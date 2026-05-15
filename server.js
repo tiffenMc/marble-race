@@ -13,13 +13,13 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.static(path.join(__dirname)));
 app.use(express.json({ limit: '50mb' }));
 
-// ─── CONSTANTES (compartidas con el cliente) ──────────────────────────────────
-const WORLD_W  = 800;
-const TRACK_H  = 7000;
-const FINISH_Y = TRACK_H - 200;
-const R        = 22;
-const TICK_MS  = 1000 / 60;
-const EMIT_EVERY = 2;   // emitir cada 2 ticks = 30 Hz
+// ─── CONSTANTES ───────────────────────────────────────────────────────────────
+const WORLD_W    = 800;
+const TRACK_H    = 7000;
+const FINISH_Y   = TRACK_H - 200;
+const R          = 22;
+const TICK_MS    = 1000 / 60;
+const EMIT_EVERY = 2;
 
 // ─── ESTADO ───────────────────────────────────────────────────────────────────
 let gameState = {
@@ -47,14 +47,14 @@ function seededRandom(seed) {
 function buildTrack(rand) {
   const bodies = [];
 
-  // Paredes y suelo — guardamos dimensiones reales al crear
-  const wallL  = Bodies.rectangle(10,           TRACK_H / 2,  20,      TRACK_H, { isStatic: true, label: 'wall' });
-  const wallR  = Bodies.rectangle(WORLD_W - 10, TRACK_H / 2,  20,      TRACK_H, { isStatic: true, label: 'wall' });
-  const floor  = Bodies.rectangle(WORLD_W / 2,  TRACK_H + 10, WORLD_W, 20,     { isStatic: true, label: 'floor' });
+  const wallL = Bodies.rectangle(10,           TRACK_H / 2, 20,      TRACK_H, { isStatic: true, label: 'wall' });
+  const wallR = Bodies.rectangle(WORLD_W - 10, TRACK_H / 2, 20,      TRACK_H, { isStatic: true, label: 'wall' });
+  const floor = Bodies.rectangle(WORLD_W / 2,  TRACK_H + 10, WORLD_W, 20,    { isStatic: true, label: 'floor' });
 
-  wallL._rw = 20;      wallL._rh = TRACK_H;
-  wallR._rw = 20;      wallR._rh = TRACK_H;
-  floor._rw = WORLD_W; floor._rh = 20;
+  // Guardamos dimensiones REALES (pre-rotación) en propiedades propias
+  wallL._rw = 20;       wallL._rh = TRACK_H;
+  wallR._rw = 20;       wallR._rh = TRACK_H;
+  floor._rw = WORLD_W;  floor._rh = 20;
 
   bodies.push(wallL, wallR, floor);
 
@@ -62,16 +62,14 @@ function buildTrack(rand) {
   const GAP         = TRACK_H / (RAMP_COUNT + 1);
   const RAMP_W      = 320;
   const RAMP_T      = 16;
-  const SIDE_MARGIN = 20;    // la rampa toca la pared
+  const SIDE_MARGIN = 20;
 
   for (let i = 0; i < RAMP_COUNT; i++) {
     const y    = GAP * (i + 1);
     const side = i % 2 === 0 ? 'left' : 'right';
-    // Ángulo entre 8° y 18°
     const deg   = rand() * 10 + 8;
     const angle = deg * (Math.PI / 180) * (side === 'left' ? 1 : -1);
 
-    // La rampa sale de la pared y deja hueco libre al otro lado
     const x = side === 'left'
       ? SIDE_MARGIN + RAMP_W / 2
       : WORLD_W - SIDE_MARGIN - RAMP_W / 2;
@@ -79,11 +77,11 @@ function buildTrack(rand) {
     const ramp = Bodies.rectangle(x, y, RAMP_W, RAMP_T, {
       isStatic: true, angle, label: 'ramp', friction: 0.04, restitution: 0.15
     });
+    // Dimensiones reales de la rampa (sin rotar)
     ramp._rw = RAMP_W;
     ramp._rh = RAMP_T;
     bodies.push(ramp);
 
-    // Bumper circular en el extremo libre para redirigir canicas
     const bumpX = side === 'left'
       ? SIDE_MARGIN + RAMP_W + 60
       : WORLD_W - SIDE_MARGIN - RAMP_W - 60;
@@ -91,6 +89,7 @@ function buildTrack(rand) {
     const bump = Bodies.circle(bumpX, y + 30, 18, {
       isStatic: true, label: 'bumper', restitution: 0.7, friction: 0
     });
+    // Radio real del bumper
     bump._radius = 18;
     bodies.push(bump);
   }
@@ -98,16 +97,18 @@ function buildTrack(rand) {
   return bodies;
 }
 
-// Serializar: usa _rw/_rh (dimensiones reales) NO el bounding box
+// ─── SERIALIZACIÓN ────────────────────────────────────────────────────────────
+// IMPORTANTE: enviamos rw/rh (dimensiones reales pre-rotación) y radius.
+// El cliente NUNCA debe usar el bounding box de Matter (que está rotado).
 function serializeBody(b) {
   return {
     label:  b.label,
     x:      b.position.x,
     y:      b.position.y,
     angle:  b.angle,
-    rw:     b._rw    || null,   // ancho real (pre-rotación)
-    rh:     b._rh    || null,   // alto real
-    radius: b._radius || b.circleRadius || null
+    rw:     b._rw    !== undefined ? b._rw    : null,
+    rh:     b._rh    !== undefined ? b._rh    : null,
+    radius: b._radius !== undefined ? b._radius : (b.circleRadius || null)
   };
 }
 
@@ -120,14 +121,12 @@ function startPhysics() {
   engine = Engine.create();
   engine.gravity.y = 0.9;
 
-  const rand = seededRandom(gameState.seed);
+  const rand        = seededRandom(gameState.seed);
   const trackBodies = buildTrack(rand);
   World.add(engine.world, trackBodies);
 
-  // Serializar con dimensiones reales
   gameState.trackBodies = trackBodies.map(serializeBody);
 
-  // Canicas
   marbleBodies = [];
   const count = gameState.marbles.length;
   gameState.marbles.forEach((m, i) => {
@@ -140,7 +139,6 @@ function startPhysics() {
     marbleBodies.push({ id: m.id, body });
   });
 
-  // Loop manual — sin Runner (Node.js no tiene requestAnimationFrame)
   physicsLoop = setInterval(() => {
     Engine.update(engine, TICK_MS);
     tickCount++;
