@@ -11,7 +11,6 @@
 body { background: #0a0a0f; overflow: hidden; font-family: 'Nunito', sans-serif; }
 canvas { display: block; }
 
-/* ── HUD ── */
 #hud {
   position: fixed; top: 0; left: 0; right: 0;
   display: flex; align-items: center; justify-content: space-between;
@@ -40,7 +39,6 @@ canvas { display: block; }
   max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 
-/* ── CONTROL DE VOLUMEN ── */
 #volBox {
   position: fixed; bottom: 20px; right: 20px;
   background: #13131eee; border: 1px solid #ffffff22;
@@ -65,7 +63,6 @@ canvas { display: block; }
 }
 #volIcon { font-size: 1.4rem; }
 
-/* ── WINNER ── */
 #winner {
   display: none;
   position: fixed; inset: 0;
@@ -91,7 +88,6 @@ canvas { display: block; }
   margin-top: 16px; display: none;
 }
 
-/* ── LOBBY / WAITING ── */
 #overlay {
   position: fixed; inset: 0;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -121,51 +117,40 @@ canvas { display: block; }
 </head>
 <body>
 
-<!-- Overlay de espera -->
 <div id="overlay">
-  <h1>🎱 MARBLE RACE</h1>
-  <p>Esperando al host…</p>
+  <h1>&#x1f3b1; MARBLE RACE</h1>
+  <p>Esperando al host&#x2026;</p>
   <div id="marblePreview"></div>
 </div>
 
-<!-- Canvas del juego -->
 <canvas id="c"></canvas>
 
-<!-- HUD superior -->
 <div id="hud">
   <div id="roundLabel">RONDA 1</div>
   <div id="leaderHud" style="display:none">
     <img id="leaderAvatar" src="" alt="">
-    <div id="leaderName">—</div>
+    <div id="leaderName">&mdash;</div>
   </div>
 </div>
 
-<!-- Control de volumen -->
 <div id="volBox">
-  <div id="volIcon">🔊</div>
+  <div id="volIcon">&#x1f50a;</div>
   <label>Volumen</label>
   <input type="range" id="volSlider" min="0" max="1" step="0.05" value="0.6">
 </div>
 
-<!-- Pantalla de ganador -->
 <div id="winner">
-  <h1>🏆 GANADOR 🏆</h1>
+  <h1>&#x1f3c6; GANADOR &#x1f3c6;</h1>
   <div id="winnerName"></div>
   <img id="winnerImg" src="" alt="">
 </div>
 
 <script>
-// ────────────────────────────────────────────────────────────────────
-// CONSTANTES — deben coincidir con server.js
-// ────────────────────────────────────────────────────────────────────
 const WORLD_W  = 800;
 const TRACK_H  = 7000;
 const FINISH_Y = TRACK_H - 200;
 const R        = 22;
 
-// ────────────────────────────────────────────────────────────────────
-// CANVAS
-// ────────────────────────────────────────────────────────────────────
 const canvas = document.getElementById('c');
 const ctx    = canvas.getContext('2d');
 let W = window.innerWidth;
@@ -179,16 +164,10 @@ window.addEventListener('resize', () => {
   canvas.height = H;
 });
 
-// ────────────────────────────────────────────────────────────────────
-// ESCALA
-// ────────────────────────────────────────────────────────────────────
 function scaleX(x) { return x * (W / WORLD_W); }
 function scaleY(y) { return y; }
 function scaleLen(l) { return l * (W / WORLD_W); }
 
-// ────────────────────────────────────────────────────────────────────
-// ESTADO LOCAL
-// ────────────────────────────────────────────────────────────────────
 let marbles     = [];
 let positions   = [];
 let trackBodies = [];
@@ -197,78 +176,77 @@ let leaderIdNow = null;
 let raceEnded   = false;
 let cameraY     = 0;
 
-// ────────────────────────────────────────────────────────────────────
-// AUDIO DEL LÍDER
-// ────────────────────────────────────────────────────────────────────
-const audios       = {};
-let   currentAudio = null;
-let   userVolume   = 0.6;
+let userVolume = 0.6;
 
 document.getElementById('volSlider').addEventListener('input', e => {
   userVolume = parseFloat(e.target.value);
-  if (currentAudio) currentAudio.volume = userVolume;
   document.getElementById('volIcon').textContent =
-    userVolume === 0 ? '🔇' : userVolume < 0.4 ? '🔉' : '🔊';
+    userVolume === 0 ? '\u{1f507}' : userVolume < 0.4 ? '\u{1f509}' : '\u{1f50a}';
 });
 
-function switchLeaderAudio(leaderId) {
-  if (leaderIdNow === leaderId) return;
-  leaderIdNow = leaderId;
+// ─── AUDIO: SIN CACHE, SIEMPRE FRESCO ───────────────────────────────
+let currentAudio = null;
+let currentAudioId = null;
+let audioFader = null;
 
+function stopAudioCompletely() {
+  if (audioFader) { clearInterval(audioFader); audioFader = null; }
   if (currentAudio) {
-    const old = currentAudio;
-    const fade = setInterval(() => {
-      if (old.volume > 0.05) {
-        old.volume = Math.max(0, old.volume - 0.05);
-      } else {
-        old.pause();
-        old.currentTime = 0;
-        clearInterval(fade);
-      }
-    }, 50);
+    try {
+      currentAudio.pause();
+      currentAudio.currentTime = 0;
+      currentAudio.loop = false;
+      currentAudio.src = '';
+      currentAudio.load();
+    } catch (e) {}
     currentAudio = null;
   }
+  currentAudioId = null;
+  leaderIdNow = null;
+}
 
+function playLeaderAudio(leaderId) {
+  if (leaderId === currentAudioId && currentAudio) return;
+  stopAudioCompletely();
+  currentAudioId = leaderId;
   if (!leaderId) return;
 
   const marble = marbles.find(m => m.id === leaderId);
   if (!marble || !marble.sound) return;
 
-  if (!audios[leaderId]) {
-    const a = new Audio(marble.sound);
-    a.loop   = true;
-    a.volume = 0;
-    audios[leaderId] = a;
-  }
+  const audio = new Audio(marble.sound);
+  audio.loop = true;
+  audio.volume = 0;
+  currentAudio = audio;
 
-  const a = audios[leaderId];
-  currentAudio = a;
-
-  a.load();
-
-  a.oncanplaythrough = () => {
-    a.play().catch(() => {});
+  const startFadeIn = () => {
+    if (!currentAudio || currentAudio !== audio) return;
+    audio.play().catch(() => {});
+    let vol = 0;
+    audioFader = setInterval(() => {
+      if (!currentAudio || currentAudio !== audio) {
+        clearInterval(audioFader);
+        audioFader = null;
+        return;
+      }
+      vol = Math.min(userVolume, vol + 0.04);
+      audio.volume = vol;
+      if (vol >= userVolume) {
+        clearInterval(audioFader);
+        audioFader = null;
+      }
+    }, 60);
   };
 
-  const fadeIn = setInterval(() => {
-    if (a.volume < userVolume - 0.05) {
-      a.volume = Math.min(userVolume, a.volume + 0.05);
-    } else {
-      a.volume = userVolume;
-      clearInterval(fadeIn);
-    }
-  }, 50);
+  if (audio.readyState >= 2) {
+    startFadeIn();
+  } else {
+    audio.addEventListener('canplaythrough', startFadeIn, { once: true });
+    audio.load();
+  }
 }
 
-function stopAllAudio() {
-  Object.values(audios).forEach(a => { a.pause(); a.currentTime = 0; });
-  currentAudio = null;
-  leaderIdNow  = null;
-}
-
-// ────────────────────────────────────────────────────────────────────
-// HUD
-// ────────────────────────────────────────────────────────────────────
+// ─── HUD ─────────────────────────────────────────────────────────────
 function updateLeaderHud(leaderId) {
   const m   = marbles.find(m => m.id === leaderId);
   const hud = document.getElementById('leaderHud');
@@ -280,20 +258,16 @@ function updateLeaderHud(leaderId) {
   else         { av.style.display = 'none'; }
 }
 
-// ────────────────────────────────────────────────────────────────────
-// DIBUJO DEL ESCENARIO — colores y estilos por tipo de elemento
-// ────────────────────────────────────────────────────────────────────
+// ─── DIBUJO ──────────────────────────────────────────────────────────
 function drawTrack() {
   ctx.save();
 
-  // Fondo degradado vertical
   const bgGrad = ctx.createLinearGradient(0, 0, 0, H);
   bgGrad.addColorStop(0, '#0d0d1a');
   bgGrad.addColorStop(1, '#1a0d0d');
   ctx.fillStyle = bgGrad;
   ctx.fillRect(0, 0, W, H);
 
-  // Líneas de fondo decorativas (efecto grid tenue)
   ctx.strokeStyle = '#ffffff06';
   ctx.lineWidth = 1;
   for (let gx = 0; gx < W; gx += 60) {
@@ -303,10 +277,8 @@ function drawTrack() {
     ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(W, gy); ctx.stroke();
   }
 
-  // Línea de meta elaborada
   const finY = scaleY(FINISH_Y) - cameraY;
   if (finY > -40 && finY < H + 40) {
-    // Fondo de meta
     const metaGrad = ctx.createLinearGradient(0, finY - 20, 0, finY + 20);
     metaGrad.addColorStop(0, '#ffcc0000');
     metaGrad.addColorStop(0.5, '#ffcc0044');
@@ -314,7 +286,6 @@ function drawTrack() {
     ctx.fillStyle = metaGrad;
     ctx.fillRect(0, finY - 20, W, 40);
 
-    // Línea punteada
     ctx.strokeStyle = '#ffcc00';
     ctx.lineWidth   = 3;
     ctx.setLineDash([20, 10]);
@@ -323,98 +294,64 @@ function drawTrack() {
     ctx.stroke();
     ctx.setLineDash([]);
 
-    // Texto
     ctx.font = '900 18px Nunito';
     ctx.textAlign = 'center';
     ctx.fillStyle = '#ffcc00';
     ctx.shadowColor = '#ffcc00';
     ctx.shadowBlur  = 16;
-    ctx.fillText('🏁  M E T A  🏁', W / 2, finY - 10);
+    ctx.fillText('\u{1f3c1}  M E T A  \u{1f3c1}', W / 2, finY - 10);
     ctx.shadowBlur = 0;
   }
 
-  // Cuerpos del escenario
   trackBodies.forEach(b => {
     const sx = scaleX(b.x);
     const sy = b.y - cameraY;
-
     if (sy < -300 || sy > H + 300) return;
 
     ctx.save();
     ctx.translate(sx, sy);
     ctx.rotate(b.angle);
 
-    // ── BUMPER estándar ──
-    if (b.label === 'bumper') {
-      const r = scaleLen(b.radius);
-      // Halo exterior
+    if (b.label === 'bumper' || b.label === 'bumper_big' || b.label === 'bumper_finish') {
+      const isGold = b.label === 'bumper_finish';
+      const isBig  = b.label === 'bumper_big';
+      const r = scaleLen(b.radius || 15);
+      const color1 = isGold ? '#ffee55' : isBig ? '#ff44cc' : '#ffaa55';
+      const color2 = isGold ? '#cc8800' : isBig ? '#880055' : '#cc3300';
+      const glow   = isGold ? '#ffcc00' : isBig ? '#ff44cc' : '#ff6b2b';
+
       const halo = ctx.createRadialGradient(0, 0, r * 0.5, 0, 0, r * 1.8);
-      halo.addColorStop(0, '#ff6b2b55');
-      halo.addColorStop(1, '#ff6b2b00');
+      halo.addColorStop(0, glow + '55');
+      halo.addColorStop(1, glow + '00');
       ctx.beginPath();
       ctx.arc(0, 0, r * 1.8, 0, Math.PI * 2);
       ctx.fillStyle = halo;
       ctx.fill();
-      // Cuerpo
+
       const grad = ctx.createRadialGradient(-r * 0.3, -r * 0.3, 1, 0, 0, r);
-      grad.addColorStop(0, '#ffaa55');
-      grad.addColorStop(1, '#cc3300');
+      grad.addColorStop(0, color1);
+      grad.addColorStop(1, color2);
       ctx.beginPath();
       ctx.arc(0, 0, r, 0, Math.PI * 2);
       ctx.fillStyle = grad;
-      ctx.shadowColor = '#ff6b2b';
-      ctx.shadowBlur  = 18;
+      ctx.shadowColor = glow;
+      ctx.shadowBlur  = isBig ? 24 : 18;
       ctx.fill();
       ctx.shadowBlur = 0;
-      // Borde
-      ctx.strokeStyle = '#ff9944';
+      ctx.strokeStyle = isGold ? '#ffee99' : isBig ? '#ff88ee' : '#ff9944';
       ctx.lineWidth = 2;
       ctx.stroke();
 
-    // ── BUMPER GRANDE (embudo central) ──
-    } else if (b.label === 'bumper_big') {
-      const r = scaleLen(b.radius);
-      const grad = ctx.createRadialGradient(-r * 0.3, -r * 0.3, 2, 0, 0, r);
-      grad.addColorStop(0, '#ff44cc');
-      grad.addColorStop(1, '#880055');
-      ctx.beginPath();
-      ctx.arc(0, 0, r, 0, Math.PI * 2);
-      ctx.fillStyle = grad;
-      ctx.shadowColor = '#ff44cc';
-      ctx.shadowBlur  = 24;
-      ctx.fill();
-      ctx.shadowBlur = 0;
-      ctx.strokeStyle = '#ff88ee';
-      ctx.lineWidth = 3;
-      ctx.stroke();
-      // Cruz decorativa
-      ctx.strokeStyle = '#ffffff44';
-      ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.moveTo(-r, 0); ctx.lineTo(r, 0); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(0, -r); ctx.lineTo(0, r); ctx.stroke();
-
-    // ── BUMPERS ZONA META ──
-    } else if (b.label === 'bumper_finish') {
-      const r = scaleLen(b.radius);
-      const grad = ctx.createRadialGradient(-r * 0.3, -r * 0.3, 1, 0, 0, r);
-      grad.addColorStop(0, '#ffee55');
-      grad.addColorStop(1, '#cc8800');
-      ctx.beginPath();
-      ctx.arc(0, 0, r, 0, Math.PI * 2);
-      ctx.fillStyle = grad;
-      ctx.shadowColor = '#ffcc00';
-      ctx.shadowBlur  = 20;
-      ctx.fill();
-      ctx.shadowBlur = 0;
-      ctx.strokeStyle = '#ffee99';
-      ctx.lineWidth = 2;
-      ctx.stroke();
-
+      if (isBig) {
+        ctx.strokeStyle = '#ffffff44';
+        ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(-r, 0); ctx.lineTo(r, 0); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(0, -r); ctx.lineTo(0, r); ctx.stroke();
+      }
     } else if (b.rw !== null && b.rh !== null) {
       const rw = scaleLen(b.rw);
       const rh = scaleLen(b.rh);
 
-      // ── PARED ──
       if (b.label === 'wall') {
         const wallGrad = ctx.createLinearGradient(-rw / 2, 0, rw / 2, 0);
         wallGrad.addColorStop(0, '#1a1a33');
@@ -422,30 +359,12 @@ function drawTrack() {
         wallGrad.addColorStop(1, '#1a1a33');
         ctx.fillStyle = wallGrad;
         ctx.fillRect(-rw / 2, -rh / 2, rw, rh);
-
-      // ── SUELO ──
       } else if (b.label === 'floor') {
         ctx.fillStyle = '#111122';
         ctx.fillRect(-rw / 2, -rh / 2, rw, rh);
         ctx.strokeStyle = '#3333aa44';
         ctx.lineWidth = 2;
         ctx.strokeRect(-rw / 2, -rh / 2, rw, rh);
-
-      // ── PLATAFORMA CORTA (obstáculo) ──
-      } else if (b.label === 'platform') {
-        const platGrad = ctx.createLinearGradient(-rw / 2, -rh / 2, rw / 2, rh / 2);
-        platGrad.addColorStop(0, '#33aaff');
-        platGrad.addColorStop(1, '#0055aa');
-        ctx.fillStyle = platGrad;
-        ctx.shadowColor = '#33aaff';
-        ctx.shadowBlur  = 10;
-        ctx.fillRect(-rw / 2, -rh / 2, rw, rh);
-        ctx.shadowBlur = 0;
-        ctx.strokeStyle = '#88ccff';
-        ctx.lineWidth = 1.5;
-        ctx.strokeRect(-rw / 2, -rh / 2, rw, rh);
-
-      // ── EMBUDO ──
       } else if (b.label === 'funnel') {
         const funnelGrad = ctx.createLinearGradient(-rw / 2, 0, rw / 2, 0);
         funnelGrad.addColorStop(0, '#aa44ff');
@@ -458,8 +377,6 @@ function drawTrack() {
         ctx.strokeStyle = '#cc88ff';
         ctx.lineWidth = 1.5;
         ctx.strokeRect(-rw / 2, -rh / 2, rw, rh);
-
-      // ── RAMPA DE ACELERACIÓN ──
       } else if (b.label === 'ramp_fast') {
         const rampFastGrad = ctx.createLinearGradient(-rw / 2, 0, rw / 2, 0);
         rampFastGrad.addColorStop(0, '#39ff14');
@@ -473,7 +390,6 @@ function drawTrack() {
         ctx.strokeStyle = '#88ff66';
         ctx.lineWidth = 1.5;
         ctx.strokeRect(-rw / 2, -rh / 2, rw, rh);
-        // Flechas indicadoras de velocidad
         ctx.strokeStyle = '#ffffff55';
         ctx.lineWidth = 1;
         for (let fx = -rw / 2 + 20; fx < rw / 2 - 10; fx += 40) {
@@ -482,8 +398,6 @@ function drawTrack() {
           ctx.moveTo(fx + 9, -4); ctx.lineTo(fx + 14, 0); ctx.lineTo(fx + 9, 4);
           ctx.stroke();
         }
-
-      // ── RAMPA NORMAL ──
       } else {
         const rampGrad = ctx.createLinearGradient(0, -rh / 2, 0, rh / 2);
         rampGrad.addColorStop(0, '#6677dd');
@@ -496,7 +410,6 @@ function drawTrack() {
         ctx.strokeStyle = '#8899ff';
         ctx.lineWidth   = 1.5;
         ctx.strokeRect(-rw / 2, -rh / 2, rw, rh);
-        // Línea brillante en el borde superior
         ctx.strokeStyle = '#aabbff88';
         ctx.lineWidth = 3;
         ctx.beginPath();
@@ -505,16 +418,11 @@ function drawTrack() {
         ctx.stroke();
       }
     }
-
     ctx.restore();
   });
-
   ctx.restore();
 }
 
-// ────────────────────────────────────────────────────────────────────
-// DIBUJO DE CANICAS
-// ────────────────────────────────────────────────────────────────────
 const marbleImages = {};
 function preloadImages() {
   marbles.forEach(m => {
@@ -528,11 +436,9 @@ function preloadImages() {
 
 function drawMarbles() {
   const scaledR = scaleLen(R);
-
   positions.forEach(pos => {
     const m = marbles.find(m => m.id === pos.id);
     if (!m) return;
-
     const sx = scaleX(pos.x);
     const sy = pos.y - cameraY;
     if (sy < -60 || sy > H + 60) return;
@@ -540,7 +446,6 @@ function drawMarbles() {
     ctx.save();
     ctx.translate(sx, sy);
     ctx.rotate(pos.angle);
-
     ctx.shadowColor = '#00000066';
     ctx.shadowBlur  = 8;
 
@@ -551,10 +456,7 @@ function drawMarbles() {
       ctx.clip();
       ctx.drawImage(img, -scaledR, -scaledR, scaledR * 2, scaledR * 2);
     } else {
-      const grad = ctx.createRadialGradient(
-        -scaledR * 0.35, -scaledR * 0.35, 2,
-        0, 0, scaledR
-      );
+      const grad = ctx.createRadialGradient(-scaledR * 0.35, -scaledR * 0.35, 2, 0, 0, scaledR);
       grad.addColorStop(0, lighten(m.color, 60));
       grad.addColorStop(1, m.color);
       ctx.beginPath();
@@ -563,7 +465,6 @@ function drawMarbles() {
       ctx.fill();
     }
 
-    // Corona del líder
     if (pos.id === leaderIdNow) {
       ctx.beginPath();
       ctx.arc(0, 0, scaledR + 3, 0, Math.PI * 2);
@@ -573,11 +474,9 @@ function drawMarbles() {
       ctx.shadowBlur  = 14;
       ctx.stroke();
     }
-
     ctx.restore();
 
-    // Nombre (no rotado)
-    ctx.font = `900 12px Nunito`;
+    ctx.font = '900 12px Nunito';
     ctx.textAlign = 'center';
     ctx.fillStyle = '#fff';
     ctx.shadowColor = '#000';
@@ -595,9 +494,6 @@ function lighten(hex, amt) {
   return `rgb(${r},${g},${b})`;
 }
 
-// ────────────────────────────────────────────────────────────────────
-// CÁMARA — sigue a la canica más avanzada
-// ────────────────────────────────────────────────────────────────────
 function updateCamera() {
   if (!positions.length) return;
   const leader  = positions.reduce((a, b) => a.y > b.y ? a : b);
@@ -606,9 +502,6 @@ function updateCamera() {
   cameraY  = Math.max(0, cameraY);
 }
 
-// ────────────────────────────────────────────────────────────────────
-// LOOP DE RENDER
-// ────────────────────────────────────────────────────────────────────
 function loop() {
   if (state.phase === 'racing' || state.phase === 'results') {
     ctx.clearRect(0, 0, W, H);
@@ -620,9 +513,6 @@ function loop() {
 }
 requestAnimationFrame(loop);
 
-// ────────────────────────────────────────────────────────────────────
-// OVERLAY DE CANICAS
-// ────────────────────────────────────────────────────────────────────
 function renderMarblePreview() {
   const el = document.getElementById('marblePreview');
   el.innerHTML = marbles.map(m => {
@@ -637,9 +527,6 @@ function renderMarblePreview() {
   }).join('');
 }
 
-// ────────────────────────────────────────────────────────────────────
-// SOCKET
-// ────────────────────────────────────────────────────────────────────
 const socket = io();
 
 socket.on('stateUpdate', s => {
@@ -657,14 +544,14 @@ socket.on('stateUpdate', s => {
   } else if (s.phase === 'lobby' || s.phase === 'setup') {
     overlay.style.display = 'flex';
     document.getElementById('overlay').querySelector('p').textContent =
-      s.phase === 'lobby' ? 'La carrera está a punto de comenzar…' : 'Esperando al host…';
+      s.phase === 'lobby' ? 'La carrera est\u00e1 a punto de comenzar\u2026' : 'Esperando al host\u2026';
   } else if (s.phase === 'ready') {
     overlay.style.display = 'flex';
-    document.getElementById('overlay').querySelector('p').textContent = '¡Preparados!';
+    document.getElementById('overlay').querySelector('p').textContent = '\u00a1Preparados!';
   }
 
   if (s.currentLeader && s.phase === 'racing') {
-    switchLeaderAudio(s.currentLeader);
+    playLeaderAudio(s.currentLeader);
     updateLeaderHud(s.currentLeader);
   }
 });
@@ -679,14 +566,14 @@ socket.on('positions', data => {
 });
 
 socket.on('leaderChange', leaderId => {
-  switchLeaderAudio(leaderId);
+  playLeaderAudio(leaderId);
   updateLeaderHud(leaderId);
 });
 
 socket.on('raceWinner', data => {
   if (raceEnded) return;
   raceEnded = true;
-  stopAllAudio();
+  stopAudioCompletely();
 
   const m  = marbles.find(m => m.id === data.winnerId);
   const el = document.getElementById('winner');
@@ -698,14 +585,14 @@ socket.on('raceWinner', data => {
 });
 
 socket.on('raceReset', () => {
-  stopAllAudio();
+  stopAudioCompletely();
   raceEnded   = false;
   positions   = [];
   trackBodies = [];
   cameraY     = 0;
   document.getElementById('winner').style.display  = 'none';
   document.getElementById('overlay').style.display = 'flex';
-  document.getElementById('overlay').querySelector('p').textContent = '¡Preparados para la siguiente!';
+  document.getElementById('overlay').querySelector('p').textContent = '\u00a1Preparados para la siguiente!';
   document.getElementById('leaderHud').style.display = 'none';
 });
 </script>
