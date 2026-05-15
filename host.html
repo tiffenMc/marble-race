@@ -152,186 +152,479 @@ h1 { font-family: 'Bebas Neue', sans-serif; font-size: 3rem; letter-spacing: 4px
 
 <script>
 var socket = io();
-var COLORS = ['#ff6b2b','#ffcc00','#39ff14','#00cfff','#ff44aa','#bb44ff','#ff4444','#44ffcc','#ffffff','#ff9900'];
+
+var COLORS = [
+  '#ff6b2b',
+  '#ffcc00',
+  '#39ff14',
+  '#00cfff',
+  '#ff44aa',
+  '#bb44ff',
+  '#ff4444',
+  '#44ffcc',
+  '#ffffff',
+  '#ff9900'
+];
+
 var selectedColor = COLORS[0];
 var localMarbles  = [];
-var imgData = null, sndData = null, sndName = '';
+
+var imgData = null;
+var sndData = null;
+var sndName = '';
+
 var gameState = {};
 
-// ── COLORES ──────────────────────────────────────────────────────────────────
+
+// ─────────────────────────────────────────────────────────────────────
+// COLORES
+// ─────────────────────────────────────────────────────────────────────
 var colorRow = document.getElementById('colorRow');
+
 COLORS.forEach(function(c, i) {
+
   var sw = document.createElement('div');
+
   sw.className = 'color-swatch' + (i === 0 ? ' selected' : '');
   sw.style.background = c;
+
   sw.addEventListener('click', function() {
-    document.querySelectorAll('.color-swatch').forEach(function(s) { s.classList.remove('selected'); });
+
+    document.querySelectorAll('.color-swatch').forEach(function(s) {
+      s.classList.remove('selected');
+    });
+
     sw.classList.add('selected');
+
     selectedColor = c;
   });
+
   colorRow.appendChild(sw);
 });
 
-// ── UPLOADS ───────────────────────────────────────────────────────────────────
+
+// ─────────────────────────────────────────────────────────────────────
+// UPLOAD IMAGEN
+// ─────────────────────────────────────────────────────────────────────
 document.getElementById('mImg').addEventListener('change', function() {
-  var file = this.files[0]; if (!file) return;
+
+  var file = this.files[0];
+
+  if (!file) return;
+
+  // Límite 2MB
+  if (file.size > 1024 * 1024 * 2) {
+
+    showToast('⚠️ Imagen demasiado pesada (máx 2MB)');
+
+    this.value = '';
+
+    return;
+  }
+
   var reader = new FileReader();
+
   reader.onload = function(e) {
+
     imgData = e.target.result;
+
     document.getElementById('imgPreviewWrap').innerHTML =
-      '<img src="' + imgData + '" class="preview-img"><div style="font-size:.7rem">Foto cargada ✅</div>';
+      '<img src="' + imgData + '" class="preview-img">' +
+      '<div style="font-size:.7rem">Foto cargada ✅</div>';
   };
+
   reader.readAsDataURL(file);
 });
 
+
+// ─────────────────────────────────────────────────────────────────────
+// UPLOAD AUDIO
+// ─────────────────────────────────────────────────────────────────────
 document.getElementById('mSound').addEventListener('change', function() {
-  var file = this.files[0]; if (!file) return;
+
+  var file = this.files[0];
+
+  if (!file) return;
+
+  // Límite 4MB
+  if (file.size > 1024 * 1024 * 4) {
+
+    showToast('⚠️ Audio demasiado pesado (máx 4MB)');
+
+    this.value = '';
+
+    return;
+  }
+
   sndName = file.name;
+
   var reader = new FileReader();
+
   reader.onload = function(e) {
+
     sndData = e.target.result;
+
     document.getElementById('sndPreviewWrap').innerHTML =
       '<div style="font-size:1.5rem;margin-bottom:4px">🎵</div>' +
-      '<div style="font-size:.7rem">' + sndName.substring(0,16) + ' ✅</div>';
+      '<div style="font-size:.7rem">' +
+      sndName.substring(0, 16) +
+      ' ✅</div>';
   };
+
   reader.readAsDataURL(file);
 });
 
-// ── AÑADIR CANICA ─────────────────────────────────────────────────────────────
-document.getElementById('btnAddMarble').addEventListener('click', function() {
-  var name = document.getElementById('mName').value.trim();
-  if (!name) { showToast('⚠️ Ponle un nombre a la canica'); return; }
 
-  var marble = { id: 'marble_' + Date.now(), name: name, color: selectedColor, image: imgData || null, sound: sndData || null, soundName: sndName };
+// ─────────────────────────────────────────────────────────────────────
+// AÑADIR CANICA
+// ─────────────────────────────────────────────────────────────────────
+document.getElementById('btnAddMarble').addEventListener('click', function() {
+
+  var name = document.getElementById('mName').value.trim();
+
+  if (!name) {
+
+    showToast('⚠️ Ponle un nombre a la canica');
+
+    return;
+  }
+
+  var marble = {
+    id: 'marble_' + Date.now(),
+    name: name,
+    color: selectedColor,
+    image: imgData || null,
+    sound: sndData || null,
+    soundName: sndName
+  };
+
   localMarbles.push(marble);
+
   socket.emit('setMarbles', localMarbles);
 
+  // Reset inputs
   document.getElementById('mName').value = '';
-  imgData = null; sndData = null; sndName = '';
-  document.getElementById('imgPreviewWrap').innerHTML = '<div style="font-size:1.5rem;margin-bottom:4px">🖼️</div><div>Foto</div>';
-  document.getElementById('sndPreviewWrap').innerHTML = '<div style="font-size:1.5rem;margin-bottom:4px">🎵</div><div>Sonido</div>';
+
+  imgData = null;
+  sndData = null;
+  sndName = '';
+
+  document.getElementById('mImg').value = '';
+  document.getElementById('mSound').value = '';
+
+  document.getElementById('imgPreviewWrap').innerHTML =
+    '<div style="font-size:1.5rem;margin-bottom:4px">🖼️</div>' +
+    '<div>Foto</div>';
+
+  document.getElementById('sndPreviewWrap').innerHTML =
+    '<div style="font-size:1.5rem;margin-bottom:4px">🎵</div>' +
+    '<div>Sonido</div>';
 
   showToast('✅ Canica añadida: ' + name);
+
   renderMarbles();
 });
 
-// ── ELIMINAR CANICA ───────────────────────────────────────────────────────────
+
+// ─────────────────────────────────────────────────────────────────────
+// ELIMINAR CANICA
+// ─────────────────────────────────────────────────────────────────────
 function removeMarble(id) {
-  localMarbles = localMarbles.filter(function(m) { return m.id !== id; });
+
+  localMarbles = localMarbles.filter(function(m) {
+    return m.id !== id;
+  });
+
   socket.emit('setMarbles', localMarbles);
+
   renderMarbles();
 }
 
-// ── RENDER CANICAS ────────────────────────────────────────────────────────────
+
+// ─────────────────────────────────────────────────────────────────────
+// RENDER CANICAS
+// ─────────────────────────────────────────────────────────────────────
 function renderMarbles() {
+
   var list = document.getElementById('marbleList');
-  document.getElementById('marbleCount').textContent = localMarbles.length;
+
+  document.getElementById('marbleCount').textContent =
+    localMarbles.length;
+
   if (!localMarbles.length) {
-    list.innerHTML = '<div class="empty-state">Aún no hay canicas.<br>¡Añade la primera!</div>';
+
+    list.innerHTML =
+      '<div class="empty-state">' +
+      'Aún no hay canicas.<br>¡Añade la primera!' +
+      '</div>';
+
     return;
   }
+
   var html = '';
+
   localMarbles.forEach(function(m) {
+
     var avatarHtml = m.image
+
       ? '<img src="' + m.image + '" class="marble-avatar">'
-      : '<div class="marble-avatar" style="background:' + m.color + ';display:flex;align-items:center;justify-content:center;font-size:1.3rem">🎱</div>';
-    html += '<div class="marble-item">' + avatarHtml +
-      '<div class="marble-info"><div class="marble-name">' + m.name + '</div>' +
-      '<div class="marble-meta">' + (m.sound ? '🎵 Con sonido' : 'Sin sonido') + ' · <span style="color:' + m.color + '">●</span></div></div>' +
-      '<div class="marble-score">' + ((gameState.scores && gameState.scores[m.id] !== undefined) ? gameState.scores[m.id] : 0) + '</div>' +
-      '<button class="marble-del" onclick="removeMarble(\'' + m.id + '\')">✕</button></div>';
+
+      : '<div class="marble-avatar" style="' +
+        'background:' + m.color + ';' +
+        'display:flex;' +
+        'align-items:center;' +
+        'justify-content:center;' +
+        'font-size:1.3rem">' +
+        '🎱</div>';
+
+    html +=
+      '<div class="marble-item">' +
+
+      avatarHtml +
+
+      '<div class="marble-info">' +
+
+      '<div class="marble-name">' +
+      m.name +
+      '</div>' +
+
+      '<div class="marble-meta">' +
+
+      (m.sound ? '🎵 Con sonido' : 'Sin sonido') +
+
+      ' · <span style="color:' + m.color + '">●</span>' +
+
+      '</div>' +
+
+      '</div>' +
+
+      '<div class="marble-score">' +
+
+      (
+        (gameState.scores &&
+        gameState.scores[m.id] !== undefined)
+
+        ? gameState.scores[m.id]
+
+        : 0
+      ) +
+
+      '</div>' +
+
+      '<button class="marble-del" onclick="removeMarble(\'' +
+      m.id +
+      '\')">✕</button>' +
+
+      '</div>';
   });
+
   list.innerHTML = html;
 }
 
-// ── BOTONES ───────────────────────────────────────────────────────────────────
-document.getElementById('btnLobby').addEventListener('click', function() { socket.emit('setPhase', 'lobby'); });
-document.getElementById('btnReady').addEventListener('click', function() { socket.emit('setPhase', 'ready'); });
-document.getElementById('btnStart').addEventListener('click', function() { socket.emit('startRace'); });
-document.getElementById('btnNext').addEventListener('click',  function() { socket.emit('nextRound'); });
+
+// ─────────────────────────────────────────────────────────────────────
+// BOTONES
+// ─────────────────────────────────────────────────────────────────────
+document.getElementById('btnLobby').addEventListener('click', function() {
+  socket.emit('setPhase', 'lobby');
+});
+
+document.getElementById('btnReady').addEventListener('click', function() {
+  socket.emit('setPhase', 'ready');
+});
+
+document.getElementById('btnStart').addEventListener('click', function() {
+  socket.emit('startRace');
+});
+
+document.getElementById('btnNext').addEventListener('click', function() {
+  socket.emit('nextRound');
+});
 
 document.getElementById('btnResetRace').addEventListener('click', function() {
-  if (!confirm('¿Parar la carrera actual? Se conservan las canicas y los puntos.')) return;
+
+  if (!confirm('¿Parar la carrera actual?')) return;
+
   socket.emit('resetRace');
-  showToast('⏹ Carrera parada — vuelves a "Escenario listo"');
+
+  showToast('⏹ Carrera parada');
 });
 
 document.getElementById('btnReset').addEventListener('click', function() {
-  if (!confirm('¿Resetear TODO? Se borran canicas y puntos.')) return;
+
+  if (!confirm('¿Resetear TODO?')) return;
+
   localMarbles = [];
+
   socket.emit('resetGame');
 });
 
-// ── SOCKET ────────────────────────────────────────────────────────────────────
+
+// ─────────────────────────────────────────────────────────────────────
+// SOCKET
+// ─────────────────────────────────────────────────────────────────────
 socket.on('stateUpdate', function(state) {
+
   gameState = state;
+
   updateUI(state);
+
   renderMarbles();
+
   renderScores(state);
 });
 
+
 socket.on('raceWinner', function(data) {
+
   gameState.scores = data.scores;
-  var w = localMarbles.find(function(m) { return m.id === data.winnerId; });
+
+  var w = localMarbles.find(function(m) {
+    return m.id === data.winnerId;
+  });
+
   showToast('🏆 Ganador: ' + (w ? w.name : data.winnerId));
+
   renderMarbles();
+
   renderScores(gameState);
 });
 
-// ── UPDATE UI ─────────────────────────────────────────────────────────────────
+
+// ─────────────────────────────────────────────────────────────────────
+// UPDATE UI
+// ─────────────────────────────────────────────────────────────────────
 function updateUI(state) {
+
   var phases = {
-    setup:     'Configurando canicas',
-    lobby:     'Sala de espera abierta',
-    ready:     'Escenario visible',
+    setup: 'Configurando canicas',
+    lobby: 'Sala de espera abierta',
+    ready: 'Escenario visible',
     countdown: 'Cuenta atrás...',
-    racing:    '🏁 Carrera en curso',
-    results:   '🏆 Resultados'
+    racing: '🏁 Carrera en curso',
+    results: '🏆 Resultados'
   };
-  document.getElementById('phaseText').textContent  = phases[state.phase] || state.phase;
-  document.getElementById('roundBadge').textContent = 'RONDA ' + state.round;
 
-  document.getElementById('btnLobby').disabled  = state.phase !== 'setup';
-  document.getElementById('btnReady').disabled  = state.phase !== 'lobby';
-  document.getElementById('btnStart').disabled  = state.phase !== 'ready';
+  document.getElementById('phaseText').textContent =
+    phases[state.phase] || state.phase;
 
-  document.getElementById('btnResetRace').disabled = (state.phase !== 'racing' && state.phase !== 'results');
+  document.getElementById('roundBadge').textContent =
+    'RONDA ' + state.round;
+
+  document.getElementById('btnLobby').disabled =
+    state.phase !== 'setup';
+
+  document.getElementById('btnReady').disabled =
+    state.phase !== 'lobby';
+
+  document.getElementById('btnStart').disabled =
+    state.phase !== 'ready';
+
+  document.getElementById('btnResetRace').disabled =
+    (state.phase !== 'racing' && state.phase !== 'results');
 
   var btnNext = document.getElementById('btnNext');
-  btnNext.style.display = state.phase === 'results' ? 'flex' : 'none';
+
+  btnNext.style.display =
+    state.phase === 'results' ? 'flex' : 'none';
 }
 
-// ── SCOREBOARD ────────────────────────────────────────────────────────────────
+
+// ─────────────────────────────────────────────────────────────────────
+// SCOREBOARD
+// ─────────────────────────────────────────────────────────────────────
 function renderScores(state) {
+
   var board = document.getElementById('scoreBoard');
+
   if (!localMarbles.length) {
-    board.innerHTML = '<div class="empty-state">La carrera aún no ha empezado</div>';
+
+    board.innerHTML =
+      '<div class="empty-state">' +
+      'La carrera aún no ha empezado' +
+      '</div>';
+
     return;
   }
+
   var sorted = localMarbles.slice().sort(function(a, b) {
-    return ((state.scores && state.scores[b.id]) || 0) - ((state.scores && state.scores[a.id]) || 0);
+
+    return (
+      ((state.scores && state.scores[b.id]) || 0) -
+      ((state.scores && state.scores[a.id]) || 0)
+    );
   });
+
   var html = '';
+
   sorted.forEach(function(m, i) {
-    var pos = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : (i + 1);
+
+    var pos =
+      i === 0 ? '🥇'
+      : i === 1 ? '🥈'
+      : i === 2 ? '🥉'
+      : (i + 1);
+
     var avatarHtml = m.image
-      ? '<img src="' + m.image + '" style="width:30px;height:30px;border-radius:50%;object-fit:cover;border:2px solid ' + m.color + '">'
-      : '<div style="width:30px;height:30px;border-radius:50%;background:' + m.color + '"></div>';
-    html += '<div class="score-row">' +
-      '<div class="score-pos ' + (i === 0 ? 'gold' : '') + '">' + pos + '</div>' + avatarHtml +
-      '<div class="score-name">' + m.name + '</div>' +
-      '<div class="score-pts">' + ((state.scores && state.scores[m.id]) || 0) + ' pts</div></div>';
+
+      ? '<img src="' + m.image + '" style="' +
+        'width:30px;' +
+        'height:30px;' +
+        'border-radius:50%;' +
+        'object-fit:cover;' +
+        'border:2px solid ' + m.color + '">'
+
+      : '<div style="' +
+        'width:30px;' +
+        'height:30px;' +
+        'border-radius:50%;' +
+        'background:' + m.color + '">' +
+        '</div>';
+
+    html +=
+      '<div class="score-row">' +
+
+      '<div class="score-pos ' +
+      (i === 0 ? 'gold' : '') +
+      '">' + pos + '</div>' +
+
+      avatarHtml +
+
+      '<div class="score-name">' +
+      m.name +
+      '</div>' +
+
+      '<div class="score-pts">' +
+
+      (
+        (state.scores && state.scores[m.id]) || 0
+      ) +
+
+      ' pts</div>' +
+
+      '</div>';
   });
+
   board.innerHTML = html;
 }
 
-// ── TOAST ─────────────────────────────────────────────────────────────────────
+
+// ─────────────────────────────────────────────────────────────────────
+// TOAST
+// ─────────────────────────────────────────────────────────────────────
 function showToast(msg) {
+
   var t = document.getElementById('toast');
+
   t.textContent = msg;
+
   t.classList.add('show');
-  setTimeout(function() { t.classList.remove('show'); }, 2500);
+
+  setTimeout(function() {
+    t.classList.remove('show');
+  }, 2500);
 }
 </script>
+  
 </body>
 </html>
