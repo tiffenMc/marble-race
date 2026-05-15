@@ -152,61 +152,56 @@ function drawStick(g) {
 
   // ── LEGS ──
   ctx.lineCap = 'round';
-  const lw = sl(2.5);
+  const k = 1.6;
+  const lw = sl(2.5 * k);
   const legSw = Math.sin(walk) * 0.5;
+  const legY = sl(10 * k), legLen = sl(10 * k);
 
   ctx.strokeStyle = '#444';
   ctx.lineWidth = lw;
-  const legY = sl(10), legLen = sl(10);
   [-1, 1].forEach(s => {
     ctx.beginPath();
-    ctx.moveTo(s * sl(3), legY);
-    ctx.lineTo(s * sl(3) + Math.sin(legSw * s + 0.2) * legLen, legY + legLen * Math.cos(legSw * s + 0.2));
+    ctx.moveTo(s * sl(3 * k), legY);
+    ctx.lineTo(s * sl(3 * k) + Math.sin(legSw * s + 0.2) * legLen, legY + legLen * Math.cos(legSw * s + 0.2));
     ctx.stroke();
   });
 
-  // ── BODY (thin line) ──
   ctx.strokeStyle = col;
   ctx.lineWidth = lw;
   ctx.beginPath();
-  ctx.moveTo(0, sl(2));
+  ctx.moveTo(0, sl(2 * k));
   ctx.lineTo(0, legY);
   ctx.stroke();
 
-  // ── ARMS ──
   const armSw = Math.sin(walk + Math.PI) * 0.3;
   ctx.lineWidth = lw * 0.8;
-  const armLen = sl(9);
+  const armLen = sl(9 * k);
 
-  // Back arm
   ctx.strokeStyle = darken(col, 40);
   ctx.beginPath();
-  ctx.moveTo(sl(-2), sl(4));
-  ctx.lineTo(sl(-2) + Math.sin(-armSw) * armLen, sl(4) + Math.cos(-armSw) * armLen);
+  ctx.moveTo(sl(-2 * k), sl(4 * k));
+  ctx.lineTo(sl(-2 * k) + Math.sin(-armSw) * armLen, sl(4 * k) + Math.cos(-armSw) * armLen);
   ctx.stroke();
 
-  // Front arm (weapon)
   ctx.strokeStyle = col;
   let faX, faY;
   if (g.attacking) {
-    faX = sl(2) + armLen + sl(5); faY = sl(2) - sl(3);
+    faX = sl(2 * k) + armLen + sl(5 * k); faY = sl(2 * k) - sl(3 * k);
   } else {
-    faX = sl(2) + Math.sin(armSw) * armLen; faY = sl(4) + Math.cos(armSw) * armLen;
+    faX = sl(2 * k) + Math.sin(armSw) * armLen; faY = sl(4 * k) + Math.cos(armSw) * armLen;
   }
   ctx.beginPath();
-  ctx.moveTo(sl(2), sl(4));
+  ctx.moveTo(sl(2 * k), sl(4 * k));
   ctx.lineTo(faX, faY);
   ctx.stroke();
 
-  // Weapon icon
-  ctx.font = `${sl(9) | 0}px Arial`;
+  ctx.font = `${sl(9 * k) | 0}px Arial`;
   ctx.textAlign = 'center';
   ctx.fillStyle = '#fff';
-  ctx.fillText(g.weapon.icon, faX + sl(4), faY + sl(1));
+  if (g.weapon) ctx.fillText(g.weapon.icon, faX + sl(4 * k), faY + sl(1 * k));
 
-  // ── HEAD ──
-  const hr = sl(6);
-  const hy = -hr - sl(1);
+  const hr = sl(6 * k);
+  const hy = -hr - sl(1 * k);
   const img = m && marbleImages[m.id];
   ctx.save();
   ctx.beginPath();
@@ -224,11 +219,11 @@ function drawStick(g) {
   ctx.restore();
 
   // Eye dot
-  ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(sl(2), hy - sl(1), sl(1.5), 0, Math.PI * 2); ctx.fill();
-  ctx.fillStyle = '#000'; ctx.beginPath(); ctx.arc(sl(3), hy - sl(1), sl(0.8), 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(sl(3 * k), hy - sl(1 * k), sl(2 * k), 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#000'; ctx.beginPath(); ctx.arc(sl(4 * k), hy - sl(1 * k), sl(1 * k), 0, Math.PI * 2); ctx.fill();
 
   // ── HP BAR ──
-  const bw = sl(24), bh = sl(4), by = hy - hr - sl(8);
+  const bw = sl(30 * k), bh = sl(4 * k), by = hy - hr - sl(8 * k);
   ctx.fillStyle = '#1a0000cc';
   ctx.fillRect(-bw / 2, by, bw, bh);
   const pct = g.hp / g.maxHp;
@@ -247,7 +242,7 @@ function drawStick(g) {
   ctx.fillText(name, 0, by - sl(2));
   ctx.shadowBlur = 0;
 
-  ctx.restore();
+  ctx.restore(); // restore outer save (from line 144)
 }
 
 function drawProjectiles() {
