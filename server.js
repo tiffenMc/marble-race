@@ -119,7 +119,7 @@ function startBattle() {
       id: m.id, name: m.name, color: m.color,
       image: m.image, sound: m.sound,
       hp: 100, maxHp: 100, weapon: wp,
-      body, lastAttack: 0, alive: true,
+      body, lastAttack: Date.now(), alive: true,
       walkPhase: rand() * Math.PI * 2
     });
   });
