@@ -8,17 +8,15 @@ const { Engine, World, Bodies, Body } = Matter;
 const app    = express();
 const server = http.createServer(app);
 
-// ─── FIX: aumentamos el buffer para permitir imágenes y audios en base64 ───
 const io = new Server(server, {
   cors: { origin: '*' },
-  maxHttpBufferSize: 1e8   // 100 MB — cubre imágenes 2MB + audios 4MB en base64
+  maxHttpBufferSize: 1e8
 });
 
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.static(path.join(__dirname)));
 app.use(express.json({ limit: '50mb' }));
 
-// ─── CONSTANTES ───────────────────────────────────────────────────────────────
 const WORLD_W    = 800;
 const TRACK_H    = 7000;
 const FINISH_Y   = TRACK_H - 200;
@@ -26,7 +24,6 @@ const R          = 22;
 const TICK_MS    = 1000 / 60;
 const EMIT_EVERY = 2;
 
-// ─── ESTADO ───────────────────────────────────────────────────────────────────
 let gameState = {
   phase: 'setup', marbles: [], round: 1,
   scores: {}, trackBodies: [], currentLeader: null, seed: null
@@ -48,127 +45,105 @@ function seededRandom(seed) {
   return () => { s = (s * 9301 + 49297) % 233280; return s / 233280; };
 }
 
-// ─── ESCENARIO MEJORADO ───────────────────────────────────────────────────────
 function buildTrack(rand) {
   const bodies = [];
 
-  // Paredes y suelo
   const wallL = Bodies.rectangle(10,           TRACK_H / 2, 20,      TRACK_H, { isStatic: true, label: 'wall' });
   const wallR = Bodies.rectangle(WORLD_W - 10, TRACK_H / 2, 20,      TRACK_H, { isStatic: true, label: 'wall' });
   const floor = Bodies.rectangle(WORLD_W / 2,  TRACK_H + 10, WORLD_W, 20,    { isStatic: true, label: 'floor' });
-
   wallL._rw = 20;       wallL._rh = TRACK_H;
   wallR._rw = 20;       wallR._rh = TRACK_H;
   floor._rw = WORLD_W;  floor._rh = 20;
-
   bodies.push(wallL, wallR, floor);
 
-  // ── RAMPAS PRINCIPALES ──────────────────────────────────────────────
-  const RAMP_COUNT  = 26;
+  const RAMP_COUNT  = 40;
   const GAP         = TRACK_H / (RAMP_COUNT + 1);
-  const RAMP_W      = 320;
-  const RAMP_T      = 16;
-  const SIDE_MARGIN = 20;
+  const SIDE_MARGIN = 55;
 
   for (let i = 0; i < RAMP_COUNT; i++) {
     const y    = GAP * (i + 1);
     const side = i % 2 === 0 ? 'left' : 'right';
-    const deg   = rand() * 10 + 8;
+    const RAMP_W = 160 + rand() * 200;
+    const deg   = 5 + rand() * 15;
     const angle = deg * (Math.PI / 180) * (side === 'left' ? 1 : -1);
+    const x = side === 'left' ? SIDE_MARGIN + RAMP_W / 2 : WORLD_W - SIDE_MARGIN - RAMP_W / 2;
 
-    const x = side === 'left'
-      ? SIDE_MARGIN + RAMP_W / 2
-      : WORLD_W - SIDE_MARGIN - RAMP_W / 2;
-
-    const ramp = Bodies.rectangle(x, y, RAMP_W, RAMP_T, {
-      isStatic: true, angle, label: 'ramp', friction: 0.04, restitution: 0.15
+    const ramp = Bodies.rectangle(x, y, RAMP_W, 12, {
+      isStatic: true, angle, label: 'ramp', friction: 0.02, restitution: 0.3
     });
-    ramp._rw = RAMP_W;
-    ramp._rh = RAMP_T;
+    ramp._rw = RAMP_W; ramp._rh = 12;
     bodies.push(ramp);
 
-    // Bumper principal al final de cada rampa
-    const bumpX = side === 'left'
-      ? SIDE_MARGIN + RAMP_W + 60
-      : WORLD_W - SIDE_MARGIN - RAMP_W - 60;
-
-    const bump = Bodies.circle(bumpX, y + 30, 18, {
-      isStatic: true, label: 'bumper', restitution: 0.7, friction: 0
+    const bumpX = side === 'left' ? SIDE_MARGIN + RAMP_W + 45 : WORLD_W - SIDE_MARGIN - RAMP_W - 45;
+    const bumpR = 12 + rand() * 12;
+    const bump = Bodies.circle(bumpX, y + 25, bumpR, {
+      isStatic: true, label: 'bumper', restitution: 0.75, friction: 0
     });
-    bump._radius = 18;
+    bump._radius = bumpR;
     bodies.push(bump);
 
-    // ── Bumper extra en el centro cada 3 rampas ──
-    if (i % 3 === 1) {
-      const midBump = Bodies.circle(WORLD_W / 2 + (rand() - 0.5) * 80, y - GAP * 0.5, 14, {
-        isStatic: true, label: 'bumper', restitution: 0.8, friction: 0
+    if (i % 3 === 0) {
+      const defX = side === 'left' ? 16 : WORLD_W - 16;
+      const defY = y + 50;
+      const def = Bodies.rectangle(defX, defY, 10, 40, {
+        isStatic: true, angle: (side === 'left' ? 0.6 : -0.6),
+        label: 'wall', friction: 0.01, restitution: 0.5
       });
-      midBump._radius = 14;
-      bodies.push(midBump);
+      def._rw = 10; def._rh = 40;
+      bodies.push(def);
     }
 
-    // ── Plataforma corta (obstáculo) en zona media de cada rampa ──
-    if (i % 4 === 2) {
-      const platX = WORLD_W / 2 + (rand() - 0.5) * 200;
-      const platY = y - GAP * 0.3;
-      const platAngle = (rand() - 0.5) * 0.4;
-      const plat = Bodies.rectangle(platX, platY, 100, 12, {
-        isStatic: true, angle: platAngle, label: 'platform', friction: 0.02, restitution: 0.3
+    if (i % 3 === 1) {
+      const midBump = Bodies.circle(WORLD_W / 2 + (rand() - 0.5) * 100, y - GAP * 0.4, 10 + rand() * 10, {
+        isStatic: true, label: 'bumper', restitution: 0.8, friction: 0
       });
-      plat._rw = 100;
-      plat._rh = 12;
-      bodies.push(plat);
+      midBump._radius = midBump.circleRadius;
+      bodies.push(midBump);
     }
   }
 
-  // ── SECCIÓN DE BUCLE / EMBUDO central (zona media del track) ────────
-  const funnelY = TRACK_H * 0.5;
-  // Dos paredes en ángulo formando un embudo
-  const fL = Bodies.rectangle(200, funnelY, 180, 14, {
-    isStatic: true, angle: 0.55, label: 'funnel', friction: 0.01, restitution: 0.25
+  const funnelY = TRACK_H * 0.45;
+  const fL = Bodies.rectangle(180, funnelY, 200, 12, {
+    isStatic: true, angle: 0.6, label: 'funnel', friction: 0.01, restitution: 0.3
   });
-  fL._rw = 180; fL._rh = 14;
-  const fR = Bodies.rectangle(600, funnelY, 180, 14, {
-    isStatic: true, angle: -0.55, label: 'funnel', friction: 0.01, restitution: 0.25
+  fL._rw = 200; fL._rh = 12;
+  const fR = Bodies.rectangle(620, funnelY, 200, 12, {
+    isStatic: true, angle: -0.6, label: 'funnel', friction: 0.01, restitution: 0.3
   });
-  fR._rw = 180; fR._rh = 14;
+  fR._rw = 200; fR._rh = 12;
   bodies.push(fL, fR);
-
-  // Bumper central del embudo
-  const fBump = Bodies.circle(WORLD_W / 2, funnelY + 60, 22, {
+  const fBump = Bodies.circle(WORLD_W / 2, funnelY + 80, 26, {
     isStatic: true, label: 'bumper_big', restitution: 0.9, friction: 0
   });
-  fBump._radius = 22;
+  fBump._radius = 26;
   bodies.push(fBump);
 
-  // ── ZONA DE ACELERACIÓN (pendiente pronunciada) ──────────────────────
-  const accelY = TRACK_H * 0.75;
-  const accelRamp = Bodies.rectangle(WORLD_W / 2, accelY, 500, 14, {
-    isStatic: true, angle: 0.18, label: 'ramp_fast', friction: 0.01, restitution: 0.2
+  const accelY = TRACK_H * 0.72;
+  const accelRamp = Bodies.rectangle(WORLD_W / 2, accelY, 550, 14, {
+    isStatic: true, angle: 0.2, label: 'ramp_fast', friction: 0.01, restitution: 0.25
   });
-  accelRamp._rw = 500;
-  accelRamp._rh = 14;
+  accelRamp._rw = 550; accelRamp._rh = 14;
   bodies.push(accelRamp);
+  for (let j = 0; j < 4; j++) {
+    const ab = Bodies.circle(WORLD_W * 0.15 + rand() * WORLD_W * 0.7, accelY + 80 + rand() * 60, 16 + rand() * 8, {
+      isStatic: true, label: 'bumper', restitution: 0.85, friction: 0
+    });
+    ab._radius = ab.circleRadius;
+    bodies.push(ab);
+  }
 
-  // ── BUMPERS EN TRIÁNGULO antes de la meta ────────────────────────────
   const preFinishY = FINISH_Y - 350;
-  const triPositions = [
-    { x: WORLD_W / 2,       y: preFinishY },
-    { x: WORLD_W / 2 - 90,  y: preFinishY + 90 },
-    { x: WORLD_W / 2 + 90,  y: preFinishY + 90 },
-  ];
-  triPositions.forEach(p => {
-    const tb = Bodies.circle(p.x, p.y, 20, {
+  [[0.5, 0], [0.35, 90], [0.65, 90], [0.42, 170], [0.58, 170]].forEach(([xFrac, yOff]) => {
+    const tb = Bodies.circle(WORLD_W * xFrac, preFinishY + yOff, 18, {
       isStatic: true, label: 'bumper_finish', restitution: 0.85, friction: 0
     });
-    tb._radius = 20;
+    tb._radius = 18;
     bodies.push(tb);
   });
 
   return bodies;
 }
 
-// ─── SERIALIZACIÓN ────────────────────────────────────────────────────────────
 function serializeBody(b) {
   return {
     label:  b.label,
@@ -181,14 +156,13 @@ function serializeBody(b) {
   };
 }
 
-// ─── FÍSICA ───────────────────────────────────────────────────────────────────
 function startPhysics() {
   destroyRace();
   raceFinished = false;
   tickCount    = 0;
 
   engine = Engine.create();
-  engine.gravity.y = 0.9;
+  engine.gravity.y = 1.0;
 
   const rand        = seededRandom(gameState.seed);
   const trackBodies = buildTrack(rand);
@@ -201,9 +175,9 @@ function startPhysics() {
   gameState.marbles.forEach((m, i) => {
     const startX = (WORLD_W / (count + 1)) * (i + 1);
     const body = Bodies.circle(startX, 60, R, {
-      restitution: 0.4, friction: 0.01, frictionAir: 0.002, label: 'marble_' + m.id
+      restitution: 0.45, friction: 0.01, frictionAir: 0.0008, label: 'marble_' + m.id
     });
-    Body.setVelocity(body, { x: (rand() - 0.5) * 4, y: 2 });
+    Body.setVelocity(body, { x: (rand() - 0.5) * 3, y: 3 });
     World.add(engine.world, body);
     marbleBodies.push({ id: m.id, body });
   });
@@ -267,7 +241,6 @@ function destroyRace() {
   marbleBodies = [];
 }
 
-// ─── SOCKETS ─────────────────────────────────────────────────────────────────
 io.on('connection', socket => {
   console.log('Conectado:', socket.id);
 
