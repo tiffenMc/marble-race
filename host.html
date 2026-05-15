@@ -611,10 +611,8 @@ function updateUI(state) {
   document.getElementById('btnLobby')
   .disabled = state.phase !== 'setup';
 
-  document.getElementById('btnReady')
-  .disabled =
-    state.phase !== 'lobby' &&
-    state.phase !== 'results';
+ document.getElementById('btnReady').disabled =
+      state.phase !== 'lobby';
 
   document.getElementById('btnStart')
   .disabled = state.phase !== 'ready';
