@@ -13,13 +13,13 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.static(path.join(__dirname)));
 app.use(express.json({ limit: '50mb' }));
 
-// ─── CONSTANTES ───────────────────────────────────────────────────────────────
-const WORLD_W  = 600;   // ancho del mundo físico (píxeles lógicos)
-const TRACK_H  = 8000;
-const FINISH_Y = TRACK_H - 300;
-const R        = 20;
+// ─── CONSTANTES (compartidas con el cliente) ──────────────────────────────────
+const WORLD_W  = 800;
+const TRACK_H  = 7000;
+const FINISH_Y = TRACK_H - 200;
+const R        = 22;
 const TICK_MS  = 1000 / 60;
-const EMIT_EVERY = 2;
+const EMIT_EVERY = 2;   // emitir cada 2 ticks = 30 Hz
 
 // ─── ESTADO ───────────────────────────────────────────────────────────────────
 let gameState = {
@@ -44,71 +44,71 @@ function seededRandom(seed) {
 }
 
 // ─── ESCENARIO ────────────────────────────────────────────────────────────────
-// Devuelve array de objetos con toda la info necesaria para física Y dibujo
 function buildTrack(rand) {
-  const trackDef = [];   // definición lógica (para serializar al cliente)
-  const bodies   = [];   // bodies de Matter.js
+  const bodies = [];
 
-  // ── Paredes ──
-  const addWall = (x, y, w, h) => {
-    trackDef.push({ type: 'rect', x, y, w, h, angle: 0, style: 'wall' });
-    bodies.push(Bodies.rectangle(x, y, w, h, { isStatic: true, label: 'wall' }));
-  };
-  addWall(5,            TRACK_H / 2, 10,      TRACK_H); // pared izq
-  addWall(WORLD_W - 5,  TRACK_H / 2, 10,      TRACK_H); // pared der
-  addWall(WORLD_W / 2,  TRACK_H + 5, WORLD_W, 10);      // suelo
+  // Paredes y suelo — guardamos dimensiones reales al crear
+  const wallL  = Bodies.rectangle(10,           TRACK_H / 2,  20,      TRACK_H, { isStatic: true, label: 'wall' });
+  const wallR  = Bodies.rectangle(WORLD_W - 10, TRACK_H / 2,  20,      TRACK_H, { isStatic: true, label: 'wall' });
+  const floor  = Bodies.rectangle(WORLD_W / 2,  TRACK_H + 10, WORLD_W, 20,     { isStatic: true, label: 'floor' });
 
-  // ── Rampas en zigzag ──
-  const RAMP_COUNT  = 30;
+  wallL._rw = 20;      wallL._rh = TRACK_H;
+  wallR._rw = 20;      wallR._rh = TRACK_H;
+  floor._rw = WORLD_W; floor._rh = 20;
+
+  bodies.push(wallL, wallR, floor);
+
+  const RAMP_COUNT  = 26;
   const GAP         = TRACK_H / (RAMP_COUNT + 1);
-  const RAMP_W      = 340;   // cubre hasta casi la mitad del mundo
-  const RAMP_T      = 18;
-  const WALL_GAP    = 10;    // distancia desde la pared
+  const RAMP_W      = 320;
+  const RAMP_T      = 16;
+  const SIDE_MARGIN = 20;    // la rampa toca la pared
 
   for (let i = 0; i < RAMP_COUNT; i++) {
     const y    = GAP * (i + 1);
     const side = i % 2 === 0 ? 'left' : 'right';
-    const deg  = rand() * 8 + 7;   // 7°–15°
+    // Ángulo entre 8° y 18°
+    const deg   = rand() * 10 + 8;
     const angle = deg * (Math.PI / 180) * (side === 'left' ? 1 : -1);
 
-    // Centro de la rampa: pegada a la pared de su lado
-    const cx = side === 'left'
-      ? WALL_GAP + RAMP_W / 2
-      : WORLD_W - WALL_GAP - RAMP_W / 2;
+    // La rampa sale de la pared y deja hueco libre al otro lado
+    const x = side === 'left'
+      ? SIDE_MARGIN + RAMP_W / 2
+      : WORLD_W - SIDE_MARGIN - RAMP_W / 2;
 
-    trackDef.push({ type: 'rect', x: cx, y, w: RAMP_W, h: RAMP_T, angle, style: 'ramp' });
-    bodies.push(
-      Bodies.rectangle(cx, y, RAMP_W, RAMP_T, {
-        isStatic: true, angle, label: 'ramp', friction: 0.03, restitution: 0.2
-      })
-    );
+    const ramp = Bodies.rectangle(x, y, RAMP_W, RAMP_T, {
+      isStatic: true, angle, label: 'ramp', friction: 0.04, restitution: 0.15
+    });
+    ramp._rw = RAMP_W;
+    ramp._rh = RAMP_T;
+    bodies.push(ramp);
 
-    // Bumper circular al final del hueco (guía las canicas)
-    const bx = side === 'left'
-      ? WALL_GAP + RAMP_W + 40
-      : WORLD_W - WALL_GAP - RAMP_W - 40;
+    // Bumper circular en el extremo libre para redirigir canicas
+    const bumpX = side === 'left'
+      ? SIDE_MARGIN + RAMP_W + 60
+      : WORLD_W - SIDE_MARGIN - RAMP_W - 60;
 
-    trackDef.push({ type: 'circle', x: bx, y: y + 35, r: 16, style: 'bumper' });
-    bodies.push(
-      Bodies.circle(bx, y + 35, 16, {
-        isStatic: true, label: 'bumper', restitution: 0.75, friction: 0
-      })
-    );
+    const bump = Bodies.circle(bumpX, y + 30, 18, {
+      isStatic: true, label: 'bumper', restitution: 0.7, friction: 0
+    });
+    bump._radius = 18;
+    bodies.push(bump);
   }
 
-  // ── Canalizadores: pequeñas pegs en el centro para añadir variedad ──
-  for (let i = 0; i < 12; i++) {
-    const px = WORLD_W * (0.3 + rand() * 0.4);
-    const py = (TRACK_H / 14) * (i + 1) + rand() * 80 - 40;
-    trackDef.push({ type: 'circle', x: px, y: py, r: 10, style: 'peg' });
-    bodies.push(
-      Bodies.circle(px, py, 10, {
-        isStatic: true, label: 'peg', restitution: 0.5, friction: 0
-      })
-    );
-  }
+  return bodies;
+}
 
-  return { trackDef, bodies };
+// Serializar: usa _rw/_rh (dimensiones reales) NO el bounding box
+function serializeBody(b) {
+  return {
+    label:  b.label,
+    x:      b.position.x,
+    y:      b.position.y,
+    angle:  b.angle,
+    rw:     b._rw    || null,   // ancho real (pre-rotación)
+    rh:     b._rh    || null,   // alto real
+    radius: b._radius || b.circleRadius || null
+  };
 }
 
 // ─── FÍSICA ───────────────────────────────────────────────────────────────────
@@ -118,32 +118,33 @@ function startPhysics() {
   tickCount    = 0;
 
   engine = Engine.create();
-  engine.gravity.y = 1.0;
+  engine.gravity.y = 0.9;
 
   const rand = seededRandom(gameState.seed);
-  const { trackDef, bodies } = buildTrack(rand);
+  const trackBodies = buildTrack(rand);
+  World.add(engine.world, trackBodies);
 
-  World.add(engine.world, bodies);
+  // Serializar con dimensiones reales
+  gameState.trackBodies = trackBodies.map(serializeBody);
 
-  // Guardar trackDef (ya tiene w/h reales, no bounds)
-  gameState.trackBodies = trackDef;
-
-  // Canicas — posición inicial repartida
+  // Canicas
   marbleBodies = [];
   const count = gameState.marbles.length;
   gameState.marbles.forEach((m, i) => {
     const startX = (WORLD_W / (count + 1)) * (i + 1);
-    const body = Bodies.circle(startX, 50, R, {
-      restitution: 0.35, friction: 0.008, frictionAir: 0.002, label: 'marble_' + m.id
+    const body = Bodies.circle(startX, 60, R, {
+      restitution: 0.4, friction: 0.01, frictionAir: 0.002, label: 'marble_' + m.id
     });
-    Body.setVelocity(body, { x: (rand() - 0.5) * 3, y: 1 });
+    Body.setVelocity(body, { x: (rand() - 0.5) * 4, y: 2 });
     World.add(engine.world, body);
     marbleBodies.push({ id: m.id, body });
   });
 
+  // Loop manual — sin Runner (Node.js no tiene requestAnimationFrame)
   physicsLoop = setInterval(() => {
     Engine.update(engine, TICK_MS);
     tickCount++;
+
     if (tickCount % EMIT_EVERY !== 0) return;
 
     const positions = marbleBodies.map(({ id, body }) => ({
@@ -151,7 +152,6 @@ function startPhysics() {
     }));
     io.emit('positions', positions);
 
-    // Líder
     if (marbleBodies.length) {
       const leader = marbleBodies.reduce((a, b) =>
         a.body.position.y > b.body.position.y ? a : b
@@ -162,7 +162,6 @@ function startPhysics() {
       }
     }
 
-    // Meta
     if (!raceFinished) {
       for (const { id, body } of marbleBodies) {
         if (body.position.y >= FINISH_Y) {
@@ -190,7 +189,7 @@ function endRace(winnerId) {
   gameState.currentLeader = winnerId;
   broadcastState();
   io.emit('raceWinner', { winnerId, scores: gameState.scores });
-  setTimeout(() => destroyRace(), 4000);
+  setTimeout(() => destroyRace(), 3000);
 }
 
 function destroyRace() {
@@ -210,8 +209,7 @@ io.on('connection', socket => {
     scores: gameState.scores, currentLeader: gameState.currentLeader, seed: gameState.seed
   });
 
-  // Si ya hay track generado (fase ready, racing o results) mandar al recién llegado
-  if (gameState.trackBodies.length) {
+  if ((gameState.phase === 'racing' || gameState.phase === 'results') && gameState.trackBodies.length) {
     socket.emit('trackData', gameState.trackBodies);
   }
 
@@ -221,51 +219,31 @@ io.on('connection', socket => {
     broadcastState();
   });
 
-  socket.on('setPhase', phase => {
-    gameState.phase = phase;
-    broadcastState();
-  });
-
-  // FASE READY: generar y enviar escenario SIN iniciar física todavía
-  socket.on('showTrack', () => {
-    if (!gameState.marbles.length) return;
-    gameState.seed = Date.now();
-    const rand = seededRandom(gameState.seed);
-    // Solo necesitamos buildTrack para el dibujo, sin física
-    // Pero para consistencia, generamos el mismo track que luego usará startPhysics
-    const { trackDef } = buildTrack(rand);
-    gameState.trackBodies = trackDef;
-    gameState.phase = 'ready';
-    broadcastState();
-    io.emit('trackData', gameState.trackBodies);
-  });
+  socket.on('setPhase', phase => { gameState.phase = phase; broadcastState(); });
 
   socket.on('startRace', () => {
     if (!gameState.marbles.length) return;
-    // Si ya hay seed (viene de showTrack), reutilizarla para mismo escenario
-    if (!gameState.seed) gameState.seed = Date.now();
     gameState.phase = 'racing';
-    startPhysics();   // usa gameState.seed — genera el mismo trackDef + bodies
+    gameState.seed  = Date.now();
+    startPhysics();
     broadcastState();
-    io.emit('trackData', gameState.trackBodies);  // reenviar por si alguien se conectó tarde
+    io.emit('trackData', gameState.trackBodies);
   });
 
   socket.on('nextRound', () => {
     destroyRace();
     gameState.round++;
-    gameState.phase = 'lobby';
+    gameState.phase = 'ready';
     gameState.currentLeader = null;
     gameState.trackBodies = [];
-    gameState.seed = null;
     broadcastState();
   });
 
   socket.on('resetRace', () => {
     destroyRace();
-    gameState.phase = 'lobby';
+    gameState.phase = 'ready';
     gameState.currentLeader = null;
     gameState.trackBodies = [];
-    gameState.seed = null;
     broadcastState();
     io.emit('raceReset');
   });
