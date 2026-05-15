@@ -511,6 +511,19 @@ socket.on('raceWinner', data => {
   if (m && m.image) { img.src = m.image; img.style.display = 'block'; }
   else              { img.style.display = 'none'; }
 });
+
+// El host ha parado la carrera manualmente — volver a pantalla de espera
+socket.on('raceReset', () => {
+  stopAllAudio();
+  raceEnded   = false;
+  positions   = [];
+  trackBodies = [];
+  cameraY     = 0;
+  document.getElementById('winner').style.display  = 'none';
+  document.getElementById('overlay').style.display = 'flex';
+  document.getElementById('overlay').querySelector('p').textContent = '¡Preparados para la siguiente!';
+  document.getElementById('leaderHud').style.display = 'none';
+});
 </script>
 </body>
 </html>
