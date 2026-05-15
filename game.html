@@ -10,128 +10,77 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { background: #0a0a0f; overflow: hidden; font-family: 'Nunito', sans-serif; }
 canvas { display: block; }
-
-/* ── HUD ── */
 #hud {
   position: fixed; top: 0; left: 0; right: 0;
   display: flex; align-items: center; justify-content: space-between;
   padding: 10px 18px;
   background: linear-gradient(#000000cc, transparent);
-  pointer-events: none;
-  z-index: 20;
+  pointer-events: none; z-index: 20;
 }
 #roundLabel {
-  font-family: 'Bebas Neue', sans-serif;
-  font-size: 1.6rem; letter-spacing: 4px;
-  color: #ffcc00;
-  text-shadow: 0 0 12px #ffcc0088;
+  font-family: 'Bebas Neue', sans-serif; font-size: 1.6rem;
+  letter-spacing: 4px; color: #ffcc00; text-shadow: 0 0 12px #ffcc0088;
 }
 #leaderHud {
   display: flex; align-items: center; gap: 10px;
-  background: #ffffff15; border-radius: 30px;
-  padding: 6px 16px;
+  background: #ffffff15; border-radius: 30px; padding: 6px 16px;
 }
-#leaderAvatar {
-  width: 36px; height: 36px; border-radius: 50%;
-  border: 2px solid gold; object-fit: cover;
-}
-#leaderName {
-  font-weight: 900; font-size: .9rem; color: #ffcc00;
-  max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-}
-
-/* ── CONTROL DE VOLUMEN ── */
+#leaderAvatar { width: 36px; height: 36px; border-radius: 50%; border: 2px solid gold; object-fit: cover; }
+#leaderName { font-weight: 900; font-size: .9rem; color: #ffcc00; max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 #volBox {
   position: fixed; bottom: 20px; right: 20px;
-  background: #13131eee; border: 1px solid #ffffff22;
-  border-radius: 14px; padding: 14px 18px;
-  display: flex; flex-direction: column; align-items: center; gap: 8px;
-  z-index: 30; pointer-events: all;
+  background: #13131eee; border: 1px solid #ffffff22; border-radius: 14px;
+  padding: 14px 18px; display: flex; flex-direction: column; align-items: center; gap: 8px;
+  z-index: 30;
 }
-#volBox label {
-  font-size: .7rem; font-weight: 700; color: #6666aa;
-  text-transform: uppercase; letter-spacing: 1px;
-}
-#volSlider {
-  -webkit-appearance: none;
-  width: 120px; height: 6px;
-  border-radius: 3px; background: #333;
-  outline: none; cursor: pointer;
-}
-#volSlider::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  width: 18px; height: 18px; border-radius: 50%;
-  background: #ff6b2b; cursor: pointer;
-}
+#volBox label { font-size: .7rem; font-weight: 700; color: #6666aa; text-transform: uppercase; letter-spacing: 1px; }
+#volSlider { -webkit-appearance: none; width: 120px; height: 6px; border-radius: 3px; background: #333; outline: none; cursor: pointer; }
+#volSlider::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%; background: #ff6b2b; cursor: pointer; }
 #volIcon { font-size: 1.4rem; }
-
-/* ── WINNER ── */
 #winner {
-  display: none;
-  position: fixed; inset: 0;
+  display: none; position: fixed; inset: 0;
   flex-direction: column; align-items: center; justify-content: center;
-  background: #000000cc;
-  color: white;
-  z-index: 40;
-  text-align: center;
+  background: #000000cc; color: white; z-index: 40; text-align: center;
 }
-#winner h1 {
-  font-family: 'Bebas Neue', sans-serif;
-  font-size: 4rem; letter-spacing: 6px;
-  color: #ffcc00; text-shadow: 0 0 40px #ffcc0099;
-  margin-bottom: 10px;
-}
-#winnerName {
-  font-family: 'Bebas Neue', sans-serif;
-  font-size: 2.6rem; letter-spacing: 3px; color: #fff;
-}
-#winnerImg {
-  width: 150px; height: 150px; border-radius: 50%;
-  object-fit: cover; border: 5px solid gold;
-  margin-top: 16px; display: none;
-}
-
-/* ── LOBBY / WAITING ── */
+#winner h1 { font-family: 'Bebas Neue', sans-serif; font-size: 4rem; letter-spacing: 6px; color: #ffcc00; text-shadow: 0 0 40px #ffcc0099; margin-bottom: 10px; }
+#winnerName { font-family: 'Bebas Neue', sans-serif; font-size: 2.6rem; letter-spacing: 3px; color: #fff; }
+#winnerImg { width: 150px; height: 150px; border-radius: 50%; object-fit: cover; border: 5px solid gold; margin-top: 16px; display: none; }
 #overlay {
   position: fixed; inset: 0;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
-  background: #0a0a0f;
-  z-index: 50;
+  background: #0a0a0f; z-index: 50;
 }
-#overlay h1 {
-  font-family: 'Bebas Neue', sans-serif;
-  font-size: 4rem; letter-spacing: 6px;
-  color: #ff6b2b; text-shadow: 0 0 30px #ff6b2b88;
-  margin-bottom: 8px;
-}
+#overlay h1 { font-family: 'Bebas Neue', sans-serif; font-size: 4rem; letter-spacing: 6px; color: #ff6b2b; text-shadow: 0 0 30px #ff6b2b88; margin-bottom: 8px; }
 #overlay p { color: #6666aa; font-size: .95rem; }
-#marblePreview {
-  display: flex; flex-wrap: wrap; gap: 12px;
-  justify-content: center; margin-top: 28px; max-width: 500px;
+#marblePreview { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin-top: 28px; max-width: 500px; }
+.previewBall { display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: .75rem; color: #aaa; font-weight: 700; }
+.previewBall .ball { width: 54px; height: 54px; border-radius: 50%; object-fit: cover; border: 3px solid #ffffff33; }
+/* Cuenta atrás */
+#countdown {
+  display: none; position: fixed; inset: 0;
+  align-items: center; justify-content: center;
+  z-index: 45; pointer-events: none;
 }
-.previewBall {
-  display: flex; flex-direction: column; align-items: center; gap: 6px;
-  font-size: .75rem; color: #aaa; font-weight: 700;
+#countdownNum {
+  font-family: 'Bebas Neue', sans-serif; font-size: 20vw;
+  color: #ffcc00; text-shadow: 0 0 60px #ffcc00;
+  animation: popIn .4s ease-out;
 }
-.previewBall .ball {
-  width: 54px; height: 54px; border-radius: 50%; object-fit: cover;
-  border: 3px solid #ffffff33;
-}
+@keyframes popIn { from { transform: scale(2); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 </style>
 </head>
 <body>
 
-<!-- Overlay de espera -->
 <div id="overlay">
   <h1>🎱 MARBLE RACE</h1>
-  <p>Esperando al host…</p>
+  <p id="overlayMsg">Esperando al host…</p>
   <div id="marblePreview"></div>
 </div>
 
-<!-- Canvas del juego -->
+<div id="countdown"><div id="countdownNum"></div></div>
+
 <canvas id="c"></canvas>
 
-<!-- HUD superior -->
 <div id="hud">
   <div id="roundLabel">RONDA 1</div>
   <div id="leaderHud" style="display:none">
@@ -140,14 +89,12 @@ canvas { display: block; }
   </div>
 </div>
 
-<!-- Control de volumen -->
 <div id="volBox">
   <div id="volIcon">🔊</div>
   <label>Volumen</label>
   <input type="range" id="volSlider" min="0" max="1" step="0.05" value="0.6">
 </div>
 
-<!-- Pantalla de ganador -->
 <div id="winner">
   <h1>🏆 GANADOR 🏆</h1>
   <div id="winnerName"></div>
@@ -155,109 +102,77 @@ canvas { display: block; }
 </div>
 
 <script>
-// ────────────────────────────────────────────────────────────────────
-// CONSTANTES (deben coincidir con server.js)
-// ────────────────────────────────────────────────────────────────────
-const WORLD_W  = 800;
-const TRACK_H  = 7000;
-const FINISH_Y = TRACK_H - 200;
-const R        = 22;
+// ── CONSTANTES (iguales que server.js) ──────────────────────────────────────
+const WORLD_W  = 600;
+const TRACK_H  = 8000;
+const FINISH_Y = TRACK_H - 300;
+const R        = 20;
 
-// ────────────────────────────────────────────────────────────────────
-// CANVAS
-// ────────────────────────────────────────────────────────────────────
+// ── CANVAS ──────────────────────────────────────────────────────────────────
 const canvas = document.getElementById('c');
 const ctx    = canvas.getContext('2d');
-let W = window.innerWidth;
-let H = window.innerHeight;
-canvas.width  = W;
-canvas.height = H;
+let W = canvas.width  = window.innerWidth;
+let H = canvas.height = window.innerHeight;
 window.addEventListener('resize', () => {
-  W = window.innerWidth; H = window.innerHeight;
-  canvas.width = W; canvas.height = H;
+  W = canvas.width  = window.innerWidth;
+  H = canvas.height = window.innerHeight;
 });
 
-// ────────────────────────────────────────────────────────────────────
-// ESTADO LOCAL
-// ────────────────────────────────────────────────────────────────────
-let marbles     = [];   // datos visuales de las canicas
-let positions   = [];   // posiciones recibidas del servidor
-let trackBodies = [];   // geometría del escenario
-let state       = { phase: 'setup', round: 1, currentLeader: null };
+// Escala: el mundo lógico (WORLD_W) se estira al ancho de pantalla
+// Usamos ctx.scale para que TODO (escenario + canicas) use el mismo sistema
+function getScale() { return W / WORLD_W; }
+
+// ── ESTADO ──────────────────────────────────────────────────────────────────
+let marbles     = [];
+let positions   = [];
+let trackBodies = [];
+let state       = { phase: 'setup', round: 1 };
 let leaderIdNow = null;
 let raceEnded   = false;
-let cameraY     = 0;    // offset de cámara
+let cameraY     = 0;
+let showTrack   = false;  // true desde fase 'ready' en adelante
 
-// ────────────────────────────────────────────────────────────────────
-// AUDIO DEL LÍDER
-// ────────────────────────────────────────────────────────────────────
-const audios      = {};   // id → HTMLAudioElement
-let   currentAudio = null;
-let   userVolume   = 0.6;
+// ── AUDIO ───────────────────────────────────────────────────────────────────
+const audios = {};
+let currentAudio = null;
+let userVolume   = 0.6;
 
 document.getElementById('volSlider').addEventListener('input', e => {
   userVolume = parseFloat(e.target.value);
   if (currentAudio) currentAudio.volume = userVolume;
-  document.getElementById('volIcon').textContent =
-    userVolume === 0 ? '🔇' : userVolume < 0.4 ? '🔉' : '🔊';
+  document.getElementById('volIcon').textContent = userVolume === 0 ? '🔇' : userVolume < 0.4 ? '🔉' : '🔊';
 });
 
 function switchLeaderAudio(leaderId) {
   if (leaderIdNow === leaderId) return;
   leaderIdNow = leaderId;
-
-  // Parar audio anterior con fade
   if (currentAudio) {
     const old = currentAudio;
     const fade = setInterval(() => {
-      if (old.volume > 0.05) {
-        old.volume = Math.max(0, old.volume - 0.05);
-      } else {
-        old.pause();
-        old.currentTime = 0;
-        clearInterval(fade);
-      }
+      if (old.volume > 0.05) old.volume = Math.max(0, old.volume - 0.05);
+      else { old.pause(); old.currentTime = 0; clearInterval(fade); }
     }, 50);
     currentAudio = null;
   }
-
   if (!leaderId) return;
-
   const marble = marbles.find(m => m.id === leaderId);
   if (!marble || !marble.sound) return;
-
-  // Crear o reutilizar el audio del nuevo líder
-  if (!audios[leaderId]) {
-    const a = new Audio(marble.sound);
-    a.loop   = true;
-    a.volume = 0;
-    audios[leaderId] = a;
-  }
-
+  if (!audios[leaderId]) { const a = new Audio(marble.sound); a.loop = true; a.volume = 0; audios[leaderId] = a; }
   const a = audios[leaderId];
   currentAudio = a;
   a.play().catch(() => {});
-
-  // Fade in
-  const fadeIn = setInterval(() => {
-    if (a.volume < userVolume - 0.05) {
-      a.volume = Math.min(userVolume, a.volume + 0.05);
-    } else {
-      a.volume = userVolume;
-      clearInterval(fadeIn);
-    }
+  const fi = setInterval(() => {
+    if (a.volume < userVolume - 0.05) a.volume = Math.min(userVolume, a.volume + 0.05);
+    else { a.volume = userVolume; clearInterval(fi); }
   }, 50);
 }
 
 function stopAllAudio() {
   Object.values(audios).forEach(a => { a.pause(); a.currentTime = 0; });
-  currentAudio = null;
-  leaderIdNow  = null;
+  currentAudio = null; leaderIdNow = null;
 }
 
-// ────────────────────────────────────────────────────────────────────
-// HUD
-// ────────────────────────────────────────────────────────────────────
+// ── HUD ─────────────────────────────────────────────────────────────────────
 function updateLeaderHud(leaderId) {
   const m = marbles.find(m => m.id === leaderId);
   const hud = document.getElementById('leaderHud');
@@ -266,195 +181,220 @@ function updateLeaderHud(leaderId) {
   document.getElementById('leaderName').textContent = m.name;
   const av = document.getElementById('leaderAvatar');
   if (m.image) { av.src = m.image; av.style.display = 'block'; }
-  else         { av.style.display = 'none'; }
+  else av.style.display = 'none';
 }
 
-// ────────────────────────────────────────────────────────────────────
-// DIBUJO DEL ESCENARIO
-// ────────────────────────────────────────────────────────────────────
-function drawTrack() {
-  ctx.save();
-  ctx.fillStyle = '#2a1f1f';
-  ctx.fillRect(0, 0, W, H);
-
-  // Línea de meta
-  const finY = FINISH_Y - cameraY;
-  if (finY > 0 && finY < H) {
-    ctx.strokeStyle = '#ffcc00';
-    ctx.lineWidth   = 4;
-    ctx.setLineDash([16, 8]);
-    ctx.beginPath();
-    ctx.moveTo(0, finY); ctx.lineTo(W, finY);
-    ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.font = '700 16px Nunito';
-    ctx.fillStyle = '#ffcc00';
-    ctx.fillText('🏁 META', W / 2 - 30, finY - 8);
-  }
-
-  // Escenario (rampas, bumpers)
-  trackBodies.forEach(b => {
-    const sy = b.y - cameraY;
-    if (sy < -100 || sy > H + 100) return; // culling
-
-    ctx.save();
-    ctx.translate(b.x, sy);
-    ctx.rotate(b.angle);
-
-    if (b.radius) {
-      // Bumper circular
-      ctx.beginPath();
-      ctx.arc(0, 0, b.radius, 0, Math.PI * 2);
-      ctx.fillStyle   = '#ff6b2b';
-      ctx.shadowColor = '#ff6b2b';
-      ctx.shadowBlur  = 12;
-      ctx.fill();
-    } else if (b.label === 'wall') {
-      ctx.fillStyle = '#333355';
-      ctx.fillRect(-b.width / 2, -b.height / 2, b.width, b.height);
+// ── CUENTA ATRÁS (visual) ────────────────────────────────────────────────────
+function showCountdown(cb) {
+  const el  = document.getElementById('countdown');
+  const num = document.getElementById('countdownNum');
+  el.style.display = 'flex';
+  let n = 3;
+  num.textContent = n;
+  const iv = setInterval(() => {
+    n--;
+    if (n <= 0) {
+      clearInterval(iv);
+      num.textContent = '¡YA!';
+      setTimeout(() => { el.style.display = 'none'; cb && cb(); }, 600);
     } else {
-      // Rampa
-      ctx.fillStyle = '#4455aa';
-      ctx.shadowColor = '#8899ff44';
-      ctx.shadowBlur  = 8;
-      ctx.beginPath();
-      ctx.roundRect(-b.width / 2, -b.height / 2, b.width, b.height, 4);
-      ctx.fill();
+      num.style.animation = 'none';
+      void num.offsetWidth; // reflow para reiniciar animación
+      num.style.animation = '';
+      num.textContent = n;
     }
-
-    ctx.restore();
-  });
-
-  ctx.restore();
+  }, 900);
 }
 
-// ────────────────────────────────────────────────────────────────────
-// DIBUJO DE CANICAS
-// ────────────────────────────────────────────────────────────────────
-// Precargamos imágenes
+// ── DIBUJO ───────────────────────────────────────────────────────────────────
 const marbleImages = {};
 function preloadImages() {
   marbles.forEach(m => {
     if (m.image && !marbleImages[m.id]) {
-      const img = new Image();
-      img.src = m.image;
-      marbleImages[m.id] = img;
+      const img = new Image(); img.src = m.image; marbleImages[m.id] = img;
     }
   });
 }
 
-function drawMarbles() {
+function drawScene() {
+  const scale = getScale();
+  ctx.clearRect(0, 0, W, H);
+
+  // Fondo
+  ctx.fillStyle = '#12121f';
+  ctx.fillRect(0, 0, W, H);
+
+  // Aplicar escala y cámara en un solo ctx.setTransform
+  // Esto hace que las coordenadas de dibujo sean exactamente las del servidor
+  ctx.save();
+  ctx.setTransform(scale, 0, 0, scale, 0, -cameraY * scale);
+
+  // ── Línea de meta ──
+  ctx.strokeStyle = '#ffcc00';
+  ctx.lineWidth   = 4 / scale;
+  ctx.setLineDash([16 / scale, 8 / scale]);
+  ctx.beginPath();
+  ctx.moveTo(0, FINISH_Y); ctx.lineTo(WORLD_W, FINISH_Y);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.font = `bold ${18/scale}px Nunito`;
+  ctx.fillStyle = '#ffcc00';
+  ctx.textAlign = 'center';
+  ctx.fillText('🏁 META', WORLD_W / 2, FINISH_Y - 8 / scale);
+
+  // ── Escenario ──
+  trackBodies.forEach(b => {
+    // Culling en coordenadas del mundo
+    if (b.y < cameraY - 200 || b.y > cameraY + H / scale + 200) return;
+
+    ctx.save();
+    ctx.translate(b.x, b.y);
+    if (b.angle) ctx.rotate(b.angle);
+
+    if (b.type === 'circle') {
+      ctx.beginPath();
+      ctx.arc(0, 0, b.r, 0, Math.PI * 2);
+      if (b.style === 'bumper') {
+        ctx.fillStyle = '#ff6b2b';
+        ctx.shadowColor = '#ff6b2b88'; ctx.shadowBlur = 14 / scale;
+      } else {
+        // peg
+        ctx.fillStyle = '#cc88ff';
+        ctx.shadowColor = '#cc88ff88'; ctx.shadowBlur = 10 / scale;
+      }
+      ctx.fill();
+      ctx.shadowBlur = 0;
+
+    } else {
+      // rect (ramp o wall)
+      const hw = b.w / 2, hh = b.h / 2;
+      if (b.style === 'wall') {
+        ctx.fillStyle = '#1e1e3a';
+        ctx.fillRect(-hw, -hh, b.w, b.h);
+      } else {
+        // Rampa con degradado
+        const grad = ctx.createLinearGradient(-hw, -hh, hw, hh);
+        grad.addColorStop(0, '#5566dd');
+        grad.addColorStop(1, '#3344aa');
+        ctx.fillStyle = grad;
+        ctx.shadowColor = '#4455cc44'; ctx.shadowBlur = 10 / scale;
+        ctx.beginPath();
+        ctx.roundRect(-hw, -hh, b.w, b.h, 5 / scale);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        // Borde superior brillante
+        ctx.strokeStyle = '#8899ff66';
+        ctx.lineWidth = 2 / scale;
+        ctx.beginPath();
+        ctx.moveTo(-hw, -hh); ctx.lineTo(hw, -hh);
+        ctx.stroke();
+      }
+    }
+    ctx.restore();
+  });
+
+  // ── Canicas ──
   positions.forEach(pos => {
     const m = marbles.find(m => m.id === pos.id);
     if (!m) return;
-    const sx = pos.x * (W / WORLD_W);  // escalar X al ancho de pantalla
-    const sy = pos.y - cameraY;
-    if (sy < -60 || sy > H + 60) return;
+    if (pos.y < cameraY - 100 || pos.y > cameraY + H / scale + 100) return;
 
     ctx.save();
-    ctx.translate(sx, sy);
-    ctx.rotate(pos.angle);
+    ctx.translate(pos.x, pos.y);
+    ctx.rotate(pos.angle || 0);
 
-    // Sombra
-    ctx.shadowColor = '#00000066';
-    ctx.shadowBlur  = 8;
+    const isLeader = pos.id === leaderIdNow;
+    if (isLeader) {
+      // Halo dorado
+      ctx.beginPath(); ctx.arc(0, 0, R + 5, 0, Math.PI * 2);
+      ctx.fillStyle = '#ffcc0033'; ctx.fill();
+    }
 
     const img = marbleImages[m.id];
-    if (img && img.complete) {
-      // Foto de perfil circular
-      ctx.beginPath();
-      ctx.arc(0, 0, R, 0, Math.PI * 2);
-      ctx.clip();
+    if (img && img.complete && img.naturalWidth > 0) {
+      ctx.beginPath(); ctx.arc(0, 0, R, 0, Math.PI * 2); ctx.clip();
       ctx.drawImage(img, -R, -R, R * 2, R * 2);
     } else {
-      // Canica de color
-      const grad = ctx.createRadialGradient(-R * 0.35, -R * 0.35, 2, 0, 0, R);
-      grad.addColorStop(0, lighten(m.color, 60));
+      const grad = ctx.createRadialGradient(-R * 0.3, -R * 0.3, 2, 0, 0, R);
+      grad.addColorStop(0, lighten(m.color, 70));
       grad.addColorStop(1, m.color);
-      ctx.beginPath();
-      ctx.arc(0, 0, R, 0, Math.PI * 2);
-      ctx.fillStyle = grad;
-      ctx.fill();
+      ctx.beginPath(); ctx.arc(0, 0, R, 0, Math.PI * 2);
+      ctx.fillStyle = grad; ctx.fill();
     }
 
-    // Borde del líder
-    if (pos.id === leaderIdNow) {
-      ctx.beginPath();
-      ctx.arc(0, 0, R + 3, 0, Math.PI * 2);
-      ctx.strokeStyle = '#ffcc00';
-      ctx.lineWidth   = 3;
-      ctx.shadowColor = '#ffcc00';
-      ctx.shadowBlur  = 14;
-      ctx.stroke();
+    if (isLeader) {
+      ctx.beginPath(); ctx.arc(0, 0, R, 0, Math.PI * 2);
+      ctx.strokeStyle = '#ffcc00'; ctx.lineWidth = 3 / scale;
+      ctx.shadowColor = '#ffcc00'; ctx.shadowBlur = 16 / scale;
+      ctx.stroke(); ctx.shadowBlur = 0;
     }
-
     ctx.restore();
 
-    // Nombre debajo
-    ctx.font = `900 12px Nunito`;
+    // Nombre (en coordenadas del mundo, sin rotación)
+    ctx.save();
+    ctx.translate(pos.x, pos.y + R + 14 / scale);
+    ctx.font = `bold ${12/scale}px Nunito`;
     ctx.textAlign = 'center';
     ctx.fillStyle = '#fff';
-    ctx.shadowColor = '#000';
-    ctx.shadowBlur  = 4;
-    ctx.fillText(m.name, sx, sy + R + 14);
+    ctx.shadowColor = '#000'; ctx.shadowBlur = 4 / scale;
+    ctx.fillText(m.name, 0, 0);
     ctx.shadowBlur = 0;
+    ctx.restore();
   });
+
+  ctx.restore(); // quitar transform
 }
 
 function lighten(hex, amt) {
   const n = parseInt(hex.replace('#',''), 16);
-  const r = Math.min(255, (n >> 16) + amt);
-  const g = Math.min(255, ((n >> 8) & 0xff) + amt);
-  const b = Math.min(255, (n & 0xff) + amt);
-  return `rgb(${r},${g},${b})`;
+  return `rgb(${Math.min(255,(n>>16)+amt)},${Math.min(255,((n>>8)&0xff)+amt)},${Math.min(255,(n&0xff)+amt)})`;
 }
 
-// ────────────────────────────────────────────────────────────────────
-// CÁMARA (sigue al líder)
-// ────────────────────────────────────────────────────────────────────
+// ── CÁMARA ───────────────────────────────────────────────────────────────────
 function updateCamera() {
-  if (!positions.length) return;
-  // Seguir a la canica más avanzada (mayor Y)
-  const leader = positions.reduce((a, b) => a.y > b.y ? a : b);
-  const targetY = leader.y - H * 0.35;
-  cameraY += (targetY - cameraY) * 0.08; // suavizado
+  if (!positions.length && !trackBodies.length) return;
+  const scale = getScale();
+  let targetY;
+  if (positions.length) {
+    const leader = positions.reduce((a, b) => a.y > b.y ? a : b);
+    targetY = leader.y - (H / scale) * 0.38;
+  } else {
+    targetY = 0;
+  }
+  cameraY += (targetY - cameraY) * 0.1;
   cameraY = Math.max(0, cameraY);
 }
 
-// ────────────────────────────────────────────────────────────────────
-// LOOP DE RENDER
-// ────────────────────────────────────────────────────────────────────
+// ── LOOP ─────────────────────────────────────────────────────────────────────
 function loop() {
-  if (state.phase === 'racing' || state.phase === 'results') {
-    ctx.clearRect(0, 0, W, H);
+  if (showTrack) {
     updateCamera();
-    drawTrack();
-    drawMarbles();
+    drawScene();
   }
   requestAnimationFrame(loop);
 }
 requestAnimationFrame(loop);
 
-// ────────────────────────────────────────────────────────────────────
-// OVERLAY DE CANICAS (lobby / ready)
-// ────────────────────────────────────────────────────────────────────
+// ── OVERLAY ──────────────────────────────────────────────────────────────────
 function renderMarblePreview() {
   const el = document.getElementById('marblePreview');
   el.innerHTML = marbles.map(m => {
-    const ballStyle = m.image
-      ? `background:url('${m.image}') center/cover; border-color:${m.color};`
-      : `background:${m.color};`;
-    return `
-      <div class="previewBall">
-        <div class="ball" style="${ballStyle}"></div>
-        <span>${m.name}</span>
-      </div>`;
+    const s = m.image ? `background:url('${m.image}') center/cover;border-color:${m.color}` : `background:${m.color}`;
+    return `<div class="previewBall"><div class="ball" style="${s}"></div><span>${m.name}</span></div>`;
   }).join('');
 }
 
-// ────────────────────────────────────────────────────────────────────
-// SOCKET
-// ────────────────────────────────────────────────────────────────────
+function setOverlay(msg) {
+  document.getElementById('overlay').style.display = 'flex';
+  document.getElementById('overlayMsg').textContent = msg;
+  showTrack = false;
+}
+
+function hideOverlay() {
+  document.getElementById('overlay').style.display = 'none';
+}
+
+// ── SOCKET ───────────────────────────────────────────────────────────────────
 const socket = io();
 
 socket.on('stateUpdate', s => {
@@ -464,21 +404,25 @@ socket.on('stateUpdate', s => {
   renderMarblePreview();
   document.getElementById('roundLabel').textContent = 'RONDA ' + s.round;
 
-  const overlay = document.getElementById('overlay');
-  if (s.phase === 'racing') {
-    overlay.style.display = 'none';
-    document.getElementById('winner').style.display = 'none';
-    raceEnded = false;
-  } else if (s.phase === 'lobby' || s.phase === 'setup') {
-    overlay.style.display = 'flex';
-    document.getElementById('overlay').querySelector('p').textContent =
-      s.phase === 'lobby' ? 'La carrera está a punto de comenzar…' : 'Esperando al host…';
+  if (s.phase === 'setup') {
+    setOverlay('Esperando al host…');
+  } else if (s.phase === 'lobby') {
+    setOverlay('La carrera está a punto de comenzar…');
   } else if (s.phase === 'ready') {
-    overlay.style.display = 'flex';
-    document.getElementById('overlay').querySelector('p').textContent = '¡Preparados!';
+    // Mostrar escenario estático (sin canicas moviéndose)
+    hideOverlay();
+    showTrack = true;
+    positions = [];
+    cameraY   = 0;
+    document.getElementById('winner').style.display = 'none';
+  } else if (s.phase === 'racing') {
+    hideOverlay();
+    showTrack = true;
+    raceEnded = false;
+    document.getElementById('winner').style.display = 'none';
   }
 
-  if (s.currentLeader && s.phase === 'racing') {
+  if (s.currentLeader && (s.phase === 'racing')) {
     switchLeaderAudio(s.currentLeader);
     updateLeaderHud(s.currentLeader);
   }
@@ -486,43 +430,41 @@ socket.on('stateUpdate', s => {
 
 socket.on('trackData', data => {
   trackBodies = data;
-  cameraY     = 0;
+  cameraY = 0;
+  showTrack = true;
+  hideOverlay();
 });
 
-socket.on('positions', data => {
-  positions = data;
-});
+socket.on('positions', data => { positions = data; });
 
 socket.on('leaderChange', leaderId => {
   switchLeaderAudio(leaderId);
   updateLeaderHud(leaderId);
 });
 
+socket.on('countdown', () => {
+  showCountdown();
+});
+
 socket.on('raceWinner', data => {
   if (raceEnded) return;
   raceEnded = true;
   stopAllAudio();
-
   const m = marbles.find(m => m.id === data.winnerId);
   const el = document.getElementById('winner');
   el.style.display = 'flex';
   document.getElementById('winnerName').textContent = m ? m.name : '???';
   const img = document.getElementById('winnerImg');
   if (m && m.image) { img.src = m.image; img.style.display = 'block'; }
-  else              { img.style.display = 'none'; }
+  else img.style.display = 'none';
 });
 
-// El host ha parado la carrera manualmente — volver a pantalla de espera
 socket.on('raceReset', () => {
   stopAllAudio();
-  raceEnded   = false;
-  positions   = [];
-  trackBodies = [];
-  cameraY     = 0;
-  document.getElementById('winner').style.display  = 'none';
-  document.getElementById('overlay').style.display = 'flex';
-  document.getElementById('overlay').querySelector('p').textContent = '¡Preparados para la siguiente!';
+  raceEnded = false; positions = []; trackBodies = []; cameraY = 0; showTrack = false;
+  document.getElementById('winner').style.display = 'none';
   document.getElementById('leaderHud').style.display = 'none';
+  setOverlay('¡Preparados para la siguiente!');
 });
 </script>
 </body>
