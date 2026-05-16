@@ -8,44 +8,138 @@
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
 <style>
 :root {
-  --bg: #0a0a0f; --surface: #13131e; --surface2: #1c1c2e;
-  --accent: #ff6b2b; --accent2: #ffcc00; --green: #39ff14;
-  --text: #f0f0ff; --muted: #6666aa; --radius: 14px;
+  --bg: #0a0a0f;
+  --surface: #13131e;
+  --surface2: #1c1c2e;
+  --accent: #ff6b2b;
+  --accent2: #ffcc00;
+  --green: #39ff14;
+  --text: #f0f0ff;
+  --muted: #6666aa;
+  --radius: 14px;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { background: var(--bg); color: var(--text); font-family: 'Nunito', sans-serif; min-height: 100vh; padding: 20px; }
-h1 { font-family: 'Bebas Neue', sans-serif; font-size: 3rem; letter-spacing: 4px; color: var(--accent); text-shadow: 0 0 30px #ff6b2b88; text-align: center; margin-bottom: 6px; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Nunito', sans-serif;
+  min-height: 100vh;
+  padding: 20px;
+}
+h1 {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 3rem;
+  letter-spacing: 4px;
+  color: var(--accent);
+  text-shadow: 0 0 30px #ff6b2b88;
+  text-align: center;
+  margin-bottom: 6px;
+}
 .subtitle { text-align: center; color: var(--muted); font-size: .9rem; margin-bottom: 28px; }
-.badge { display: inline-block; background: var(--accent); color: #fff; font-size: .7rem; font-weight: 900; padding: 3px 10px; border-radius: 20px; letter-spacing: 2px; text-transform: uppercase; margin-left: 8px; }
+.badge {
+  display: inline-block;
+  background: var(--accent);
+  color: #fff;
+  font-size: .7rem;
+  font-weight: 900;
+  padding: 3px 10px;
+  border-radius: 20px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-left: 8px;
+}
 .grid { display: grid; grid-template-columns: 380px 1fr; gap: 20px; max-width: 1100px; margin: 0 auto; }
 @media (max-width: 800px) { .grid { grid-template-columns: 1fr; } }
-.card { background: var(--surface); border: 1px solid #ffffff11; border-radius: var(--radius); padding: 22px; }
-.card h2 { font-family: 'Bebas Neue', sans-serif; font-size: 1.4rem; letter-spacing: 2px; color: var(--accent2); margin-bottom: 16px; }
+.card {
+  background: var(--surface);
+  border: 1px solid #ffffff11;
+  border-radius: var(--radius);
+  padding: 22px;
+}
+.card h2 {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.4rem;
+  letter-spacing: 2px;
+  color: var(--accent2);
+  margin-bottom: 16px;
+}
 .field { margin-bottom: 14px; }
 .field label { display: block; font-size: .8rem; font-weight: 700; color: var(--muted); margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1px; }
-.field input[type=text] { width: 100%; background: var(--surface2); border: 1px solid #ffffff22; border-radius: 8px; color: var(--text); padding: 10px 14px; font-family: 'Nunito', sans-serif; font-size: .95rem; outline: none; transition: border .2s; }
+.field input[type=text] {
+  width: 100%;
+  background: var(--surface2);
+  border: 1px solid #ffffff22;
+  border-radius: 8px;
+  color: var(--text);
+  padding: 10px 14px;
+  font-family: 'Nunito', sans-serif;
+  font-size: .95rem;
+  outline: none;
+  transition: border .2s;
+}
 .field input[type=text]:focus { border-color: var(--accent); }
 .upload-row { display: flex; gap: 10px; }
-.upload-btn { flex: 1; background: var(--surface2); border: 2px dashed #ffffff22; border-radius: 8px; padding: 10px; text-align: center; cursor: pointer; font-size: .8rem; color: var(--muted); transition: all .2s; position: relative; overflow: hidden; }
+.upload-btn {
+  flex: 1;
+  background: var(--surface2);
+  border: 2px dashed #ffffff22;
+  border-radius: 8px;
+  padding: 10px;
+  text-align: center;
+  cursor: pointer;
+  font-size: .8rem;
+  color: var(--muted);
+  transition: all .2s;
+  position: relative;
+  overflow: hidden;
+}
 .upload-btn:hover { border-color: var(--accent); color: var(--accent); }
-.upload-btn input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+.upload-btn input[type=file] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+  width: 100%;
+  height: 100%;
+}
 .preview-img { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; display: block; margin: 0 auto 4px; }
-.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 22px; border-radius: 10px; border: none; font-family: 'Bebas Neue', sans-serif; font-size: 1.1rem; letter-spacing: 2px; cursor: pointer; transition: all .15s; text-transform: uppercase; }
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 12px 22px;
+  border-radius: 10px;
+  border: none;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.1rem;
+  letter-spacing: 2px;
+  cursor: pointer;
+  transition: all .15s;
+  text-transform: uppercase;
+}
 .btn:active { transform: scale(.97); }
-.btn-primary  { background: var(--accent); color: #fff; width: 100%; }
+.btn-primary { background: var(--accent); color: #fff; width: 100%; }
 .btn-primary:hover { background: #ff8855; }
 .btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid #ffffff22; width: 100%; }
 .btn-secondary:hover { border-color: var(--accent2); color: var(--accent2); }
 .btn-green { background: var(--green); color: #000; width: 100%; }
 .btn-green:hover { background: #55ff33; }
 .btn-danger { background: #ff2244; color: #fff; width: 100%; }
-.btn-warning { background: #ff8800; color: #fff; width: 100%; }
-.btn-warning:hover { background: #ffaa33; }
+.btn-danger:hover { background: #ff4466; }
 .btn-xl { font-size: 1.6rem; padding: 18px 30px; }
 .btn:disabled { opacity: 0.4; cursor: not-allowed; }
 .marble-list { display: flex; flex-direction: column; gap: 10px; max-height: 320px; overflow-y: auto; padding-right: 4px; }
-.marble-item { display: flex; align-items: center; gap: 12px; background: var(--surface2); border-radius: 10px; padding: 10px 14px; border: 1px solid #ffffff11; }
-.marble-avatar { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; border: 2px solid var(--accent); flex-shrink: 0; }
+.marble-item {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--surface2);
+  border-radius: 10px;
+  padding: 10px 14px;
+  border: 1px solid #ffffff11;
+}
+.marble-avatar {
+  width: 44px; height: 44px; border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--accent);
+  flex-shrink: 0;
+}
 .marble-info { flex: 1; min-width: 0; }
 .marble-name { font-weight: 900; font-size: .95rem; }
 .marble-meta { font-size: .75rem; color: var(--muted); }
@@ -54,10 +148,26 @@ h1 { font-family: 'Bebas Neue', sans-serif; font-size: 3rem; letter-spacing: 4px
 .marble-del:hover { background: #ff224422; }
 .phase-section { display: flex; flex-direction: column; gap: 12px; }
 .phase-label { font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: var(--muted); }
-.phase-indicator { display: flex; align-items: center; gap: 10px; background: var(--surface2); border-radius: 10px; padding: 12px 16px; border: 1px solid #ffffff11; }
-.phase-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--green); box-shadow: 0 0 8px var(--green); flex-shrink: 0; }
+.phase-indicator {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--surface2);
+  border-radius: 10px;
+  padding: 12px 16px;
+  border: 1px solid #ffffff11;
+}
+.phase-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
 .phase-text { font-weight: 700; font-size: .9rem; }
-.round-badge { background: var(--surface2); border: 1px solid var(--accent2); color: var(--accent2); font-family: 'Bebas Neue', sans-serif; font-size: 1.1rem; letter-spacing: 3px; padding: 8px 16px; border-radius: 8px; text-align: center; }
+.round-badge {
+  background: var(--surface2);
+  border: 1px solid var(--accent2);
+  color: var(--accent2);
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.1rem;
+  letter-spacing: 3px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  text-align: center;
+}
 .color-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
 .color-swatch { width: 28px; height: 28px; border-radius: 50%; cursor: pointer; border: 3px solid transparent; transition: all .15s; }
 .color-swatch.selected { border-color: #fff; transform: scale(1.2); }
@@ -67,8 +177,14 @@ h1 { font-family: 'Bebas Neue', sans-serif; font-size: 3rem; letter-spacing: 4px
 .score-name { flex: 1; font-weight: 700; }
 .score-pts { font-family: 'Bebas Neue', sans-serif; font-size: 1.3rem; color: var(--accent); }
 .empty-state { text-align: center; color: var(--muted); font-size: .85rem; padding: 20px; border: 2px dashed #ffffff11; border-radius: 10px; }
-.divider { border: none; border-top: 1px solid #ffffff11; margin: 4px 0; }
-.toast { position: fixed; bottom: 24px; right: 24px; background: var(--green); color: #000; font-weight: 900; padding: 12px 20px; border-radius: 10px; font-size: .9rem; transform: translateY(60px); opacity: 0; transition: all .3s; z-index: 999; }
+.toast {
+  position: fixed; bottom: 24px; right: 24px;
+  background: var(--green); color: #000;
+  font-weight: 900; padding: 12px 20px;
+  border-radius: 10px; font-size: .9rem;
+  transform: translateY(60px); opacity: 0;
+  transition: all .3s; z-index: 999;
+}
 .toast.show { transform: translateY(0); opacity: 1; }
 </style>
 </head>
@@ -121,21 +237,16 @@ h1 { font-family: 'Bebas Neue', sans-serif; font-size: 3rem; letter-spacing: 4px
       <div class="phase-section">
         <div class="phase-label">Estado actual</div>
         <div class="phase-indicator">
-          <div class="phase-dot"></div>
+          <div class="phase-dot" id="phaseDot" style="background:var(--green);box-shadow:0 0 8px var(--green)"></div>
           <div class="phase-text" id="phaseText">Configurando...</div>
         </div>
         <div class="round-badge" id="roundBadge">RONDA 1</div>
-
-        <div class="phase-label" style="margin-top:8px">Flujo de partida</div>
+        <div class="phase-label" style="margin-top:8px">Acciones</div>
         <button class="btn btn-secondary" id="btnLobby">📺 Abrir sala de espera</button>
         <button class="btn btn-secondary" id="btnReady" disabled>🎱 Mostrar canicas en escenario</button>
         <button class="btn btn-green btn-xl" id="btnStart" disabled>▶ INICIAR CARRERA</button>
         <button class="btn btn-secondary" id="btnNext" style="display:none">🔄 Siguiente ronda</button>
-
-        <hr class="divider">
-        <div class="phase-label">Acciones de emergencia</div>
-        <button class="btn btn-warning" id="btnResetRace">⏹ Parar carrera actual</button>
-        <button class="btn btn-danger" id="btnReset" style="margin-top:4px">🗑️ Reset total (borra todo)</button>
+        <button class="btn btn-danger" id="btnReset" style="margin-top:6px">🗑️ Reset total</button>
       </div>
     </div>
 
@@ -153,478 +264,189 @@ h1 { font-family: 'Bebas Neue', sans-serif; font-size: 3rem; letter-spacing: 4px
 <script>
 var socket = io();
 
-var COLORS = [
-  '#ff6b2b',
-  '#ffcc00',
-  '#39ff14',
-  '#00cfff',
-  '#ff44aa',
-  '#bb44ff',
-  '#ff4444',
-  '#44ffcc',
-  '#ffffff',
-  '#ff9900'
-];
-
+var COLORS = ['#ff6b2b','#ffcc00','#39ff14','#00cfff','#ff44aa','#bb44ff','#ff4444','#44ffcc','#ffffff','#ff9900'];
 var selectedColor = COLORS[0];
-var localMarbles  = [];
-
+var localMarbles = [];
 var imgData = null;
 var sndData = null;
 var sndName = '';
+var gameState = { phase: 'setup' };
 
-var gameState = {};
-
-
-// ─────────────────────────────────────────────────────────────────────
-// COLORES
-// ─────────────────────────────────────────────────────────────────────
+// ── BUILD COLORS ──
 var colorRow = document.getElementById('colorRow');
-
 COLORS.forEach(function(c, i) {
-
   var sw = document.createElement('div');
-
   sw.className = 'color-swatch' + (i === 0 ? ' selected' : '');
   sw.style.background = c;
-
   sw.addEventListener('click', function() {
-
-    document.querySelectorAll('.color-swatch').forEach(function(s) {
-      s.classList.remove('selected');
-    });
-
+    document.querySelectorAll('.color-swatch').forEach(function(s) { s.classList.remove('selected'); });
     sw.classList.add('selected');
-
     selectedColor = c;
   });
-
   colorRow.appendChild(sw);
 });
 
-
-// ─────────────────────────────────────────────────────────────────────
-// UPLOAD IMAGEN
-// ─────────────────────────────────────────────────────────────────────
+// ── IMAGE UPLOAD ──
 document.getElementById('mImg').addEventListener('change', function() {
-
   var file = this.files[0];
-
   if (!file) return;
-
-  // Límite 2MB
-  if (file.size > 1024 * 1024 * 2) {
-
-    showToast('⚠️ Imagen demasiado pesada (máx 2MB)');
-
-    this.value = '';
-
-    return;
-  }
-
   var reader = new FileReader();
-
   reader.onload = function(e) {
-
     imgData = e.target.result;
-
     document.getElementById('imgPreviewWrap').innerHTML =
-      '<img src="' + imgData + '" class="preview-img">' +
-      '<div style="font-size:.7rem">Foto cargada ✅</div>';
+      '<img src="' + imgData + '" class="preview-img"><div style="font-size:.7rem">Foto ✅</div>';
   };
-
   reader.readAsDataURL(file);
 });
 
-
-// ─────────────────────────────────────────────────────────────────────
-// UPLOAD AUDIO
-// ─────────────────────────────────────────────────────────────────────
+// ── SOUND UPLOAD ──
 document.getElementById('mSound').addEventListener('change', function() {
-
   var file = this.files[0];
-
   if (!file) return;
-
-  // Límite 4MB
-  if (file.size > 1024 * 1024 * 4) {
-
-    showToast('⚠️ Audio demasiado pesado (máx 4MB)');
-
-    this.value = '';
-
-    return;
-  }
-
   sndName = file.name;
-
   var reader = new FileReader();
-
   reader.onload = function(e) {
-
     sndData = e.target.result;
-
     document.getElementById('sndPreviewWrap').innerHTML =
-      '<div style="font-size:1.5rem;margin-bottom:4px">🎵</div>' +
-      '<div style="font-size:.7rem">' +
-      sndName.substring(0, 16) +
-      ' ✅</div>';
+      '<div style="font-size:1.5rem;margin-bottom:4px">🎵</div><div style="font-size:.7rem">' + sndName.substring(0, 16) + ' ✅</div>';
   };
-
   reader.readAsDataURL(file);
 });
 
-
-// ─────────────────────────────────────────────────────────────────────
-// AÑADIR CANICA
-// ─────────────────────────────────────────────────────────────────────
+// ── ADD MARBLE ──
 document.getElementById('btnAddMarble').addEventListener('click', function() {
-
   var name = document.getElementById('mName').value.trim();
-
-  if (!name) {
-
-    showToast('⚠️ Ponle un nombre a la canica');
-
-    return;
-  }
-
-  var marble = {
-    id: 'marble_' + Date.now(),
+  if (!name) { showToast('⚠️ Ponle un nombre'); return; }
+  localMarbles.push({
+    id: 'marble_' + Date.now() + '_' + Math.random().toString(36).slice(2,6),
     name: name,
     color: selectedColor,
     image: imgData || null,
     sound: sndData || null,
     soundName: sndName
-  };
-
-  localMarbles.push(marble);
-
+  });
   socket.emit('setMarbles', localMarbles);
-
-  // Reset inputs
   document.getElementById('mName').value = '';
-
-  imgData = null;
-  sndData = null;
-  sndName = '';
-
-  document.getElementById('mImg').value = '';
-  document.getElementById('mSound').value = '';
-
-  document.getElementById('imgPreviewWrap').innerHTML =
-    '<div style="font-size:1.5rem;margin-bottom:4px">🖼️</div>' +
-    '<div>Foto</div>';
-
-  document.getElementById('sndPreviewWrap').innerHTML =
-    '<div style="font-size:1.5rem;margin-bottom:4px">🎵</div>' +
-    '<div>Sonido</div>';
-
-  showToast('✅ Canica añadida: ' + name);
-
+  imgData = null; sndData = null; sndName = '';
+  document.getElementById('imgPreviewWrap').innerHTML = '<div style="font-size:1.5rem;margin-bottom:4px">🖼️</div><div>Foto</div>';
+  document.getElementById('sndPreviewWrap').innerHTML = '<div style="font-size:1.5rem;margin-bottom:4px">🎵</div><div>Sonido</div>';
+  showToast('✅ Canica: ' + name);
   renderMarbles();
 });
 
-
-// ─────────────────────────────────────────────────────────────────────
-// ELIMINAR CANICA
-// ─────────────────────────────────────────────────────────────────────
 function removeMarble(id) {
-
-  localMarbles = localMarbles.filter(function(m) {
-    return m.id !== id;
-  });
-
+  localMarbles = localMarbles.filter(function(m) { return m.id !== id; });
   socket.emit('setMarbles', localMarbles);
-
   renderMarbles();
 }
 
-
-// ─────────────────────────────────────────────────────────────────────
-// RENDER CANICAS
-// ─────────────────────────────────────────────────────────────────────
+// ── RENDER MARBLES ──
 function renderMarbles() {
-
   var list = document.getElementById('marbleList');
-
-  document.getElementById('marbleCount').textContent =
-    localMarbles.length;
-
+  document.getElementById('marbleCount').textContent = localMarbles.length;
   if (!localMarbles.length) {
-
-    list.innerHTML =
-      '<div class="empty-state">' +
-      'Aún no hay canicas.<br>¡Añade la primera!' +
-      '</div>';
-
+    list.innerHTML = '<div class="empty-state">Aún no hay canicas.<br>¡Añade la primera!</div>';
     return;
   }
-
   var html = '';
-
   localMarbles.forEach(function(m) {
-
     var avatarHtml = m.image
-
       ? '<img src="' + m.image + '" class="marble-avatar">'
-
-      : '<div class="marble-avatar" style="' +
-        'background:' + m.color + ';' +
-        'display:flex;' +
-        'align-items:center;' +
-        'justify-content:center;' +
-        'font-size:1.3rem">' +
-        '🎱</div>';
-
-    html +=
-      '<div class="marble-item">' +
-
-      avatarHtml +
-
-      '<div class="marble-info">' +
-
-      '<div class="marble-name">' +
-      m.name +
-      '</div>' +
-
-      '<div class="marble-meta">' +
-
-      (m.sound ? '🎵 Con sonido' : 'Sin sonido') +
-
-      ' · <span style="color:' + m.color + '">●</span>' +
-
-      '</div>' +
-
-      '</div>' +
-
-      '<div class="marble-score">' +
-
-      (
-        (gameState.scores &&
-        gameState.scores[m.id] !== undefined)
-
-        ? gameState.scores[m.id]
-
-        : 0
-      ) +
-
-      '</div>' +
-
-      '<button class="marble-del" onclick="removeMarble(\'' +
-      m.id +
-      '\')">✕</button>' +
-
-      '</div>';
+      : '<div class="marble-avatar" style="background:' + m.color + ';display:flex;align-items:center;justify-content:center;font-size:1.3rem">🎱</div>';
+    html += '<div class="marble-item">' + avatarHtml +
+      '<div class="marble-info"><div class="marble-name">' + m.name + '</div><div class="marble-meta">' +
+      (m.sound ? '🎵 Con sonido' : 'Sin sonido') + ' · <span style="color:' + m.color + '">●</span></div></div>' +
+      '<div class="marble-score">' + ((gameState.scores && gameState.scores[m.id] !== undefined) ? gameState.scores[m.id] : 0) + '</div>' +
+      '<button class="marble-del" onclick="removeMarble(\'' + m.id + '\')">✕</button></div>';
   });
-
   list.innerHTML = html;
 }
 
-
-// ─────────────────────────────────────────────────────────────────────
-// BOTONES
-// ─────────────────────────────────────────────────────────────────────
-document.getElementById('btnLobby').addEventListener('click', function() {
-  socket.emit('setPhase', 'lobby');
-});
-
-document.getElementById('btnReady').addEventListener('click', function() {
-  socket.emit('setPhase', 'ready');
-});
-
-document.getElementById('btnStart').addEventListener('click', function() {
-  socket.emit('startRace');
-});
-
-document.getElementById('btnNext').addEventListener('click', function() {
-  socket.emit('nextRound');
-});
-
-document.getElementById('btnResetRace').addEventListener('click', function() {
-
-  if (!confirm('¿Parar la carrera actual?')) return;
-
-  socket.emit('resetRace');
-
-  showToast('⏹ Carrera parada');
-});
-
+// ── PHASE BUTTONS ──
+document.getElementById('btnLobby').addEventListener('click', function() { socket.emit('setPhase', 'lobby'); });
+document.getElementById('btnReady').addEventListener('click', function() { socket.emit('setPhase', 'ready'); });
+document.getElementById('btnStart').addEventListener('click', function() { socket.emit('startRace'); });
+document.getElementById('btnNext').addEventListener('click', function() { socket.emit('nextRound'); });
 document.getElementById('btnReset').addEventListener('click', function() {
-
-  if (!confirm('¿Resetear TODO?')) return;
-
+  if (!confirm('¿Resetear todo?')) return;
   localMarbles = [];
-
   socket.emit('resetGame');
 });
 
-
-// ─────────────────────────────────────────────────────────────────────
-// SOCKET
-// ─────────────────────────────────────────────────────────────────────
+// ── SOCKET EVENTS ──
 socket.on('stateUpdate', function(state) {
-
   gameState = state;
-
+  if (state.marbles && state.marbles.length) {
+    localMarbles = state.marbles;
+  }
   updateUI(state);
-
   renderMarbles();
-
   renderScores(state);
 });
 
-
 socket.on('raceWinner', function(data) {
-
   gameState.scores = data.scores;
-
-  var w = localMarbles.find(function(m) {
-    return m.id === data.winnerId;
-  });
-
-  showToast('🏆 Ganador: ' + (w ? w.name : data.winnerId));
-
+  var w = localMarbles.find(function(m) { return m.id === data.winnerId; });
+  showToast('🏆 Ganador: ' + (w ? w.name : data.winnerName));
   renderMarbles();
-
   renderScores(gameState);
 });
 
-
-// ─────────────────────────────────────────────────────────────────────
-// UPDATE UI
-// ─────────────────────────────────────────────────────────────────────
+// ── UPDATE UI ──
 function updateUI(state) {
+  var phases = { setup:'Configurando canicas', lobby:'Sala de espera abierta', ready:'Escenario visible', countdown:'Cuenta atrás...', racing:'🏁 Combate', results:'🏆 Resultados' };
+  var txt = phases[state.phase] || state.phase;
+  if (state.tournament && state.phase === 'racing') {
+    var t = state.tournament;
+    txt += ' ' + (t.matchIndex + 1) + '/' + t.bracket.length;
+  }
+  if (state.tournament && state.phase === 'results' && state.tournament.championId) {
+    var champ = localMarbles.find(function(m) { return m.id === state.tournament.championId; });
+    txt = '🏆 CAMPEÓN: ' + (champ ? champ.name : '?');
+  }
+  document.getElementById('phaseText').textContent = txt;
+  document.getElementById('roundBadge').textContent = 'RONDA ' + (state.round || 1);
 
-  var phases = {
-    setup: 'Configurando canicas',
-    lobby: 'Sala de espera abierta',
-    ready: 'Escenario visible',
-    countdown: 'Cuenta atrás...',
-    racing: '🏁 Carrera en curso',
-    results: '🏆 Resultados'
-  };
+  var dot = document.getElementById('phaseDot');
+  var colors = { setup:'#666', lobby:'#39ff14', ready:'#ffcc00', racing:'#ff6b2b', results:'#ffd700' };
+  dot.style.background = colors[state.phase] || '#666';
 
-  document.getElementById('phaseText').textContent =
-    phases[state.phase] || state.phase;
-
-  document.getElementById('roundBadge').textContent =
-    'RONDA ' + state.round;
-
-  document.getElementById('btnLobby').disabled =
-    state.phase !== 'setup';
-
-  document.getElementById('btnReady').disabled =
-    state.phase !== 'lobby';
-
-  document.getElementById('btnStart').disabled =
-    state.phase !== 'ready';
-
-  document.getElementById('btnResetRace').disabled =
-    (state.phase !== 'racing' && state.phase !== 'results');
-
-  var btnNext = document.getElementById('btnNext');
-
-  btnNext.style.display =
-    state.phase === 'results' ? 'flex' : 'none';
+  document.getElementById('btnLobby').disabled = !['setup'].includes(state.phase);
+  document.getElementById('btnReady').disabled = !['lobby','results'].includes(state.phase);
+  document.getElementById('btnStart').disabled = state.phase !== 'ready';
+  document.getElementById('btnNext').style.display = state.phase === 'results' ? 'flex' : 'none';
 }
 
-
-// ─────────────────────────────────────────────────────────────────────
-// SCOREBOARD
-// ─────────────────────────────────────────────────────────────────────
+// ── SCOREBOARD ──
 function renderScores(state) {
-
   var board = document.getElementById('scoreBoard');
-
   if (!localMarbles.length) {
-
-    board.innerHTML =
-      '<div class="empty-state">' +
-      'La carrera aún no ha empezado' +
-      '</div>';
-
+    board.innerHTML = '<div class="empty-state">La carrera aún no ha empezado</div>';
     return;
   }
-
   var sorted = localMarbles.slice().sort(function(a, b) {
-
-    return (
-      ((state.scores && state.scores[b.id]) || 0) -
-      ((state.scores && state.scores[a.id]) || 0)
-    );
+    return ((state.scores && state.scores[b.id]) || 0) - ((state.scores && state.scores[a.id]) || 0);
   });
-
   var html = '';
-
   sorted.forEach(function(m, i) {
-
-    var pos =
-      i === 0 ? '🥇'
-      : i === 1 ? '🥈'
-      : i === 2 ? '🥉'
-      : (i + 1);
-
+    var pos = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : (i + 1);
     var avatarHtml = m.image
-
-      ? '<img src="' + m.image + '" style="' +
-        'width:30px;' +
-        'height:30px;' +
-        'border-radius:50%;' +
-        'object-fit:cover;' +
-        'border:2px solid ' + m.color + '">'
-
-      : '<div style="' +
-        'width:30px;' +
-        'height:30px;' +
-        'border-radius:50%;' +
-        'background:' + m.color + '">' +
-        '</div>';
-
-    html +=
-      '<div class="score-row">' +
-
-      '<div class="score-pos ' +
-      (i === 0 ? 'gold' : '') +
-      '">' + pos + '</div>' +
-
-      avatarHtml +
-
-      '<div class="score-name">' +
-      m.name +
-      '</div>' +
-
-      '<div class="score-pts">' +
-
-      (
-        (state.scores && state.scores[m.id]) || 0
-      ) +
-
-      ' pts</div>' +
-
-      '</div>';
+      ? '<img src="' + m.image + '" style="width:30px;height:30px;border-radius:50%;object-fit:cover;border:2px solid ' + m.color + '">'
+      : '<div style="width:30px;height:30px;border-radius:50%;background:' + m.color + '"></div>';
+    html += '<div class="score-row"><div class="score-pos ' + (i === 0 ? 'gold' : '') + '">' + pos + '</div>' +
+      avatarHtml + '<div class="score-name">' + m.name + '</div>' +
+      '<div class="score-pts">' + ((state.scores && state.scores[m.id]) || 0) + ' pts</div></div>';
   });
-
   board.innerHTML = html;
 }
 
-
-// ─────────────────────────────────────────────────────────────────────
-// TOAST
-// ─────────────────────────────────────────────────────────────────────
+// ── TOAST ──
 function showToast(msg) {
-
   var t = document.getElementById('toast');
-
   t.textContent = msg;
-
   t.classList.add('show');
-
-  setTimeout(function() {
-    t.classList.remove('show');
-  }, 2500);
+  setTimeout(function() { t.classList.remove('show'); }, 2500);
 }
 </script>
-  
 </body>
 </html>
