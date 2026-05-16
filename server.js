@@ -3,7 +3,7 @@ const http    = require('http');
 const { Server } = require('socket.io');
 const path    = require('path');
 const Matter  = require('matter-js');
-const { Engine, World, Bodies, Body } = Matter;
+const { Engine, World, Bodies, Body, Constraint, Body: { setVelocity, applyForce } } = Matter;
 
 const app    = express();
 const server = http.createServer(app);
@@ -22,34 +22,17 @@ const W_H    = 500;
 const TICK   = 1000 / 60;
 
 const WEAPONS = [
-  { name: 'Maza',      dmg: 18, charge: 2000, cd: 1000, range: 24, speed: 0.0003, icon: '\u{1f528}', type: 'melee', optRange: 20 },
-  { name: 'Martillo',  dmg: 15, charge: 1800, cd: 900,  range: 22, speed: 0.00035, icon: '\u{1f528}', type: 'melee', optRange: 18 },
-  { name: 'Espad\u00f3n', dmg: 16, charge: 2000, cd: 900,  range: 28, speed: 0.0003,  icon: '\u{2694}\u{fe0f}', type: 'melee', optRange: 25 },
-  { name: 'Hacha',     dmg: 14, charge: 1500, cd: 800,  range: 24, speed: 0.0004,  icon: '\u{1fa93}', type: 'melee', optRange: 22 },
-  { name: 'Espada',    dmg: 12, charge: 1200, cd: 700,  range: 22, speed: 0.0005,  icon: '\u{2694}\u{fe0f}', type: 'melee', optRange: 20 },
-  { name: 'Lanza',     dmg: 10, charge: 1500, cd: 800,  range: 44, speed: 0.0004,  icon: '\u{1f531}', type: 'melee', optRange: 40 },
-  { name: 'Katana',    dmg: 9,  charge: 700,  cd: 500,  range: 18, speed: 0.0007,  icon: '\u{1f5e1}\u{fe0f}', type: 'melee', optRange: 16 },
-  { name: 'Daga',      dmg: 5,  charge: 400,  cd: 400,  range: 16, speed: 0.0008,  icon: '\u{1f5e1}\u{fe0f}', type: 'melee', optRange: 14 },
-  { name: 'Pu\u00f1os', dmg: 3,  charge: 250,  cd: 300,  range: 14, speed: 0.001,   icon: '\u{1f44a}', type: 'melee', optRange: 12 },
-  { name: 'Patada',    dmg: 6,  charge: 600,  cd: 500,  range: 20, speed: 0.0007,  icon: '\u{1f9b6}', type: 'melee', optRange: 18 },
-  { name: 'Arco',      dmg: 4,  charge: 2000, cd: 1500, range: 100,speed: 0.0004,  icon: '\u{1f3f9}', type: 'ranged', optRange: 110 },
-  { name: 'Ballesta',  dmg: 7,  charge: 2400, cd: 1800, range: 85, speed: 0.00035, icon: '\u{1f3f9}', type: 'ranged', optRange: 90 },
-  { name: 'Vara',      dmg: 5,  charge: 1600, cd: 1200, range: 60, speed: 0.0005,  icon: '\u{1fa84}', type: 'ranged', optRange: 70 },
-  { name: 'Jabalina',  dmg: 8,  charge: 2000, cd: 1400, range: 65, speed: 0.00035, icon: '\u{1f531}', type: 'ranged', optRange: 75 },
-  { name: 'Escudo',    dmg: 2,  charge: 800,  cd: 800,  range: 18, speed: 0.0006,  icon: '\u{1f6e1}\u{fe0f}', type: 'melee', optRange: 16 },
-  { name: 'L\u00e1tigo', dmg: 5,  charge: 700,  cd: 700,  range: 40, speed: 0.00065, icon: '\u{1f3f9}', type: 'melee', optRange: 36 },
-  { name: 'Estrella',  dmg: 3,  charge: 700,  cd: 700,  range: 60, speed: 0.0006,  icon: '\u{2b50}', type: 'ranged', optRange: 65 },
-  { name: 'Pico',      dmg: 8,  charge: 1000, cd: 700,  range: 24, speed: 0.0005,  icon: '\u{26cf}\u{fe0f}', type: 'melee', optRange: 22 },
-  { name: 'Tridente',  dmg: 10, charge: 1500, cd: 800,  range: 42, speed: 0.00045, icon: '\u{1f531}', type: 'melee', optRange: 38 },
-  { name: 'Mayal',     dmg: 13, charge: 1800, cd: 900,  range: 28, speed: 0.00035, icon: '\u{1f528}', type: 'melee', optRange: 25 },
+  // Class-based weapons with shield block %
+  { name: 'Arquero',   dmg: 3,  charge: 300,  cd: 350,  range: 55, icon: '\u{1f3f9}', type: 'ranged', block: 5,  dodge: 18 },
+  { name: 'Guerrero',  dmg: 12, charge: 800,  cd: 700,  range: 30, icon: '\u{2694}\u{fe0f}', type: 'melee', block: 20, dodge: 3 },
+  { name: 'Caballero', dmg: 8,  charge: 500,  cd: 500,  range: 28, icon: '\u{1f6e1}\u{fe0f}', type: 'melee', block: 40, dodge: 5 },
+  { name: 'Lancero',   dmg: 7,  charge: 450,  cd: 500,  range: 45, icon: '\u{1f531}', type: 'melee', block: 15, dodge: 10 },
+  { name: 'Escudero',  dmg: 5,  charge: 400,  cd: 450,  range: 22, icon: '\u{1f6e1}\u{fe0f}', type: 'melee', block: 60, dodge: 3 },
 ];
 
 const PLATFORMS = [
+  // Single flat floor for 1v1 matches
   { x: W_W / 2, y: 460, w: W_W, h: 30 },
-  { x: 150, y: 365, w: 160, h: 12 }, { x: 500, y: 365, w: 180, h: 12 },
-  { x: 350, y: 290, w: 200, h: 12 }, { x: 120, y: 290, w: 110, h: 12 }, { x: 620, y: 290, w: 110, h: 12 },
-  { x: 400, y: 215, w: 160, h: 12 }, { x: 220, y: 215, w: 100, h: 12 }, { x: 580, y: 215, w: 100, h: 12 },
-  { x: 400, y: 145, w: 120, h: 12 },
 ];
 
 const THEMES = [
@@ -60,7 +43,8 @@ const THEMES = [
 ];
 
 let gameState = {
-  phase: 'setup', marbles: [], round: 1, scores: {}, winnerId: null, theme: THEMES[0]
+  phase: 'setup', marbles: [], round: 1, scores: {}, winnerId: null, theme: THEMES[0],
+  tournament: null  // { bracket: [[id1,id2],...], matchIndex: 0, winners: [], championId: null }
 };
 
 let engine      = null;
@@ -73,54 +57,137 @@ function broadcastState() {
   io.emit('stateUpdate', {
     phase: gameState.phase, marbles: gameState.marbles,
     round: gameState.round, scores: gameState.scores,
-    winnerId: gameState.winnerId, theme: gameState.theme
+    winnerId: gameState.winnerId, theme: gameState.theme,
+    tournament: gameState.tournament
   });
 }
 
-function startBattle() {
+// ─── RAGDOLL SYSTEM ────────────────────────────────────────────────
+
+function createRagdoll(x, y, color, marbleId) {
+  const col = { group: -1 };
+  const P = (opts) => ({ density: 0.001, friction: 0.5, restitution: 0.05, frictionAir: 0.015, collisionFilter: col, ...opts });
+
+  const parts = {};
+  const S_ = 0.6; // scale factor (60% of original)
+
+  // Torso
+  parts.torso = Bodies.rectangle(x, y, 12 * S_, 16 * S_, P({ density: 0.0005, label: 't_' + marbleId }));
+
+  // Head
+  parts.head = Bodies.circle(x, y - 13 * S_, 5, P({ density: 0.0004, restitution: 0.2, label: 'h_' + marbleId }));
+
+  // Arms
+  parts.upperArmL = Bodies.rectangle(x - 10 * S_, y - 5 * S_, 4, 14 * S_, P({ density: 0.0003, label: 'ual_' + marbleId }));
+  parts.lowerArmL = Bodies.rectangle(x - 14 * S_, y + 4 * S_, 3, 12 * S_, P({ density: 0.00025, label: 'lal_' + marbleId }));
+  parts.upperArmR = Bodies.rectangle(x + 10 * S_, y - 5 * S_, 4, 14 * S_, P({ density: 0.0003, label: 'uar_' + marbleId }));
+  parts.lowerArmR = Bodies.rectangle(x + 14 * S_, y + 4 * S_, 3, 12 * S_, P({ density: 0.00025, label: 'lar_' + marbleId }));
+
+  // Legs
+  parts.upperLegL = Bodies.rectangle(x - 7 * S_, y + 12 * S_, 7, 12 * S_, P({ density: 0.0025, friction: 0.8, label: 'ull_' + marbleId }));
+  parts.lowerLegL = Bodies.rectangle(x - 7 * S_, y + 22 * S_, 6, 10 * S_, P({ density: 0.0022, friction: 0.9, label: 'lll_' + marbleId }));
+  parts.upperLegR = Bodies.rectangle(x + 7 * S_, y + 12 * S_, 7, 12 * S_, P({ density: 0.0025, friction: 0.8, label: 'ulr_' + marbleId }));
+  parts.lowerLegR = Bodies.rectangle(x + 7 * S_, y + 22 * S_, 6, 10 * S_, P({ density: 0.0022, friction: 0.9, label: 'llr_' + marbleId }));
+
+  // Feet
+  parts.footL = Bodies.rectangle(x - 7 * S_, y + 30 * S_, 14 * S_, 4, P({ density: 0.004, friction: 0.99, restitution: 0.01, label: 'fl_' + marbleId }));
+  parts.footR = Bodies.rectangle(x + 7 * S_, y + 30 * S_, 14 * S_, 4, P({ density: 0.004, friction: 0.99, restitution: 0.01, label: 'fr_' + marbleId }));
+
+  const allBodies = Object.values(parts);
+  World.add(engine.world, allBodies);
+
+  // Joints
+  const S_JOINT = 0.88, D_JOINT = 0.45;
+  const J = (bA, pA, bB, pB, stiff, damp) => {
+    const s = stiff !== undefined ? stiff : S_JOINT;
+    const d = damp !== undefined ? damp : D_JOINT;
+    const c = Constraint.create({ bodyA: bA, pointA: pA, bodyB: bB, pointB: pB, length: 0, stiffness: s, damping: d });
+    c._origS = s; c._origD = d;
+    World.add(engine.world, c);
+    return c;
+  };
+
+  const constraints = [
+    J(parts.torso, { x: 0, y: -8 * S_ }, parts.head, { x: 0, y: 5 }),
+    J(parts.torso, { x: -8 * S_, y: -5 * S_ }, parts.upperArmL, { x: 0, y: -7 * S_ }),
+    J(parts.torso, { x: 8 * S_, y: -5 * S_ }, parts.upperArmR, { x: 0, y: -7 * S_ }),
+    J(parts.upperArmL, { x: 0, y: 7 * S_ }, parts.lowerArmL, { x: 0, y: -6 * S_ }, 0.7, 0.4),
+    J(parts.upperArmR, { x: 0, y: 7 * S_ }, parts.lowerArmR, { x: 0, y: -6 * S_ }, 0.7, 0.4),
+    J(parts.torso, { x: -7 * S_, y: 8 * S_ }, parts.upperLegL, { x: 0, y: -6 * S_ }, 0.97, 0.45),
+    J(parts.torso, { x: 7 * S_, y: 8 * S_ }, parts.upperLegR, { x: 0, y: -6 * S_ }, 0.97, 0.45),
+    J(parts.upperLegL, { x: 0, y: 6 * S_ }, parts.lowerLegL, { x: 0, y: -5 * S_ }, 0.95, 0.4),
+    J(parts.upperLegR, { x: 0, y: 6 * S_ }, parts.lowerLegR, { x: 0, y: -5 * S_ }, 0.95, 0.4),
+    J(parts.lowerLegL, { x: 0, y: 5 * S_ }, parts.footL, { x: 0, y: -2 }, 0.95, 0.4),
+    J(parts.lowerLegR, { x: 0, y: 5 * S_ }, parts.footR, { x: 0, y: -2 }, 0.95, 0.4),
+  ];
+
+  return { parts, constraints };
+}
+
+function removeRagdollFromWorld(r) {
+  Object.values(r.parts).forEach(b => { try { World.remove(engine.world, b); } catch(e) {} });
+}
+
+function getRagdollCenter(r) {
+  return { x: r.parts.torso.position.x, y: r.parts.torso.position.y };
+}
+
+function getAttackHandPos(r, side) {
+  const arm = side === 'left' ? r.parts.lowerArmL : r.parts.lowerArmR;
+  return { x: arm.position.x, y: arm.position.y };
+}
+
+function applyImpulse(body, point, impulse) {
+  Body.setVelocity(body, {
+    x: body.velocity.x + impulse.x / body.mass,
+    y: body.velocity.y + impulse.y / body.mass
+  });
+}
+
+// ─── BATTLE ────────────────────────────────────────────────────────
+
+function startBattle(id1, id2) {
   destroyBattle();
   tickCount = 0;
   gameState.phase = 'racing';
   gameState.winnerId = null;
   gameState.theme = THEMES[Math.floor(Math.random() * THEMES.length)];
 
-  engine = Engine.create({ gravity: { x: 0, y: 0.5 } });
+  engine = Engine.create({ gravity: { x: 0, y: 0.2 } });
 
+  // Walls
   World.add(engine.world, [
-    Bodies.rectangle(-10, W_H / 2, 20, W_H, { isStatic: true, restitution: 0.3, friction: 0.2 }),
-    Bodies.rectangle(W_W + 10, W_H / 2, 20, W_H, { isStatic: true, restitution: 0.3, friction: 0.2 }),
+    Bodies.rectangle(-10, W_H / 2, 20, W_H, { isStatic: true, restitution: 0.2, friction: 0.8 }),
+    Bodies.rectangle(W_W + 10, W_H / 2, 20, W_H, { isStatic: true, restitution: 0.2, friction: 0.8 }),
   ]);
 
+  // Single floor
   PLATFORMS.forEach(p => {
     World.add(engine.world, Bodies.rectangle(p.x, p.y, p.w, p.h, {
-      isStatic: true, restitution: 0.1, friction: 0.6, label: 'plat'
+      isStatic: true, restitution: 0.05, friction: 0.9, label: 'plat'
     }));
   });
 
-  const count = gameState.marbles.length;
   gladiators = [];
 
-  gameState.marbles.forEach((m, i) => {
-    const angle = (i / count) * Math.PI * 2;
-    const dist = 160 + Math.random() * 80;
-    const x = W_W / 2 + Math.cos(angle) * dist;
-    const y = 130 + Math.random() * 80;
+  // Find the two marbles by id
+  const m1 = gameState.marbles.find(m => m.id === id1);
+  const m2 = gameState.marbles.find(m => m.id === id2);
+  if (!m1 || !m2) return;
 
-    const body = Bodies.circle(x, y, 14, {
-      restitution: 0.4, friction: 0.2, frictionAir: 0.01,
-      density: 0.0015, label: 'g_' + m.id
-    });
-    World.add(engine.world, body);
-
+  [m1, m2].forEach((m, i) => {
+    const x = 150 + i * 500 + Math.random() * 60;
+    const y = 430;
+    const ragdoll = createRagdoll(x, y, m.color, m.id);
     const wp = WEAPONS[Math.floor(Math.random() * WEAPONS.length)];
-
     gladiators.push({
       id: m.id, name: m.name, color: m.color,
       image: m.image, sound: m.sound,
-      hp: 100, maxHp: 100, weapon: wp,
-      body, state: 'move', stateTimer: 0, alive: true,
+      hp: 80, maxHp: 80, weapon: wp, dodge: wp.dodge,
+      ragdoll, state: 'move', stateTimer: 0, alive: true,
       walkPhase: Math.random() * Math.PI * 2, chargePct: 0,
-      flail: 0
+      flail: 0, facingRight: true, combatTimer: 0,
+      deadTimer: 0, hitStun: 0
     });
   });
 
@@ -128,10 +195,68 @@ function startBattle() {
   battleLoop = setInterval(tick, TICK);
 }
 
+function startTournament() {
+  const ids = gameState.marbles.map(m => m.id);
+  // Shuffle and pair up
+  const shuffled = [...ids].sort(() => Math.random() - 0.5);
+  const bracket = [];
+  for (let i = 0; i < shuffled.length - 1; i += 2) {
+    bracket.push([shuffled[i], shuffled[i+1]]);
+  }
+  // If odd number, last gets a bye (auto-advance)
+  if (shuffled.length % 2 !== 0) {
+    // Give bye to last player by adding them as already in winners
+    gameState.tournament = { bracket, matchIndex: 0, winners: [shuffled[shuffled.length-1]], championId: null };
+  } else {
+    gameState.tournament = { bracket, matchIndex: 0, winners: [], championId: null };
+  }
+  // Start first match
+  playNextMatch();
+}
+
+function playNextMatch() {
+  const t = gameState.tournament;
+  if (!t) return;
+  // If all matches played, check if we need another round
+  if (t.matchIndex >= t.bracket.length) {
+    // All matches of this round done - check if we have a champion
+    if (t.winners.length === 1) {
+      // Champion!
+      const champ = t.winners[0];
+      gameState.winnerId = champ;
+      if (!gameState.scores[champ]) gameState.scores[champ] = 0;
+      gameState.scores[champ]++;
+      gameState.tournament.championId = champ;
+      gameState.phase = 'results';
+      broadcastState();
+      const winnerMarble = gameState.marbles.find(m => m.id === champ);
+      io.emit('battleWinner', { winnerId: champ, winnerName: winnerMarble ? winnerMarble.name : 'Nadie', winnerSound: winnerMarble ? winnerMarble.sound : null, scores: gameState.scores });
+      return;
+    }
+    // More than 1 winner - create next round bracket
+    const nextBracket = [];
+    for (let i = 0; i < t.winners.length - 1; i += 2) {
+      nextBracket.push([t.winners[i], t.winners[i+1]]);
+    }
+    if (t.winners.length % 2 !== 0) {
+      gameState.tournament = { bracket: nextBracket, matchIndex: 0, winners: [t.winners[t.winners.length-1]], championId: null };
+    } else {
+      gameState.tournament = { bracket: nextBracket, matchIndex: 0, winners: [], championId: null };
+    }
+    playNextMatch();
+    return;
+  }
+  
+  const match = t.bracket[t.matchIndex];
+  gameState.winnerId = null;
+  broadcastState();
+  startBattle(match[0], match[1]);
+}
+
 function tick() {
   const now = Date.now();
 
-  // Projectiles
+  // ── Projectiles ──
   for (let i = projectiles.length - 1; i >= 0; i--) {
     const p = projectiles[i];
     p.life--;
@@ -141,144 +266,273 @@ function tick() {
     let hit = false;
     gladiators.forEach(g => {
       if (g.id === p.owner || !g.alive || hit) return;
-      const dx = g.body.position.x - p.body.position.x;
-      const dy = g.body.position.y - p.body.position.y;
-      if (dx * dx + dy * dy < 400) {
+      // Check all ragdoll parts
+      let hitPart = null, minPartDist = 200;
+      Object.values(g.ragdoll.parts).forEach(part => {
+        const dx = part.position.x - p.body.position.x;
+        const dy = part.position.y - p.body.position.y;
+        const d = dx * dx + dy * dy;
+        if (d < minPartDist) { minPartDist = d; hitPart = part; }
+      });
+      if (hitPart && minPartDist < 400) {
+        const dx = hitPart.position.x - p.body.position.x;
+        const dy = hitPart.position.y - p.body.position.y;
+        const d = Math.sqrt(dx * dx + dy * dy) || 1;
         g.hp = Math.max(0, g.hp - p.dmg);
-        g._lastDmg = p.dmg; g._lastCrit = false;
-        Body.setVelocity(g.body, { x: (dx / 20) * 6, y: (dy / 20) * 3 - 3 });
-        if (g.hp <= 0) { g.alive = false; World.remove(engine.world, g.body); }
+        g._lastDmg = p.dmg; g._lastCrit = false; g._lastBlock = null;
+        g.hitStun = 200 + p.dmg * 5;
+        applyImpulse(hitPart, hitPart.position, { x: (dx / d) * 0.05, y: (dy / d) * 0.02 });
+        if (g.hp <= 0) { g.alive = false; g.deadTimer = 0; }
         hit = true;
       }
     });
     if (hit) { try { World.remove(engine.world, p.body); } catch(e) {} projectiles.splice(i, 1); }
   }
 
-  // Gladiators
+  // ── Gladiator AI ──
   gladiators.forEach(g => {
-    if (!g.alive) return;
-    if (g.flail > 0) g.flail -= TICK * 0.01;
+    const r = g.ragdoll;
+    const torso = r.parts.torso;
+    if (!g.alive) {
+      g.deadTimer += TICK;
+      if (g.deadTimer > 400 && !r._removed) {
+        // Remove ragdoll from physics world so body disappears
+        r.constraints.forEach(c => { try { World.remove(engine.world, c); } catch(e) {} });
+        Object.values(r.parts).forEach(b => { try { World.remove(engine.world, b); } catch(e) {} });
+        r._removed = true;
+      }
+      return;
+    }
 
+    // ── Always keep stiffness at maximum ──
+    // Body stays rigid - no limp mode on hit
+    g.hitStun = Math.max(0, g.hitStun - TICK);
+    r.constraints.forEach(c => { c.stiffness = c._origS; c.damping = c._origD; });
+
+    // Find nearest enemy
     let nearest = null, minDist = Infinity;
     gladiators.forEach(o => {
       if (o.id === g.id || !o.alive) return;
-      const dx = o.body.position.x - g.body.position.x;
-      const dy = o.body.position.y - g.body.position.y;
+      const oc = getRagdollCenter(o.ragdoll);
+      const gc = getRagdollCenter(r);
+      const dx = oc.x - gc.x;
+      const dy = oc.y - gc.y;
       const d = dx * dx + dy * dy;
       if (d < minDist) { minDist = d; nearest = o; }
     });
-    if (!nearest) return;
+    if (!nearest || g.hitStun > 300) return;
 
-    const dx = nearest.body.position.x - g.body.position.x;
-    const dy = nearest.body.position.y - g.body.position.y;
+    const nc = getRagdollCenter(nearest.ragdoll);
+    const gc = getRagdollCenter(r);
+    const dx = nc.x - gc.x;
+    const dy = nc.y - gc.y;
     const dist = Math.sqrt(dx * dx + dy * dy) || 1;
-    const isR = g.weapon.type === 'ranged';
+    g.facingRight = dx > 0;
 
-    // Repulsion
+    // ── PERSONAL SPACE (STRICT - never violated) ──
+    const personalSpace = 25;
+    const prefDist = personalSpace + 25;
+    const hitRange = g.weapon.range + 10;
+    
+    // Strong repulsion when approaching personal space
     gladiators.forEach(o => {
       if (o.id === g.id || !o.alive) return;
-      const rdx = g.body.position.x - o.body.position.x;
-      const rdy = g.body.position.y - o.body.position.y;
+      const oc2 = getRagdollCenter(o.ragdoll);
+      const gc2 = getRagdollCenter(r);
+      const rdx = gc2.x - oc2.x;
+      const rdy = gc2.y - oc2.y;
       const rd = Math.sqrt(rdx * rdx + rdy * rdy);
-      if (rd < 40 && rd > 0) {
-        Body.applyForce(g.body, g.body.position, { x: (rdx / rd) * 0.002 * (40 - rd) / 40, y: (rdy / rd) * 0.002 * (40 - rd) / 40 });
+      if (rd < personalSpace && rd > 0) {
+        const repForce = 0.015 * (personalSpace - rd) / personalSpace;
+        applyForce(torso, torso.position, { x: (rdx / rd) * repForce, y: 0 });
       }
     });
 
-    switch (g.state) {
-      case 'move':
-        if (isR) {
-          if (dist < g.weapon.optRange * 0.4) {
-            Body.applyForce(g.body, g.body.position, { x: -(dx / dist) * g.weapon.speed * 2, y: 0 });
-          } else if (dist > g.weapon.optRange * 1.2) {
-            Body.applyForce(g.body, g.body.position, { x: (dx / dist) * g.weapon.speed * 0.5, y: 0 });
-          } else {
-            g.state = 'charge'; g.stateTimer = 0; g.chargePct = 0;
-          }
-        } else {
-          Body.applyForce(g.body, g.body.position, { x: (dx / dist) * g.weapon.speed, y: 0 });
-          if (dist < g.weapon.range + 15) { g.state = 'charge'; g.stateTimer = 0; g.chargePct = 0; }
+    // ── SLOW MOVEMENT ──
+    const dir = dx > 0 ? 1 : -1;
+    const walkForce = 0.003;
+    
+    let moveForce = 0;
+    if (dist < personalSpace * 0.8) {
+      moveForce = -walkForce * 2;
+    } else if (dist > prefDist) {
+      const ratio = Math.min(0.6, (dist - prefDist) / 60);
+      moveForce = walkForce * ratio;
+    }
+    
+    if (Math.abs(torso.angle) < 0.8 && Math.abs(moveForce) > 0.0001) {
+      applyForce(torso, torso.position, { x: dir * moveForce, y: 0 });
+      if (Math.abs(torso.velocity.x) > 0.5) {
+        Body.setVelocity(torso, { x: Math.sign(torso.velocity.x) * 0.5, y: torso.velocity.y });
+      }
+      // Gentle foot oscillation for walking look
+      g.walkPhase += 0.015;
+      const step = Math.sin(g.walkPhase);
+      applyForce(r.parts.footL, r.parts.footL.position, { x: step * 0.0008 * dir, y: 0 });
+      applyForce(r.parts.footR, r.parts.footR.position, { x: -step * 0.0008 * dir, y: 0 });
+    }
+
+
+    // Arms held in guard position when idle
+    if (!(Math.abs(moveForce) > 0.0005 || g.state === 'charge')) {
+      Body.setAngularVelocity(r.parts.upperArmL, 0.003);
+      Body.setAngularVelocity(r.parts.upperArmR, -0.003);
+    }
+
+    // ── Combat with weapon range ──
+    if (g.state === 'move' && dist < 300 && dist > personalSpace * 0.3) {
+      g.state = 'charge'; g.stateTimer = 0; g.chargePct = 0;
+    }
+
+    // During charge, advance only until personal space boundary
+    if (g.state === 'charge' && Math.abs(torso.angle) < 0.6 && dist > personalSpace && dist < 300) {
+      applyForce(torso, torso.position, { x: dir * walkForce * 0.3, y: 0 });
+    }
+
+    if (g.state === 'charge') {
+      g.stateTimer += TICK;
+      g.chargePct = Math.min(1, g.stateTimer / g.weapon.charge);
+      const sA = g.facingRight ? r.parts.upperArmR : r.parts.upperArmL;
+      const sL = g.facingRight ? r.parts.lowerArmR : r.parts.lowerArmL;
+      if (g.chargePct < 0.5) {
+        // Wind up - pull arm back (big dramatic motion)
+        Body.setAngularVelocity(sA, g.facingRight ? 0.02 : -0.02);
+        Body.setAngularVelocity(sL, g.facingRight ? 0.03 : -0.03);
+      } else {
+        // Strike! (fast, powerful swing)
+        Body.setAngularVelocity(sA, g.facingRight ? -0.08 : 0.08);
+        Body.setAngularVelocity(sL, g.facingRight ? -0.12 : 0.12);
+      }
+      // HIT CHECK: based on weapon type
+      const isRanged = g.weapon.type === 'ranged';
+      if (isRanged) {
+        // Ranged: fire projectile when charged
+        if (g.chargePct >= 0.5 && dist < 300) {
+          const pBody = Bodies.circle(torso.position.x + dir * 18, torso.position.y - 3, 3,
+            { restitution: 0.1, friction: 0, frictionAir: 0.002, density: 0.0002 });
+          Body.setVelocity(pBody, { x: dir * (3 + Math.random()), y: (dy / dist) * 1.2 - 0.3 + Math.random() * 0.5 });
+          World.add(engine.world, pBody);
+          projectiles.push({ body: pBody, owner: g.id, dmg: g.weapon.dmg, life: 80 });
+          g.state = 'cooldown'; g.stateTimer = 0;
+        } else if (g.chargePct >= 1) {
+          g.state = 'cooldown'; g.stateTimer = 0;
         }
-        break;
-
-      case 'charge':
-        g.stateTimer += TICK;
-        g.chargePct = Math.min(1, g.stateTimer / g.weapon.charge);
-        Body.applyForce(g.body, g.body.position, { x: (dx / dist) * g.weapon.speed * 0.2, y: 0 });
-
-        if (isR) {
-          if (dist < g.weapon.optRange * 0.35) { g.state = 'move'; break; }
-          if (g.chargePct >= 1 && dist < g.weapon.range + 20) {
-            g.lastAttack = now; g.state = 'cooldown'; g.stateTimer = 0;
-            const pBody = Bodies.circle(g.body.position.x + (dx / dist) * 18, g.body.position.y - 3, 3,
-              { restitution: 0.1, friction: 0, frictionAir: 0.002, density: 0.0002 });
-            Body.setVelocity(pBody, { x: (dx / dist) * 5, y: (dy / dist) * 2 });
-            World.add(engine.world, pBody);
-            projectiles.push({ body: pBody, owner: g.id, dmg: g.weapon.dmg, life: 120 });
+      } else {
+        // Melee hit check (must be at similar height)
+        if (g.chargePct >= 0.3 && dist < hitRange && Math.abs(dy) < 25) {
+          // Dodge check
+          if (Math.random() < nearest.dodge / 100) {
+            nearest._lastDmg = 0; nearest._lastCrit = false;
+            nearest._lastBlock = 'dodge';
           }
-        } else {
-          if (g.chargePct >= 1 && dist < g.weapon.range + 12) {
-            let dmg = g.weapon.dmg + Math.floor(Math.random() * 4) - 1;
-            let crit = Math.random() < 0.12;
-            if (crit) dmg = Math.floor(dmg * 2);
+          // Shield block check
+          else if (Math.random() < nearest.weapon.block / 100) {
+            nearest._lastDmg = 0; nearest._lastCrit = false;
+            nearest._lastBlock = 'shield';
+          }
+          // Hit!
+          else {
+            let dmg = g.weapon.dmg + (Math.random() < 0.5 ? 1 : 0);
             nearest.hp = Math.max(0, nearest.hp - dmg);
-            nearest._lastDmg = dmg; nearest._lastCrit = crit;
-            nearest.flail = 1;
-            const kb = 3 + dmg * 0.15;
-            Body.setVelocity(nearest.body, { x: (dx / dist) * kb, y: (dy / dist) * kb * 0.3 - kb * 0.15 });
-            g.state = 'cooldown'; g.stateTimer = 0;
-            if (nearest.hp <= 0) { nearest.alive = false; World.remove(engine.world, nearest.body); }
+            nearest._lastDmg = dmg; nearest._lastCrit = false;
+            nearest.hitStun = 150 + dmg * 3;
+            const kb = 0.004 + (g.weapon.dmg / 30);
+            applyImpulse(nearest.ragdoll.parts.torso, nearest.ragdoll.parts.torso.position, { x: dir * kb, y: 0 });
+            if (nearest.hp <= 0) { nearest.alive = false; nearest.deadTimer = 0; }
           }
-          if (dist > g.weapon.range + 25) { g.state = 'move'; }
+          g.state = 'cooldown'; g.stateTimer = 0;
+        } else if (g.chargePct >= 1) {
+          g.state = 'cooldown'; g.stateTimer = 0;
         }
-        break;
-
-      case 'cooldown':
-        g.stateTimer += TICK;
-        Body.applyForce(g.body, g.body.position, { x: -(dx / dist) * g.weapon.speed * 0.5, y: 0 });
-        if (g.stateTimer >= g.weapon.cd) { g.state = 'move'; g.chargePct = 0; }
-        break;
+      }
     }
 
-    const onFloor = g.body.position.y > 430 || PLATFORMS.some(p =>
-      Math.abs(g.body.position.x - p.x) < p.w / 2 && Math.abs(g.body.position.y + 14 - p.y) < 5);
-    if (onFloor && Math.random() < 0.002) {
-      Body.setVelocity(g.body, { x: g.body.velocity.x + (dx / dist) * 0.3, y: -5 });
+    if (g.state === 'cooldown') {
+      g.stateTimer += TICK;
+      Body.setAngularVelocity(g.facingRight ? r.parts.upperArmR : r.parts.upperArmL, g.facingRight ? 0.003 : -0.003);
+      if (g.stateTimer >= g.weapon.cd) { g.state = 'move'; g.chargePct = 0; }
     }
-
-    g.walkPhase += Math.abs(g.body.velocity.x) * 0.03;
   });
 
+  // ── Check winner ──
   const alive = gladiators.filter(g => g.alive);
   if (alive.length <= 1 && gladiators.length > 1) {
     endBattle(alive.length === 1 ? alive[0] : null); return;
   }
   if (gladiators.length === 0) return;
 
+  // ── Step physics ──
   Engine.update(engine, TICK);
+  
+  // ── Lock torso rotation (ALWAYS upright) ──
+  gladiators.forEach(g => {
+    if (g.alive && g.ragdoll && g.ragdoll.parts && g.ragdoll.parts.torso) {
+      Body.setAngle(g.ragdoll.parts.torso, 0);
+      Body.setAngularVelocity(g.ragdoll.parts.torso, 0);
+    }
+  });
+
+  // ── Broadcast state (every other tick) ──
   tickCount++;
   if (tickCount % 2 !== 0) return;
 
-  const state = gladiators.map(g => {
+  const state = gladiators.filter(g => g.alive).map(g => {
+    const r = g.ragdoll;
+    const parts = {};
+    Object.keys(r.parts).forEach(k => {
+      const b = r.parts[k];
+      parts[k] = { x: b.position.x, y: b.position.y, angle: b.angle };
+    });
     const s = {
-      id: g.id, x: g.body.position.x, y: g.body.position.y,
+      id: g.id, parts,
       hp: g.hp, maxHp: g.maxHp, alive: g.alive, weapon: g.weapon,
-      state: g.state, chargePct: g.chargePct, walkPhase: g.walkPhase, flail: g.flail
+      state: g.state, chargePct: g.chargePct, walkPhase: g.walkPhase, flail: g.flail,
+      facingRight: g.facingRight
     };
-    if (g._lastDmg) { s.dmg = g._lastDmg; s.crit = g._lastCrit; g._lastDmg = 0; g._lastCrit = 0; }
+    if (g._lastDmg !== undefined) { s.dmg = g._lastDmg; s.crit = g._lastCrit; s.block = g._lastBlock; g._lastDmg = undefined; g._lastCrit = false; g._lastBlock = null; }
     return s;
   });
 
-  io.emit('battleState', { gladiators: state, projectiles: projectiles.map(p => ({ x: p.body.position.x, y: p.body.position.y })) });
+  io.emit('battleState', {
+    gladiators: state,
+    projectiles: projectiles.map(p => ({ x: p.body.position.x, y: p.body.position.y }))
+  });
 }
 
 function endBattle(winner) {
   clearInterval(battleLoop); battleLoop = null;
   if (engine) { World.clear(engine.world); Engine.clear(engine); } engine = null;
-  if (winner) { gameState.winnerId = winner.id; if (!gameState.scores[winner.id]) gameState.scores[winner.id] = 0; gameState.scores[winner.id]++; }
-  gladiators = []; projectiles = []; gameState.phase = 'results';
-  broadcastState();
-  io.emit('battleWinner', { winnerId: winner ? winner.id : null, winnerName: winner ? winner.name : 'Nadie', winnerSound: winner ? winner.sound : null, scores: gameState.scores });
+  gladiators = []; projectiles = [];
+  
+  if (winner) {
+    gameState.winnerId = winner.id;
+    // Record tournament winner
+    if (gameState.tournament) {
+      gameState.tournament.winners.push(winner.id);
+      gameState.tournament.matchIndex++;
+      // Emit match result
+      io.emit('battleWinner', { 
+        winnerId: winner.id, 
+        winnerName: winner.name, 
+        winnerSound: winner.sound, 
+        scores: gameState.scores,
+        tournament: { matchIndex: gameState.tournament.matchIndex, total: gameState.tournament.bracket.length }
+      });
+      // After short delay, start next match
+      setTimeout(() => {
+        playNextMatch();
+      }, 2000);
+    } else {
+      gameState.phase = 'results';
+      if (!gameState.scores[winner.id]) gameState.scores[winner.id] = 0;
+      gameState.scores[winner.id]++;
+      broadcastState();
+      io.emit('battleWinner', { winnerId: winner.id, winnerName: winner.name, winnerSound: winner.sound, scores: gameState.scores });
+    }
+  } else {
+    gameState.phase = 'results';
+    broadcastState();
+  }
 }
 
 function destroyBattle() {
@@ -287,20 +541,33 @@ function destroyBattle() {
   gladiators = []; projectiles = [];
 }
 
+// ─── SOCKET.IO ─────────────────────────────────────────────────────
+
 io.on('connection', socket => {
-  console.log('Conectado:', socket.id);
   socket.emit('stateUpdate', gameState);
   socket.on('setMarbles', data => {
     gameState.marbles = data.map(m => ({ id: m.id, name: m.name, color: m.color, image: m.image || null, sound: m.sound || null, soundName: m.soundName || '' }));
     data.forEach(m => { if (gameState.scores[m.id] === undefined) gameState.scores[m.id] = 0; }); broadcastState();
   });
   socket.on('setPhase', p => { gameState.phase = p; broadcastState(); });
-  socket.on('startRace', () => { if (gameState.marbles.length < 2) return; startBattle(); });
-  socket.on('nextRound', () => { destroyBattle(); gameState.round++; gameState.phase = 'lobby'; gameState.winnerId = null; broadcastState(); });
-  socket.on('resetRace', () => { destroyBattle(); gameState.phase = 'lobby'; gameState.winnerId = null; broadcastState(); io.emit('battleReset'); });
-  socket.on('resetGame', () => { destroyBattle(); gameState = { phase: 'setup', marbles: [], round: 1, scores: {}, winnerId: null, theme: THEMES[0] }; broadcastState(); });
+  socket.on('startRace', () => {
+    if (gameState.marbles.length < 2) return;
+    startTournament();
+  });
+  socket.on('nextRound', () => { destroyBattle(); gameState.round++; gameState.phase = 'lobby'; gameState.winnerId = null; gameState.tournament = null; broadcastState(); });
+  socket.on('resetRace', () => { destroyBattle(); gameState.phase = 'lobby'; gameState.winnerId = null; gameState.tournament = null; broadcastState(); io.emit('battleReset'); });
+  socket.on('resetGame', () => { destroyBattle(); gameState = { phase: 'setup', marbles: [], round: 1, scores: {}, winnerId: null, theme: THEMES[0], tournament: null }; broadcastState(); });
   socket.on('disconnect', () => {});
 });
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => console.log('Servidor en puerto ' + PORT));
+
+// HashCode polyfill for string (for collision group uniqueness)
+String.prototype.hashCode = function() {
+  let hash = 0;
+  for (let i = 0; i < this.length; i++) { const c = this.charCodeAt(i); hash = ((hash << 5) - hash) + c; hash |= 0; }
+  return hash;
+};
+
+
