@@ -1,7 +1,7 @@
 {
   "name": "marble-race",
   "version": "1.0.0",
-  "description": "Real-time multiplayer marble race game",
+  "description": "Carrera de Canicas Multijugador en Tiempo Real",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
@@ -9,9 +9,6 @@
   "dependencies": {
     "express": "^4.18.2",
     "socket.io": "^4.7.2",
-    "matter-js": "^0.20.0"
-  },
-  "engines": {
-    "node": ">=18.0.0"
+    "matter-js": "^0.19.0"
   }
 }
